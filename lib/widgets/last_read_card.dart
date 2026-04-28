@@ -8,14 +8,17 @@ class LastReadCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [AppColors.cardGradientStart, AppColors.cardGradientEnd],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(20),
+        color: AppColors.primaryGreen,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primaryGreen.withOpacity(0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
       ),
       child: Stack(
         children: [
@@ -24,33 +27,50 @@ class LastReadCard extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  const Icon(Icons.menu_book, color: Colors.white, size: 16),
+                  const Icon(Icons.menu_book, color: AppColors.primaryYellow, size: 18),
                   const SizedBox(width: 8),
-                  Text('Terakhir Dibaca', style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 14)),
+                  const Text('Terakhir Dibaca', style: TextStyle(color: Colors.white70, fontSize: 13)),
                 ],
               ),
-              const SizedBox(height: 20),
-              const Text('Surah', style: TextStyle(color: Colors.white, fontSize: 12)),
+              const SizedBox(height: 12),
+              const Text('Al-Baqarah', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w600)),
               const SizedBox(height: 4),
-              const Text('Al - Fatihah', style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () {},
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.darkBackground,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                  elevation: 0,
+              const Text('Ayat No: 15', style: TextStyle(color: Colors.white70, fontSize: 14)),
+              const SizedBox(height: 24),
+              Align(
+                alignment: Alignment.bottomRight,
+                child: ElevatedButton(
+                  onPressed: () {},
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryYellow,
+                    foregroundColor: AppColors.primaryGreen,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    elevation: 0,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: const [
+                      Text('Lanjutkan', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                      SizedBox(width: 8),
+                      Icon(Icons.arrow_forward, size: 16),
+                    ],
+                  ),
                 ),
-                child: const Text('Lanjutkan >'),
               ),
             ],
           ),
           Positioned(
-            right: -10,
-            bottom: -10,
-            child: Icon(Icons.auto_stories, size: 110, color: Colors.white.withOpacity(0.2)),
+            right: 0,
+            top: 0,
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: const Icon(Icons.menu_book_outlined, color: AppColors.primaryYellow, size: 32),
+            ),
           ),
         ],
       ),

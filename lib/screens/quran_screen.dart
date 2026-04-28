@@ -1,17 +1,32 @@
 import 'package:flutter/material.dart';
 import '../theme/colors.dart';
 import '../widgets/last_read_card.dart';
+import '../models/surah.dart';
+import '../services/api_service.dart';
+import 'detail_surat_screen.dart'; // import detail
 
-class QuranScreen extends StatelessWidget {
+class QuranScreen extends StatefulWidget {
   const QuranScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+  State<QuranScreen> createState() => _QuranScreenState();
+}
 
+class _QuranScreenState extends State<QuranScreen> {
+  late Future<List<Surah>> futureSurahs;
+
+  @override
+  void initState() {
+    super.initState();
+    // Meminta Service API untuk mulai mendownload data saat halaman ini dibuka
+    futureSurahs = ApiService.getSuratList();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('QUR\'AN'),
+        title: const Text('QUR\'AN', style: TextStyle(fontWeight: FontWeight.bold)),
         centerTitle: true,
       ),
       body: SingleChildScrollView(
@@ -23,7 +38,7 @@ class QuranScreen extends StatelessWidget {
             const SizedBox(height: 24),
             _buildTabBar(context),
             const SizedBox(height: 16),
-            _buildSurahList(isDark),
+            _buildSurahList(),
           ],
         ),
       ),
@@ -36,9 +51,9 @@ class QuranScreen extends StatelessWidget {
       child: Column(
         children: [
           TabBar(
-            labelColor: AppColors.primaryGold,
-            unselectedLabelColor: Theme.of(context).textTheme.bodyMedium?.color,
-            indicatorColor: AppColors.primaryGold,
+            labelColor: AppColors.primaryYellow,
+            unselectedLabelColor: AppColors.mutedGreen,
+            indicatorColor: AppColors.primaryYellow,
             dividerColor: Colors.transparent,
             tabs: const [
               Tab(text: 'Surah'),
@@ -52,45 +67,76 @@ class QuranScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSurahList(bool isDark) {
-    final surahs = [
-      {'id': 1, 'name': 'Al-Fatihah', 'arabic': 'الفاتحة'},
-      {'id': 2, 'name': 'Al-Baqarah', 'arabic': 'البقرة'},
-      {'id': 3, 'name': 'Al-Imran', 'arabic': 'آل عمران'},
-      {'id': 4, 'name': 'An-Nisa', 'arabic': 'النساء'},
-      {'id': 5, 'name': 'Al-Ma\'idah', 'arabic': 'المائدة'},
-      {'id': 6, 'name': 'Al-An\'am', 'arabic': 'الأنعام'},
-    ];
-
-    return ListView.separated(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: surahs.length,
-      separatorBuilder: (context, index) => Divider(color: isDark ? AppColors.darkSurface : Colors.grey.shade200, height: 24),
-      itemBuilder: (context, index) {
-        final surah = surahs[index];
-        return ListTile(
-          contentPadding: EdgeInsets.zero,
-          leading: Stack(
-            alignment: Alignment.center,
-            children: [
-              Icon(Icons.star_border, color: AppColors.primaryGold, size: 40),
-              Text(
-                surah['id'].toString(), 
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)
+  Widget _buildSurahList() {
+    // Scaffold Data via FutureBuilder untuk animasi Loading otomatis
+    return FutureBuilder<List<Surah>>(
+      future: futureSurahs,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          // Ketika proses download JSON sedang berjalan, tampilkan muter-muter
+          return const Padding(
+            padding: EdgeInsets.all(40.0),
+            child: Center(child: CircularProgressIndicator(color: AppColors.primaryGreen)),
+          );
+        } else if (snapshot.hasError) {
+          // Jika tidak ada koneksi/error, tampilkan warna merah
+          return Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Center(
+              child: Text(
+                'Gagal memuat data: \n${snapshot.error}',
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Colors.red),
               ),
-            ],
-          ),
-          title: Text(surah['name'].toString(), style: const TextStyle(fontWeight: FontWeight.bold)),
-          trailing: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(surah['arabic'].toString(), style: const TextStyle(color: AppColors.primaryGold, fontSize: 18, fontWeight: FontWeight.bold)),
-              const SizedBox(width: 16),
-              const Icon(Icons.play_circle_fill, color: AppColors.primaryGold),
-            ],
-          ),
-          onTap: () {},
+            ),
+          );
+        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return const Center(child: Text('Tidak ada data surat.'));
+        }
+
+        final surahs = snapshot.data!;
+
+        return ListView.separated(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(), // Scroll mengikuti SingleChildScrollView luar
+          itemCount: surahs.length, // Menampilkan 114 kotak
+          separatorBuilder: (context, index) => const Divider(color: AppColors.background, height: 24, thickness: 2),
+          itemBuilder: (context, index) {
+            final surah = surahs[index];
+            return ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: Stack(
+                alignment: Alignment.center,
+                children: [
+                   const Icon(Icons.star_border, color: AppColors.primaryYellow, size: 40),
+                   Text(
+                     surah.nomor.toString(), // Nomor Surat asli dari Equran
+                     style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)
+                   ),
+                ],
+              ),
+              title: Text(surah.namaLatin, style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primaryGreen)),
+              // Tambahan informasi jumlah ayat
+              subtitle: Text('Ayat: ${surah.jumlahAyat}', style: const TextStyle(color: AppColors.mutedGreen, fontSize: 12)),
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(surah.nama, style: const TextStyle(color: AppColors.primaryYellow, fontSize: 18, fontWeight: FontWeight.bold)),
+                  const SizedBox(width: 16),
+                  const Icon(Icons.play_circle_fill, color: AppColors.primaryYellow),
+                ],
+              ),
+              onTap: () {
+                // Berpindah ke Halaman Detail dengan membawa Data Nomor Surat
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => DetailSuratScreen(nomorSurat: surah.nomor),
+                  ),
+                );
+              },
+            );
+          },
         );
       },
     );

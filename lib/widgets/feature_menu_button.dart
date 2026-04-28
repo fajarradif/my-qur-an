@@ -15,26 +15,35 @@ class FeatureMenuButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    
     return GestureDetector(
       onTap: onTap,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
-              color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: isDark
-                  ? []
-                  : [BoxShadow(color: Colors.grey.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, 5))],
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.04),
+                  blurRadius: 15,
+                  offset: const Offset(0, 5),
+                ),
+              ],
             ),
-            child: Icon(icon, size: 32, color: AppColors.primaryGold),
+            child: Icon(icon, size: 28, color: AppColors.primaryGreen),
           ),
-          const SizedBox(height: 8),
-          Text(label, style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 12)),
+          const SizedBox(height: 12),
+          Text(
+            label, 
+            style: const TextStyle(
+              color: AppColors.mutedGreen, 
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            )
+          ),
         ],
       ),
     );

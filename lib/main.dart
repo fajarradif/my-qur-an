@@ -15,8 +15,9 @@ class MyQuranApp extends StatelessWidget {
       title: 'MyQuran',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.system, // Otomatis menyesuaikan tema HP (Light / Dark)
+      // Desain baru ini dikhususkan untuk tampilan terang/bersih (Light Mode) 
+      // yang memadukan Hijau Tua dan Emas
+      themeMode: ThemeMode.light, 
       home: const HomeScreen(),
     );
   }
