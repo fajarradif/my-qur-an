@@ -37,7 +37,7 @@ class QuranNumberMarker extends StatelessWidget {
               width: size * 0.85,
               height: size * 0.85,
               decoration: BoxDecoration(
-                border: Border.all(color: markerColor.withOpacity(0.5), width: isSmall ? 0.5 : 1.0),
+                border: Border.all(color: markerColor.withValues(alpha: 0.5), width: isSmall ? 0.5 : 1.0),
                 borderRadius: BorderRadius.circular(isSmall ? 2 : 4),
               ),
             ),
@@ -60,7 +60,7 @@ class QuranNumberMarker extends StatelessWidget {
                width: size * 0.5,
                height: size * 0.5,
                decoration: BoxDecoration(
-                 color: markerColor.withOpacity(0.1),
+                 color: markerColor.withValues(alpha: 0.1),
                  shape: BoxShape.circle,
                ),
              ),

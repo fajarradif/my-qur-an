@@ -38,7 +38,8 @@ class _TasbihScreenState extends State<TasbihScreen> {
         backgroundColor: AppColors.background,
         iconTheme: const IconThemeData(color: AppColors.primaryGreen),
       ),
-      body: Center(
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(vertical: 40),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -105,8 +106,8 @@ class _TasbihScreenState extends State<TasbihScreen> {
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                         colors: [
-                          AppColors.primaryGreen,
-                          AppColors.primaryGreen.withValues(alpha: 0.8),
+                          AppColors.deepGreen,
+                          AppColors.emeraldGreen,
                         ],
                       ),
                     ),
