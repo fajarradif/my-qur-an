@@ -3,6 +3,7 @@ import '../theme/colors.dart';
 import '../widgets/last_read_card.dart';
 import '../models/surah.dart';
 import '../services/api_service.dart';
+import '../widgets/quran_number_marker.dart';
 import 'detail_surat_screen.dart'; // import detail
 
 class QuranScreen extends StatefulWidget {
@@ -105,23 +106,14 @@ class _QuranScreenState extends State<QuranScreen> {
             final surah = surahs[index];
             return ListTile(
               contentPadding: EdgeInsets.zero,
-              leading: Stack(
-                alignment: Alignment.center,
-                children: [
-                   const Icon(Icons.star_border, color: AppColors.primaryYellow, size: 40),
-                   Text(
-                     surah.nomor.toString(), // Nomor Surat asli dari Equran
-                     style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)
-                   ),
-                ],
-              ),
+              leading: QuranNumberMarker(number: surah.nomor.toString()),
               title: Text(surah.namaLatin, style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primaryGreen)),
               // Tambahan informasi jumlah ayat
               subtitle: Text('Ayat: ${surah.jumlahAyat}', style: const TextStyle(color: AppColors.mutedGreen, fontSize: 12)),
               trailing: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(surah.nama, style: const TextStyle(color: AppColors.primaryYellow, fontSize: 18, fontWeight: FontWeight.bold)),
+                  Text(surah.nama, style: const TextStyle(color: AppColors.primaryYellow, fontSize: 22, fontWeight: FontWeight.bold, fontFamily: 'QuranFont')),
                   const SizedBox(width: 16),
                   const Icon(Icons.play_circle_fill, color: AppColors.primaryYellow),
                 ],

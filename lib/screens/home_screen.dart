@@ -5,6 +5,9 @@ import '../widgets/last_read_card.dart';
 import '../models/jadwal.dart';
 import '../services/api_service.dart';
 import 'quran_screen.dart';
+import 'tahlil_screen.dart';
+import 'tasbih_screen.dart';
+import 'kiblat_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -20,7 +23,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    // Default menggunakan kota Jakarta, ini akan dimuat begitu layar Home dibuka
+    // Default menggunakan kota Jakarta
     futureJadwal = ApiService.getJadwalSholat('58a2fc6ed39fd083f55d4182bf88826d');
   }
 
@@ -31,7 +34,7 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Stack(
           children: [
             SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(20, 30, 20, 100), // padding bawah buat nav bar mengambang
+              padding: const EdgeInsets.fromLTRB(20, 30, 20, 100),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -55,8 +58,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 ],
               ),
             ),
-            
-            // Bottom Navigation Bar ala card floating
             Positioned(
               left: 20,
               right: 20,
@@ -88,7 +89,7 @@ class _HomeScreenState extends State<HomeScreen> {
             shape: BoxShape.circle,
             color: Colors.black,
             boxShadow: [
-              BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 10, offset: const Offset(0, 4)),
+              BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 10, offset: const Offset(0, 4)),
             ],
             image: const DecorationImage(
               image: NetworkImage('https://i.pravatar.cc/150?img=11'),
@@ -105,54 +106,48 @@ class _HomeScreenState extends State<HomeScreen> {
       future: futureJadwal,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return _buildStaticPrayerCard("Memuat...", "--:--", "Mohon tunggu");
-        } else if (snapshot.hasError) {
-          return _buildStaticPrayerCard("Error", "--:--", "Gagal memuat API");
-        } else if (!snapshot.hasData) {
-          return _buildStaticPrayerCard("Periksa Koneksi", "--:--", "Tidak ada data");
+          return _buildStaticPrayerCard("Memuat Jadwal...");
+        } else if (snapshot.hasError || !snapshot.hasData) {
+          return _buildStaticPrayerCard("Gagal Memuat Jadwal");
         }
         
         final jadwal = snapshot.data!;
         final nextPrayer = jadwal.getNextPrayer();
+        
+        final List<Map<String, String>> allPrayers = [
+          {'name': 'Subuh', 'time': jadwal.subuh},
+          {'name': 'Dzuhur', 'time': jadwal.dzuhur},
+          {'name': 'Ashar', 'time': jadwal.ashar},
+          {'name': 'Maghrib', 'time': jadwal.maghrib},
+          {'name': 'Isya', 'time': jadwal.isya},
+        ];
 
         return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          width: double.infinity,
+          padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
             color: AppColors.surface,
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(24),
             boxShadow: [
-              BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 15, offset: const Offset(0, 5)),
+              BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 15, offset: const Offset(0, 5)),
             ],
           ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          child: Column(
             children: [
               Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: const BoxDecoration(
-                      color: AppColors.iconBgGreen,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(Icons.access_time_filled, color: AppColors.primaryGreen, size: 20),
-                  ),
-                  const SizedBox(width: 16),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(nextPrayer['name']!, style: const TextStyle(color: AppColors.primaryGreen, fontSize: 14, fontWeight: FontWeight.bold)),
-                      const Text('Akurat via myquran.com', style: TextStyle(color: AppColors.mutedGreen, fontSize: 10)),
-                    ],
-                  ),
+                  const Text('Jadwal Sholat Hari Ini', style: TextStyle(color: AppColors.primaryGreen, fontWeight: FontWeight.bold, fontSize: 14)),
+                  Text(jadwal.tanggal, style: const TextStyle(color: AppColors.mutedGreen, fontSize: 10)),
                 ],
               ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(nextPrayer['time']!, style: const TextStyle(color: AppColors.primaryGreen, fontSize: 20, fontWeight: FontWeight.bold)),
-                  const Text('WIB', style: TextStyle(color: AppColors.mutedGreen, fontSize: 10)),
-                ],
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: allPrayers.map((prayer) {
+                  final bool isNext = prayer['name'] == nextPrayer['name'];
+                  return _buildPrayerItem(prayer['name']!, prayer['time']!, isNext);
+                }).toList(),
               ),
             ],
           ),
@@ -161,47 +156,50 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // Fallback UI kalau loading atau error
-  Widget _buildStaticPrayerCard(String title, String time, String subtitle) {
+  Widget _buildPrayerItem(String name, String time, bool isNext) {
+    return Column(
+      children: [
+        Text(
+          name,
+          style: TextStyle(
+            color: isNext ? AppColors.primaryYellow : AppColors.mutedGreen,
+            fontSize: 11,
+            fontWeight: isNext ? FontWeight.bold : FontWeight.normal,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+          decoration: BoxDecoration(
+            color: isNext ? AppColors.primaryGreen : AppColors.iconBgGreen.withOpacity(0.5),
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: isNext ? [
+              BoxShadow(color: AppColors.primaryGreen.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 4))
+            ] : null,
+          ),
+          child: Text(
+            time,
+            style: TextStyle(
+              color: isNext ? Colors.white : AppColors.primaryGreen,
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStaticPrayerCard(String message) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      width: double.infinity,
+      padding: const EdgeInsets.all(30),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 15, offset: const Offset(0, 5)),
-        ],
+        borderRadius: BorderRadius.circular(24),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: const BoxDecoration(
-                  color: AppColors.iconBgGreen,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.access_time_filled, color: AppColors.primaryGreen, size: 20),
-              ),
-              const SizedBox(width: 16),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title, style: const TextStyle(color: AppColors.primaryGreen, fontSize: 14, fontWeight: FontWeight.bold)),
-                  Text(subtitle, style: const TextStyle(color: AppColors.mutedGreen, fontSize: 10)),
-                ],
-              ),
-            ],
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(time, style: const TextStyle(color: AppColors.primaryGreen, fontSize: 20, fontWeight: FontWeight.bold)),
-            ],
-          ),
-        ],
+      child: Center(
+        child: Text(message, style: const TextStyle(color: AppColors.mutedGreen)),
       ),
     );
   }
@@ -218,19 +216,25 @@ class _HomeScreenState extends State<HomeScreen> {
           },
         ),
         FeatureMenuButton(
-          icon: Icons.receipt_long, // Tahlil
+          icon: Icons.receipt_long,
           label: 'Tahlil',
-          onTap: () {},
+          onTap: () {
+            Navigator.push(context, MaterialPageRoute(builder: (context) => const TahlilScreen()));
+          },
         ),
         FeatureMenuButton(
-          icon: Icons.brightness_high, // Tasbih
+          icon: Icons.brightness_high,
           label: 'Tasbih',
-          onTap: () {},
+          onTap: () {
+            Navigator.push(context, MaterialPageRoute(builder: (context) => const TasbihScreen()));
+          },
         ),
         FeatureMenuButton(
           icon: Icons.explore,
           label: 'Kiblat',
-          onTap: () {},
+          onTap: () {
+            Navigator.push(context, MaterialPageRoute(builder: (context) => const KiblatScreen()));
+          },
         ),
       ],
     );
@@ -244,7 +248,7 @@ class _HomeScreenState extends State<HomeScreen> {
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 15, offset: const Offset(0, 5)),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 15, offset: const Offset(0, 5)),
         ],
       ),
       child: Column(
@@ -254,8 +258,8 @@ class _HomeScreenState extends State<HomeScreen> {
             textAlign: TextAlign.center,
             style: TextStyle(
               color: AppColors.primaryGreen,
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
+              fontSize: 28,
+              fontFamily: 'QuranFont',
               height: 1.5,
             ),
           ),
@@ -276,7 +280,7 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Container(
                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                decoration: BoxDecoration(
-                 color: AppColors.primaryYellow.withOpacity(0.2),
+                 color: AppColors.primaryYellow.withValues(alpha: 0.2),
                  borderRadius: BorderRadius.circular(8),
                ),
                child: const Text('QS. Al-Baqarah: 152', style: TextStyle(color: AppColors.primaryYellow, fontSize: 10, fontWeight: FontWeight.bold)),
@@ -294,7 +298,7 @@ class _HomeScreenState extends State<HomeScreen> {
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(30),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 20, offset: const Offset(0, 10)),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 20, offset: const Offset(0, 10)),
         ],
       ),
       child: Row(
