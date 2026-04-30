@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/colors.dart';
+import '../models/ayat.dart';
 import '../models/surah_detail.dart';
 import '../services/api_service.dart';
 import '../widgets/quran_number_marker.dart';
@@ -262,7 +263,7 @@ class _DetailSuratScreenState extends State<DetailSuratScreen> {
     );
   }
 
-  Widget _buildAyatCard(ayat) {
+  Widget _buildAyatCard(Ayat ayat) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(

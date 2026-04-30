@@ -227,7 +227,7 @@ class _HomeScreenState extends State<HomeScreen> {
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [AppColors.deepGreen, AppColors.emeraldGreen],
+              colors: [AppColors.deepForestGreen, AppColors.deepGreen],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -325,7 +325,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: allPrayers.map((prayer) {
                   final bool isActive = prayer['name'] == activeName;
-                  return _buildPrayerItem(prayer['name']!, prayer['time']!, isActive);
+                  return Expanded(
+                    child: _buildPrayerItem(prayer['name']!, prayer['time']!, isActive),
+                  );
                 }).toList(),
               ),
             ],
@@ -360,7 +362,7 @@ class _HomeScreenState extends State<HomeScreen> {
             time,
             style: TextStyle(
               color: isActive ? Colors.white : AppColors.primaryGreen,
-              fontSize: 13,
+              fontSize: 12,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -395,8 +397,8 @@ class _HomeScreenState extends State<HomeScreen> {
           },
         ),
         FeatureMenuButton(
-          icon: Icons.receipt_long,
-          label: 'Tahlil',
+          icon: Icons.auto_stories, // Changed from receipt_long
+          label: 'Tahlil & Yasin',
           onTap: () {
             Navigator.push(context, MaterialPageRoute(builder: (context) => const TahlilScreen()));
           },

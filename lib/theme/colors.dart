@@ -4,8 +4,10 @@ class AppColors {
   // New Palette: Deep Green & Golden Yellow
   static const Color primaryGreen = Color(0xFF1D5C42);
   static const Color deepGreen = Color(0xFF0B3D2E); // Deep Forest Green
+  static const Color deepForestGreen = Color(0xFF072A1F); // Even Deeper Forest Green
   static const Color emeraldGreen = Color(0xFF1D5C42);
   static const Color secondaryGreen = Color(0xFF2A7A56);
+
   static const Color mutedGreen = Color(0xFF7A9386);
   static const Color iconBgGreen = Color(0xFFE8F0EC);
   

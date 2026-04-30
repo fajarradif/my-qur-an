@@ -11,7 +11,7 @@ class LastReadCard extends StatelessWidget {
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [AppColors.deepGreen, AppColors.emeraldGreen],
+          colors: [AppColors.deepForestGreen, AppColors.deepGreen],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),

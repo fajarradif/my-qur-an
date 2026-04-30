@@ -1,44 +1,258 @@
 import 'package:flutter/material.dart';
 import '../theme/colors.dart';
 import '../models/tahlil.dart';
+import '../models/ayat.dart';
+import '../models/surah_detail.dart';
+import '../services/api_service.dart';
 import '../widgets/quran_number_marker.dart';
 
-class TahlilScreen extends StatelessWidget {
+class TahlilScreen extends StatefulWidget {
   const TahlilScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final List<Tahlil> tahlilData = _getTahlilData();
+  State<TahlilScreen> createState() => _TahlilScreenState();
+}
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('Tahlil & Doa', style: TextStyle(fontWeight: FontWeight.bold)),
-        centerTitle: true,
-        elevation: 0,
+class _TahlilScreenState extends State<TahlilScreen> {
+  late Future<List<Tahlil>> futureTahlil;
+  late Future<SurahDetail> futureYasin;
+  bool _isMushafMode = false;
+
+  @override
+  void initState() {
+    super.initState();
+    futureTahlil = ApiService.getTahlilList();
+    futureYasin = ApiService.getDetailSurat(36); // Surah Yasin
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
         backgroundColor: AppColors.background,
-        iconTheme: const IconThemeData(color: AppColors.primaryGreen),
+        appBar: AppBar(
+          backgroundColor: AppColors.deepGreen,
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.white),
+            onPressed: () => Navigator.pop(context),
+          ),
+          title: Text(
+            _isMushafMode ? 'Mode Lafadz' : 'Tahlil & Yasin',
+            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 20),
+          ),
+          centerTitle: true,
+          actions: [
+            IconButton(
+              icon: Icon(
+                _isMushafMode ? Icons.list_alt : Icons.menu_book,
+                color: Colors.white,
+              ),
+              tooltip: _isMushafMode ? 'Mode Detail' : 'Mode Lafadz',
+              onPressed: () {
+                setState(() {
+                  _isMushafMode = !_isMushafMode;
+                });
+              },
+            ),
+          ],
+          bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(60),
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: AppColors.iconBgGreen.withValues(alpha: 0.3),
+                borderRadius: BorderRadius.circular(15),
+              ),
+              child: TabBar(
+                indicator: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  color: AppColors.primaryYellow,
+                ),
+                labelColor: AppColors.deepGreen,
+                unselectedLabelColor: Colors.white70,
+                labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                indicatorSize: TabBarIndicatorSize.tab,
+                dividerColor: Colors.transparent,
+                tabs: const [
+                  Tab(text: 'Tahlil'),
+                  Tab(text: 'Yasin'),
+                ],
+              ),
+            ),
+          ),
+        ),
+        body: TabBarView(
+          children: [
+            _buildTahlilTab(),
+            _buildYasinTab(),
+          ],
+        ),
       ),
-      body: ListView.separated(
-        padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
-        itemCount: tahlilData.length,
-        separatorBuilder: (context, index) => const Divider(color: Colors.transparent, height: 16),
-        itemBuilder: (context, index) {
-          return _buildTahlilCard(tahlilData[index]);
-        },
+    );
+  }
+
+  Widget _buildTahlilTab() {
+    return FutureBuilder<List<Tahlil>>(
+      future: futureTahlil,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator(color: AppColors.primaryGreen));
+        } else if (snapshot.hasError) {
+          return _buildErrorState(snapshot.error.toString(), () {
+            setState(() => futureTahlil = ApiService.getTahlilList());
+          });
+        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return const Center(child: Text('Data Tahlil tidak tersedia'));
+        }
+
+        final tahlilData = snapshot.data!;
+        return ListView.builder(
+          padding: const EdgeInsets.all(20),
+          itemCount: tahlilData.length,
+          itemBuilder: (context, index) {
+            return _isMushafMode 
+                ? _buildMushafTahlilCard(tahlilData[index])
+                : _buildTahlilCard(tahlilData[index]);
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildYasinTab() {
+    return FutureBuilder<SurahDetail>(
+      future: futureYasin,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator(color: AppColors.primaryGreen));
+        } else if (snapshot.hasError) {
+          return _buildErrorState(snapshot.error.toString(), () {
+            setState(() => futureYasin = ApiService.getDetailSurat(36));
+          });
+        } else if (!snapshot.hasData) {
+          return const Center(child: Text('Data Yasin tidak tersedia'));
+        }
+
+        final yasin = snapshot.data!;
+        if (_isMushafMode) {
+          return _buildMushafYasinView(yasin);
+        }
+
+        return ListView.builder(
+          padding: const EdgeInsets.all(20),
+          itemCount: yasin.ayat.length,
+          itemBuilder: (context, index) {
+            final ayat = yasin.ayat[index];
+            return _buildAyatCard(ayat.nomorAyat.toString(), ayat.teksArab, ayat.teksLatin, ayat.teksIndonesia);
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildMushafTahlilCard(Tahlil tahlil) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 24),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.iconBgGreen.withValues(alpha: 0.3)),
+      ),
+      child: Text(
+        tahlil.arabic,
+        textAlign: TextAlign.right,
+        style: const TextStyle(
+          fontSize: 28,
+          fontFamily: 'QuranFont',
+          color: AppColors.textDark,
+          height: 2.2,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMushafYasinView(SurahDetail yasin) {
+    List<InlineSpan> spans = [];
+    for (var a in yasin.ayat) {
+      spans.add(
+        TextSpan(
+          text: '${a.teksArab} ',
+          style: const TextStyle(
+            fontSize: 26,
+            fontFamily: 'QuranFont',
+            color: AppColors.textDark,
+            height: 2.2,
+          ),
+        ),
+      );
+      spans.add(
+        WidgetSpan(
+          alignment: PlaceholderAlignment.middle,
+          child: QuranNumberMarker(
+            number: a.nomorAyat.toString(),
+            size: 28,
+            isInline: true,
+            color: const Color(0xFFC5A358),
+          ),
+        ),
+      );
+      spans.add(const TextSpan(text: ' '));
+    }
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFDF7E7),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: const Color(0xFFC5A358), width: 2),
+          boxShadow: [
+            BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 15),
+          ],
+        ),
+        child: Column(
+          children: [
+            const Text(
+              'بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيْمِ',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 28,
+                fontFamily: 'QuranFont',
+                color: AppColors.primaryGreen,
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text.rich(
+              TextSpan(children: spans),
+              textAlign: TextAlign.justify,
+              textDirection: TextDirection.rtl,
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildTahlilCard(Tahlil tahlil) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      margin: const EdgeInsets.only(bottom: 20),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(24),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 10, offset: const Offset(0, 4)),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
+          ),
         ],
+        border: Border.all(color: AppColors.iconBgGreen.withValues(alpha: 0.5), width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -69,20 +283,39 @@ class TahlilScreen extends StatelessWidget {
             tahlil.arabic,
             textAlign: TextAlign.right,
             style: const TextStyle(
-              fontSize: 28,
+              fontSize: 26,
               fontFamily: 'QuranFont',
               color: AppColors.textDark,
-              height: 2.0,
+              height: 2.2,
             ),
           ),
-          const SizedBox(height: 16),
-          Text(
-            tahlil.translation,
-            textAlign: TextAlign.left,
-            style: const TextStyle(
-              fontSize: 13,
-              color: AppColors.mutedGreen,
-              height: 1.5,
+          const SizedBox(height: 20),
+          if (tahlil.latin.isNotEmpty) ...[
+            Text(
+              tahlil.latin,
+              style: const TextStyle(
+                fontSize: 14,
+                color: AppColors.secondaryGreen,
+                height: 1.5,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppColors.iconBgGreen.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Text(
+              tahlil.translation,
+              style: const TextStyle(
+                fontSize: 13,
+                color: AppColors.textDark,
+                height: 1.6,
+                fontStyle: FontStyle.italic,
+              ),
             ),
           ),
         ],
@@ -90,44 +323,115 @@ class TahlilScreen extends StatelessWidget {
     );
   }
 
-  List<Tahlil> _getTahlilData() {
-    return [
-      Tahlil(
-        id: 1,
-        title: "Pengantar (Al-Fatihah)",
-        arabic: "اِلَى حَضْرَةِ النَّبِيِّ الْمُصْطَفَى صَلَّى اللهُ عَلَيْهِ وَسَلَّمَ وَاٰلِهٖ وَاَزْوَاجِهٖ وَذُرِّيَّتِهٖ وَاَهْلِ بَيْتِهِ الْكِرَامِ، شَيْءٌ لِلّٰهِ لَهُمُ الْفَاتِحَةُ",
-        translation: "Kepada yang terhormat Nabi Muhammad SAW, segenap keluarga, istri-istri, dan keturunannya. Bacaan Al-Fatihah ini kami peruntukkan kepada mereka.",
+  Widget _buildAyatCard(String number, String arabic, String latin, String translation) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 20),
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
+          ),
+        ],
+        border: Border.all(color: AppColors.iconBgGreen.withValues(alpha: 0.5), width: 1),
       ),
-      Tahlil(
-        id: 2,
-        title: "Al-Ikhlas",
-        arabic: "قُلْ هُوَ اللّٰهُ اَحَدٌ، اَللّٰهُ الصَّمَدُ، لَمْ يَلِدْ وَلَمْ يُولَدْ، وَلَمْ يَكُنْ لَّهٗ كُفُوًا اَحَدٌ (٣×)",
-        translation: "Katakanlah (Muhammad), 'Dialah Allah, Yang Maha Esa. Allah tempat meminta segala sesuatu. (Allah) tidak beranak dan tidak pula diperanakkan. Dan tidak ada sesuatu yang setara dengan-Nya.' (3x)",
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              QuranNumberMarker(
+                number: number,
+                color: AppColors.primaryGreen,
+                size: 32,
+                textStyle: const TextStyle(color: AppColors.primaryGreen, fontWeight: FontWeight.bold, fontSize: 10),
+              ),
+              const Spacer(),
+              IconButton(
+                icon: const Icon(Icons.play_circle_outline, color: AppColors.primaryGreen),
+                onPressed: () {},
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          Text(
+            arabic,
+            textAlign: TextAlign.right,
+            style: const TextStyle(
+              fontSize: 26,
+              fontFamily: 'QuranFont',
+              color: AppColors.textDark,
+              height: 2.2,
+            ),
+          ),
+          const SizedBox(height: 20),
+          Text(
+            latin,
+            style: const TextStyle(
+              fontSize: 14,
+              color: AppColors.secondaryGreen,
+              height: 1.5,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppColors.iconBgGreen.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Text(
+              translation,
+              style: const TextStyle(
+                fontSize: 13,
+                color: AppColors.textDark,
+                height: 1.6,
+              ),
+            ),
+          ),
+        ],
       ),
-      Tahlil(
-        id: 3,
-        title: "Al-Falaq",
-        arabic: "قُلْ اَعُوذُ بِرَبِّ الْفَلَقِ، مِنْ شَرِّ مَا خَلَقَ، وَمِنْ شَرِّ غَاسِقٍ اِذَا وَقَبَ، وَمِنْ شَرِّ النَّفّٰثٰتِ فِى الْعُقَدِ، وَمِنْ شَرِّ حَاسِدٍ اِذَا حَسَدَ",
-        translation: "Katakanlah, 'Aku berlindung kepada Tuhan yang menguasai subuh (fajar), dari kejahatan (makhluk yang) Dia ciptakan, dan dari kejahatan malam apabila telah gelap gulita, dan dari kejahatan (perempuan-perempuan) penyihir yang meniup pada buhul-buhul (talinya), dan dari kejahatan orang yang dengki apabila dia dengki.'",
+    );
+  }
+
+  Widget _buildErrorState(String error, VoidCallback onRetry) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline, color: Colors.red, size: 60),
+            const SizedBox(height: 16),
+            Text(
+              'Oops! Terjadi kesalahan',
+              style: TextStyle(color: AppColors.primaryGreen, fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              error,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: AppColors.mutedGreen, fontSize: 14),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: onRetry,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primaryGreen,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              ),
+              child: const Text('Coba Lagi'),
+            ),
+          ],
+        ),
       ),
-      Tahlil(
-        id: 4,
-        title: "An-Nas",
-        arabic: "قُلْ اَعُوذُ بِرَبِّ النَّاسِ، مَلِكِ النَّاسِ، اِلٰهِ النَّاسِ، مِنْ شَرِّ الْوَسْوَاسِ الْخَنَّاسِ، اَلَّذِي يُوَسْوِسُ فِي صُدُورِ النَّاسِ، مِنَ الْجِنَّةِ وَالنَّاسِ",
-        translation: "Katakanlah, 'Aku berlindung kepada Tuhannya manusia, Raja manusia, Sembahan manusia, dari kejahatan (bisikan) setan yang bersembunyi, yang membisikkan (kejahatan) ke dalam dada manusia, dari (golongan) jin dan manusia.'",
-      ),
-      Tahlil(
-        id: 5,
-        title: "Ayat Kursi",
-        arabic: "اَللّٰهُ لَآ اِلٰهَ اِلَّا هُوَ الْحَيُّ الْقَيُّومُ لَا تَاْخُذُهٗ سِنَةٌ وَّلَا نَوْمٌ لَهٗ مَا فِى السَّمٰوٰتِ وَمَا فِى الْاَرْضِ مَنْ ذَا الَّذِي يَشْفَعُ عِنْدَهٗٓ اِلَّا بِاِذْنِهٖ يَعْلَمُ مَا بَيْنَ اَيْدِيْهِمْ وَمَا خَلْفَهُمْ وَّلَا يُحِيْطُوْنَ بِشَيْءٍ مِّنْ عِلْمِهٖٓ اِلَّا بِمَا شَاۤءَ وَسِعَ كُرْسِيُّهُ السَّمٰوٰتِ وَالْاَرْضَ وَلَا يَؤُوْدُهٗ حِفْظُهُمَا وَهُوَ الْعَلِيُّ الْعَظِيْمُ",
-        translation: "Allah, tidak ada tuhan selain Dia. Yang Mahahidup, yang terus-menerus mengurus (makhluk-Nya), tidak mengantuk dan tidak tidur. Milik-Nya apa yang ada di langit dan apa yang ada di bumi. Tidak ada yang dapat memberi syafaat di sisi-Nya tanpa izin-Nya. Dia mengetahui apa yang di hadapan mereka dan apa yang di belakang mereka, dan mereka tidak mengetahui sesuatu apa pun tentang ilmu-Nya melainkan apa yang Dia kehendaki. Kursi-Nya meliputi langit dan bumi. Dan Dia tidak merasa berat memelihara keduanya, dan Dia Mahatinggi, Mahabesar.",
-      ),
-      Tahlil(
-        id: 6,
-        title: "Tahlil",
-        arabic: "لَآ اِلٰهَ اِلَّا اللّٰهُ (١٠٠×)",
-        translation: "Tiada Tuhan selain Allah. (100x)",
-      ),
-    ];
+    );
   }
 }

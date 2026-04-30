@@ -1,8 +1,10 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:flutter/services.dart';
 import '../models/surah.dart';
 import '../models/surah_detail.dart';
 import '../models/jadwal.dart';
+import '../models/tahlil.dart';
 
 class ApiService {
   static const String baseUrl = 'https://equran.id/api/v2';
@@ -57,6 +59,18 @@ class ApiService {
       throw Exception('Gagal memuat jadwal sholat');
     } catch (e) {
       throw Exception('Terjadi kesalahan koneksi API Muslim');
+    }
+  }
+
+  // 4. Mengambil Data Tahlil Lengkap (Local Assets)
+  static Future<List<Tahlil>> getTahlilList() async {
+    try {
+      final String response = await rootBundle.loadString('assets/data/tahlil.json');
+      final data = await json.decode(response);
+      final List<dynamic> tahlilList = data['data'];
+      return tahlilList.map((json) => Tahlil.fromJson(json)).toList();
+    } catch (e) {
+      throw Exception('Gagal memuat data Tahlil Lokal: $e');
     }
   }
 }
