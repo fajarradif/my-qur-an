@@ -26,8 +26,11 @@ class _QuranScreenState extends State<QuranScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('QUR\'AN', style: TextStyle(fontWeight: FontWeight.bold)),
+        backgroundColor: AppColors.deepGreen,
+        elevation: 0,
+        title: const Text('AL-QURAN', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
         centerTitle: true,
       ),
       body: SingleChildScrollView(

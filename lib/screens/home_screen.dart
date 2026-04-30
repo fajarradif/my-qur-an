@@ -10,6 +10,8 @@ import 'quran_screen.dart';
 import 'tahlil_screen.dart';
 import 'tasbih_screen.dart';
 import 'kiblat_screen.dart';
+import 'bookmark_screen.dart';
+import 'profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -48,9 +50,11 @@ class _HomeScreenState extends State<HomeScreen> {
   void _updateTime() {
     final DateTime now = DateTime.now();
     final String formattedDateTime = _formatDateTime(now);
-    setState(() {
-      _currentTime = formattedDateTime;
-    });
+    if (mounted) {
+      setState(() {
+        _currentTime = formattedDateTime;
+      });
+    }
   }
 
   String _formatDateTime(DateTime dateTime) {
@@ -63,47 +67,14 @@ class _HomeScreenState extends State<HomeScreen> {
       body: SafeArea(
         child: Stack(
           children: [
-            SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(20, 30, 20, 100),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildHeader(),
-                  const SizedBox(height: 30),
-                  
-                  SizedBox(
-                    height: 200,
-                    child: PageView(
-                      controller: _pageController,
-                      onPageChanged: (index) {
-                        setState(() {
-                          _currentPage = index;
-                        });
-                      },
-                      children: [
-                        const LastReadCard(),
-                        _buildCountdownCard(),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  _buildPageIndicator(),
-                  const SizedBox(height: 24),
-                  _buildPrayerTimeCard(),
-                  const SizedBox(height: 30),
-                  _buildFeaturesGrid(),
-                  const SizedBox(height: 30),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text('Inspirasi Harian', style: TextStyle(color: AppColors.primaryGreen, fontSize: 16, fontWeight: FontWeight.bold)),
-                      Text('Lihat Semua', style: TextStyle(color: AppColors.secondaryGreen, fontSize: 12)),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  _buildInspirationCard(),
-                ],
-              ),
+            IndexedStack(
+              index: _selectedIndex,
+              children: [
+                _buildHomeContent(),
+                const QuranScreen(),
+                const BookmarkScreen(),
+                const ProfileScreen(),
+              ],
             ),
             Positioned(
               left: 20,
@@ -113,6 +84,51 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildHomeContent() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(20, 30, 20, 100),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildHeader(),
+          const SizedBox(height: 30),
+          
+          SizedBox(
+            height: 200,
+            child: PageView(
+              controller: _pageController,
+              onPageChanged: (index) {
+                setState(() {
+                  _currentPage = index;
+                });
+              },
+              children: [
+                const LastReadCard(),
+                _buildCountdownCard(),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          _buildPageIndicator(),
+          const SizedBox(height: 24),
+          _buildPrayerTimeCard(),
+          const SizedBox(height: 30),
+          _buildFeaturesGrid(),
+          const SizedBox(height: 30),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('Inspirasi Harian', style: TextStyle(color: AppColors.primaryGreen, fontSize: 16, fontWeight: FontWeight.bold)),
+              Text('Lihat Semua', style: TextStyle(color: AppColors.secondaryGreen, fontSize: 12)),
+            ],
+          ),
+          const SizedBox(height: 16),
+          _buildInspirationCard(),
+        ],
       ),
     );
   }
@@ -393,11 +409,11 @@ class _HomeScreenState extends State<HomeScreen> {
           icon: Icons.menu_book,
           label: 'Al-Quran',
           onTap: () {
-            Navigator.push(context, MaterialPageRoute(builder: (context) => const QuranScreen()));
+             setState(() => _selectedIndex = 1);
           },
         ),
         FeatureMenuButton(
-          icon: Icons.auto_stories, // Changed from receipt_long
+          icon: Icons.auto_stories,
           label: 'Tahlil & Yasin',
           onTap: () {
             Navigator.push(context, MaterialPageRoute(builder: (context) => const TahlilScreen()));
@@ -476,10 +492,10 @@ class _HomeScreenState extends State<HomeScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: AppColors.surface.withValues(alpha: 0.95),
         borderRadius: BorderRadius.circular(30),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 20, offset: const Offset(0, 10)),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 20, offset: const Offset(0, 10)),
         ],
       ),
       child: Row(
@@ -499,6 +515,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final color = isSelected ? AppColors.primaryYellow : AppColors.mutedGreen;
 
     return GestureDetector(
+      behavior: HitTestBehavior.opaque,
       onTap: () => setState(() => _selectedIndex = index),
       child: Column(
         mainAxisSize: MainAxisSize.min,
