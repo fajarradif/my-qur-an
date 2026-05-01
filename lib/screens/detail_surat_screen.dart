@@ -3,12 +3,14 @@ import '../theme/colors.dart';
 import '../models/ayat.dart';
 import '../models/surah_detail.dart';
 import '../services/api_service.dart';
+import '../services/bookmark_service.dart';
 import '../widgets/quran_number_marker.dart';
 
 class DetailSuratScreen extends StatefulWidget {
   final int nomorSurat;
+  final int? initialAyat;
 
-  const DetailSuratScreen({super.key, required this.nomorSurat});
+  const DetailSuratScreen({super.key, required this.nomorSurat, this.initialAyat});
 
   @override
   State<DetailSuratScreen> createState() => _DetailSuratScreenState();
@@ -17,11 +19,56 @@ class DetailSuratScreen extends StatefulWidget {
 class _DetailSuratScreenState extends State<DetailSuratScreen> {
   late Future<SurahDetail> futureSurahDetail;
   bool _isMushafMode = false;
+  int? _lastReadAyat;
+  final ScrollController _scrollController = ScrollController();
+  final Map<int, GlobalKey> _ayatKeys = {};
 
   @override
   void initState() {
     super.initState();
     futureSurahDetail = ApiService.getDetailSurat(widget.nomorSurat);
+    _loadLastRead();
+    
+    // Jika ada initialAyat, kita akan scroll setelah data dimuat di FutureBuilder
+  }
+
+  Future<void> _loadLastRead() async {
+    final lastRead = await BookmarkService.getLastRead();
+    if (mounted && lastRead['surah'] == widget.nomorSurat) {
+      setState(() {
+        _lastReadAyat = lastRead['ayat'];
+      });
+    }
+  }
+
+  void _scrollToAyat(int ayatNumber, {int retryCount = 0}) {
+    // Beri waktu sebentar agar ListView merender item-itemnya
+    Future.delayed(const Duration(milliseconds: 300), () {
+      if (!mounted) return;
+      
+      final key = _ayatKeys[ayatNumber];
+      if (key != null && key.currentContext != null) {
+        Scrollable.ensureVisible(
+          key.currentContext!,
+          duration: const Duration(milliseconds: 600),
+          curve: Curves.easeInOut,
+        );
+      } else if (retryCount < 5) {
+        // Jika belum ketemu (mungkin karena lazy loading belum build itemnya), 
+        // kita coba scroll sedikit ke bawah untuk memicu build item berikutnya, lalu coba lagi.
+        _scrollController.animateTo(
+          _scrollController.offset + 500, 
+          duration: const Duration(milliseconds: 100), 
+          curve: Curves.linear
+        ).then((_) => _scrollToAyat(ayatNumber, retryCount: retryCount + 1));
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 
   @override
@@ -68,6 +115,19 @@ class _DetailSuratScreenState extends State<DetailSuratScreen> {
           }
 
           final detail = snapshot.data!;
+          
+          // Inisialisasi keys hanya sekali saat data pertama kali tersedia
+          if (_ayatKeys.isEmpty) {
+            for (var a in detail.ayat) {
+              _ayatKeys[a.nomorAyat] = GlobalKey();
+            }
+            
+            // Jika ada initialAyat, trigger scroll
+            if (widget.initialAyat != null && widget.initialAyat! > 0) {
+              _scrollToAyat(widget.initialAyat!);
+            }
+          }
+
           return Column(
             children: [
               // Sembunyikan header card jika di Mode Mushaf untuk memberi ruang maksimal
@@ -85,11 +145,17 @@ class _DetailSuratScreenState extends State<DetailSuratScreen> {
 
   Widget _buildTafsirView(SurahDetail detail) {
     return ListView.separated(
+      controller: _scrollController,
+      cacheExtent: 10000, // Pre-build items dalam rentang 10000 pixel
       padding: const EdgeInsets.fromLTRB(20, 0, 20, 40),
       itemCount: detail.ayat.length,
       separatorBuilder: (context, index) => const Divider(color: Colors.transparent, height: 16),
       itemBuilder: (context, index) {
-        return _buildAyatCard(detail.ayat[index]);
+        final ayat = detail.ayat[index];
+        return Container(
+          key: _ayatKeys[ayat.nomorAyat],
+          child: _buildAyatCard(ayat, detail.namaLatin),
+        );
       },
     );
   }
@@ -258,12 +324,33 @@ class _DetailSuratScreenState extends State<DetailSuratScreen> {
               Text('${detail.jumlahAyat} AYAT', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500)),
             ],
           ),
+          if (_lastReadAyat != null) ...[
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.bookmark, color: AppColors.primaryYellow, size: 14),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Terakhir dibaca: Ayat $_lastReadAyat',
+                    style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );
   }
 
-  Widget _buildAyatCard(Ayat ayat) {
+  Widget _buildAyatCard(Ayat ayat, String detailNamaLatin) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -292,12 +379,59 @@ class _DetailSuratScreenState extends State<DetailSuratScreen> {
                   textStyle: const TextStyle(color: AppColors.primaryGreen, fontWeight: FontWeight.bold, fontSize: 12),
                 ),
                 Row(
-                  children: const [
-                    Icon(Icons.share, color: AppColors.primaryGreen, size: 20),
-                    SizedBox(width: 16),
-                    Icon(Icons.play_arrow, color: AppColors.primaryGreen, size: 24),
-                    SizedBox(width: 16),
-                    Icon(Icons.bookmark_outline, color: AppColors.primaryGreen, size: 20),
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.share, color: AppColors.primaryGreen, size: 20),
+                      onPressed: () {
+                        // Implement share
+                      },
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.play_arrow, color: AppColors.primaryGreen, size: 24),
+                      onPressed: () {
+                        // Implement audio
+                      },
+                    ),
+                    IconButton(
+                      icon: Icon(
+                        _lastReadAyat == ayat.nomorAyat ? Icons.bookmark : Icons.bookmark_outline, 
+                        color: _lastReadAyat == ayat.nomorAyat ? AppColors.primaryYellow : AppColors.primaryGreen, 
+                        size: 20
+                      ),
+                      onPressed: () async {
+                        if (_lastReadAyat == ayat.nomorAyat) {
+                          // Jika diklik lagi ayat yang sama, hapus bookmark
+                          await BookmarkService.clearLastRead();
+                          if (mounted) {
+                            setState(() => _lastReadAyat = null);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Penanda dihapus'),
+                                backgroundColor: AppColors.mutedGreen,
+                                duration: Duration(seconds: 1),
+                              ),
+                            );
+                          }
+                        } else {
+                          // Jika diklik ayat lain, pindahkan bookmark
+                          await BookmarkService.saveLastRead(
+                            surah: widget.nomorSurat,
+                            surahName: detailNamaLatin,
+                            ayat: ayat.nomorAyat,
+                          );
+                          if (mounted) {
+                            setState(() => _lastReadAyat = ayat.nomorAyat);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Penanda dipindahkan ke ayat ${ayat.nomorAyat}'),
+                                backgroundColor: AppColors.primaryGreen,
+                                duration: const Duration(seconds: 2),
+                              ),
+                            );
+                          }
+                        }
+                      },
+                    ),
                   ],
                 ),
               ],

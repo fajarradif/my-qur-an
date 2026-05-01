@@ -72,7 +72,7 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 _buildHomeContent(),
                 const QuranScreen(),
-                const BookmarkScreen(),
+                BookmarkScreen(key: ValueKey(_selectedIndex)),
                 const ProfileScreen(),
               ],
             ),
@@ -107,7 +107,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 });
               },
               children: [
-                const LastReadCard(),
+                LastReadCard(onRefresh: () => setState(() {})),
                 _buildCountdownCard(),
               ],
             ),
@@ -516,7 +516,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
-      onTap: () => setState(() => _selectedIndex = index),
+      onTap: () {
+        setState(() {
+          _selectedIndex = index;
+        });
+      },
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [

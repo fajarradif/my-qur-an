@@ -1,45 +1,68 @@
 import 'package:flutter/material.dart';
 import '../theme/colors.dart';
+import '../widgets/last_read_card.dart';
+import '../services/bookmark_service.dart';
+import 'detail_surat_screen.dart';
 
-class BookmarkScreen extends StatelessWidget {
+class BookmarkScreen extends StatefulWidget {
   const BookmarkScreen({super.key});
 
+  @override
+  State<BookmarkScreen> createState() => _BookmarkScreenState();
+}
+
+class _BookmarkScreenState extends State<BookmarkScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
+      appBar: AppBar(
+        backgroundColor: AppColors.deepGreen,
+        title: const Text('BOOKMARKS', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        centerTitle: true,
+        elevation: 0,
+      ),
       body: SafeArea(
-        child: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                width: 150,
-                height: 150,
-                decoration: BoxDecoration(
-                  color: AppColors.iconBgGreen.withValues(alpha: 0.3),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.bookmark_border, size: 80, color: AppColors.primaryYellow),
-              ),
-              const SizedBox(height: 24),
               const Text(
-                'Belum Ada Bookmark',
-                style: TextStyle(color: AppColors.primaryGreen, fontSize: 22, fontWeight: FontWeight.bold),
+                'Terakhir Dibaca',
+                style: TextStyle(color: AppColors.primaryGreen, fontSize: 18, fontWeight: FontWeight.bold),
               ),
-              const SizedBox(height: 12),
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 40),
-                child: Text(
-                  'Ayat yang kamu tandai akan muncul di sini agar mudah dibaca kembali.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: AppColors.mutedGreen, fontSize: 14),
-                ),
-              ),
+              const SizedBox(height: 16),
+              LastReadCard(onRefresh: () => setState(() {})),
+              const SizedBox(height: 32),
+              _buildInspirationPlaceholder(),
             ],
           ),
         ),
       ),
     );
   }
+
+  Widget _buildInspirationPlaceholder() {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: AppColors.primaryGreen.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: AppColors.primaryGreen.withValues(alpha: 0.1)),
+      ),
+      child: Column(
+        children: [
+          const Icon(Icons.auto_awesome, color: AppColors.primaryYellow, size: 32),
+          const SizedBox(height: 16),
+          const Text(
+            'Lanjutkan tilawahmu hari ini untuk mendapatkan pahala dan ketenangan hati.',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: AppColors.primaryGreen, fontSize: 14, fontStyle: FontStyle.italic),
+          ),
+        ],
+      ),
+    );
+  }
 }
+

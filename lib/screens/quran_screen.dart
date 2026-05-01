@@ -38,7 +38,7 @@ class _QuranScreenState extends State<QuranScreen> {
         child: Column(
           children: [
             const SizedBox(height: 20),
-            const LastReadCard(),
+            LastReadCard(onRefresh: () => setState(() {})),
             const SizedBox(height: 24),
             _buildTabBar(context),
             const SizedBox(height: 16),
@@ -121,14 +121,19 @@ class _QuranScreenState extends State<QuranScreen> {
                   const Icon(Icons.play_circle_fill, color: AppColors.primaryYellow),
                 ],
               ),
-              onTap: () {
+              onTap: () async {
                 // Berpindah ke Halaman Detail dengan membawa Data Nomor Surat
-                Navigator.push(
+                await Navigator.push(
                   context,
                   MaterialPageRoute(
                     builder: (context) => DetailSuratScreen(nomorSurat: surah.nomor),
                   ),
                 );
+                if (mounted) {
+                  setState(() {
+                    // Refresh LastReadCard
+                  });
+                }
               },
             );
           },
