@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/colors.dart';
 import '../widgets/last_read_card.dart';
-import '../services/bookmark_service.dart';
-import 'detail_surat_screen.dart';
 
 class BookmarkScreen extends StatefulWidget {
   const BookmarkScreen({super.key});

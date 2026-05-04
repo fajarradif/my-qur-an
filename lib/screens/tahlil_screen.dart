@@ -4,7 +4,10 @@ import '../models/tahlil.dart';
 import '../models/ayat.dart';
 import '../models/surah_detail.dart';
 import '../services/api_service.dart';
+import '../services/bookmark_service.dart';
+import 'detail_surat_screen.dart';
 import '../widgets/quran_number_marker.dart';
+import 'package:audioplayers/audioplayers.dart';
 
 class TahlilScreen extends StatefulWidget {
   const TahlilScreen({super.key});
@@ -17,12 +20,54 @@ class _TahlilScreenState extends State<TahlilScreen> {
   late Future<List<Tahlil>> futureTahlil;
   late Future<SurahDetail> futureYasin;
   bool _isMushafMode = false;
+  int? _lastReadAyat;
+  int? _playingAyat;
+  final AudioPlayer _audioPlayer = AudioPlayer();
 
   @override
   void initState() {
     super.initState();
     futureTahlil = ApiService.getTahlilList();
     futureYasin = ApiService.getDetailSurat(36); // Surah Yasin
+    _loadLastRead();
+    
+    _audioPlayer.onPlayerComplete.listen((event) {
+      if (mounted) setState(() => _playingAyat = null);
+    });
+  }
+
+  @override
+  void dispose() {
+    _audioPlayer.dispose();
+    super.dispose();
+  }
+
+  Future<void> _playAudio(int ayatNo, String audioUrl) async {
+    try {
+      if (_playingAyat == ayatNo) {
+        await _audioPlayer.stop();
+        setState(() => _playingAyat = null);
+      } else {
+        await _audioPlayer.stop();
+        await _audioPlayer.play(UrlSource(audioUrl));
+        setState(() => _playingAyat = ayatNo);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal memutar audio: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
+  Future<void> _loadLastRead() async {
+    final lastRead = await BookmarkService.getLastRead();
+    if (mounted && lastRead['surah'] == 36) {
+      setState(() {
+        _lastReadAyat = lastRead['ayat'];
+      });
+    }
   }
 
   @override
@@ -178,6 +223,7 @@ class _TahlilScreenState extends State<TahlilScreen> {
   Widget _buildMushafYasinView(SurahDetail yasin) {
     List<InlineSpan> spans = [];
     for (var a in yasin.ayat) {
+      final bool isCurrentBookmark = _lastReadAyat == a.nomorAyat;
       spans.add(
         TextSpan(
           text: '${a.teksArab} ',
@@ -192,11 +238,36 @@ class _TahlilScreenState extends State<TahlilScreen> {
       spans.add(
         WidgetSpan(
           alignment: PlaceholderAlignment.middle,
-          child: QuranNumberMarker(
-            number: a.nomorAyat.toString(),
-            size: 28,
-            isInline: true,
-            color: const Color(0xFFC5A358),
+          child: GestureDetector(
+            onTap: () async {
+              if (_lastReadAyat == a.nomorAyat) {
+                await BookmarkService.clearLastRead();
+                if (mounted) {
+                  setState(() => _lastReadAyat = null);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Penanda dihapus'), duration: Duration(seconds: 1)),
+                  );
+                }
+              } else {
+                await BookmarkService.saveLastRead(
+                  surah: 36,
+                  surahName: 'Yasin',
+                  ayat: a.nomorAyat,
+                );
+                if (mounted) {
+                  setState(() => _lastReadAyat = a.nomorAyat);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Penanda dipindahkan ke ayat ${a.nomorAyat}'), duration: const Duration(seconds: 2)),
+                  );
+                }
+              }
+            },
+            child: QuranNumberMarker(
+              number: a.nomorAyat.toString(),
+              size: 28,
+              isInline: true,
+              color: isCurrentBookmark ? AppColors.primaryYellow : const Color(0xFFC5A358),
+            ),
           ),
         ),
       );
@@ -352,8 +423,43 @@ class _TahlilScreenState extends State<TahlilScreen> {
               ),
               const Spacer(),
               IconButton(
-                icon: const Icon(Icons.play_circle_outline, color: AppColors.primaryGreen),
-                onPressed: () {},
+                icon: Icon(
+                  _lastReadAyat == int.tryParse(number) ? Icons.bookmark : Icons.bookmark_border,
+                  color: AppColors.primaryGreen,
+                ),
+                onPressed: () async {
+                  int ayatNo = int.tryParse(number) ?? 0;
+                  if (_lastReadAyat == ayatNo) {
+                    await BookmarkService.clearLastRead();
+                    if (mounted) setState(() => _lastReadAyat = null);
+                  } else {
+                    await BookmarkService.saveLastRead(
+                      surah: 36,
+                      surahName: 'Yasin',
+                      ayat: ayatNo,
+                    );
+                    if (mounted) setState(() => _lastReadAyat = ayatNo);
+                  }
+                },
+              ),
+              IconButton(
+                icon: Icon(
+                  _playingAyat == int.tryParse(number) ? Icons.stop_circle_outlined : Icons.play_circle_outline, 
+                  color: AppColors.primaryGreen
+                ),
+                onPressed: () async {
+                  int ayatNo = int.tryParse(number) ?? 0;
+                  // Untuk Yasin, kita ambil data dari snapshot (ini agak tricky karena _buildAyatCard di luar builder)
+                  // Tapi kita bisa asumsikan audio URL bisa didapat dari API atau cache
+                  // Di sini saya akan mencari audio dari futureYasin
+                  final yasin = await futureYasin;
+                  final ayat = yasin.ayat.firstWhere((a) => a.nomorAyat == ayatNo);
+                  String? audioUrl = ayat.audio['01'] ?? ayat.audio.values.firstOrNull;
+                  
+                  if (audioUrl != null) {
+                    _playAudio(ayatNo, audioUrl);
+                  }
+                },
               ),
             ],
           ),

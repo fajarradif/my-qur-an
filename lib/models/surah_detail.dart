@@ -8,6 +8,7 @@ class SurahDetail {
   final String tempatTurun;
   final String arti;
   final List<Ayat> ayat;
+  final Map<String, dynamic> audioFull;
 
   SurahDetail({
     required this.nomor,
@@ -17,6 +18,7 @@ class SurahDetail {
     required this.tempatTurun,
     required this.arti,
     required this.ayat,
+    required this.audioFull,
   });
 
   factory SurahDetail.fromJson(Map<String, dynamic> json) {
@@ -31,6 +33,8 @@ class SurahDetail {
       tempatTurun: json['tempatTurun'] ?? '',
       arti: json['arti'] ?? '',
       ayat: ayatParsed,
+      audioFull: json['audioFull'] ?? {},
     );
   }
 }
+

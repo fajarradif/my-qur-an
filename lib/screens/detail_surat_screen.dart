@@ -5,6 +5,7 @@ import '../models/surah_detail.dart';
 import '../services/api_service.dart';
 import '../services/bookmark_service.dart';
 import '../widgets/quran_number_marker.dart';
+import 'package:audioplayers/audioplayers.dart';
 
 class DetailSuratScreen extends StatefulWidget {
   final int nomorSurat;
@@ -20,6 +21,8 @@ class _DetailSuratScreenState extends State<DetailSuratScreen> {
   late Future<SurahDetail> futureSurahDetail;
   bool _isMushafMode = false;
   int? _lastReadAyat;
+  int? _playingAyat;
+  final AudioPlayer _audioPlayer = AudioPlayer();
   final ScrollController _scrollController = ScrollController();
   final Map<int, GlobalKey> _ayatKeys = {};
 
@@ -29,7 +32,19 @@ class _DetailSuratScreenState extends State<DetailSuratScreen> {
     futureSurahDetail = ApiService.getDetailSurat(widget.nomorSurat);
     _loadLastRead();
     
-    // Jika ada initialAyat, kita akan scroll setelah data dimuat di FutureBuilder
+    // Listen to audio player state to reset _playingAyat ketika selesai
+    _audioPlayer.onPlayerComplete.listen((event) {
+      if (mounted) {
+        setState(() => _playingAyat = null);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _audioPlayer.dispose();
+    _scrollController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadLastRead() async {
@@ -41,34 +56,60 @@ class _DetailSuratScreenState extends State<DetailSuratScreen> {
     }
   }
 
-  void _scrollToAyat(int ayatNumber, {int retryCount = 0}) {
-    // Beri waktu sebentar agar ListView merender item-itemnya
-    Future.delayed(const Duration(milliseconds: 300), () {
-      if (!mounted) return;
-      
-      final key = _ayatKeys[ayatNumber];
-      if (key != null && key.currentContext != null) {
-        Scrollable.ensureVisible(
-          key.currentContext!,
-          duration: const Duration(milliseconds: 600),
-          curve: Curves.easeInOut,
-        );
-      } else if (retryCount < 5) {
-        // Jika belum ketemu (mungkin karena lazy loading belum build itemnya), 
-        // kita coba scroll sedikit ke bawah untuk memicu build item berikutnya, lalu coba lagi.
-        _scrollController.animateTo(
-          _scrollController.offset + 500, 
-          duration: const Duration(milliseconds: 100), 
-          curve: Curves.linear
-        ).then((_) => _scrollToAyat(ayatNumber, retryCount: retryCount + 1));
+  Future<void> _playAudio(int ayatNo, String audioUrl) async {
+    try {
+      if (_playingAyat == ayatNo) {
+        await _audioPlayer.stop();
+        setState(() => _playingAyat = null);
+      } else {
+        await _audioPlayer.stop();
+        await _audioPlayer.play(UrlSource(audioUrl));
+        setState(() => _playingAyat = ayatNo);
       }
-    });
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal memutar audio: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
   }
 
-  @override
-  void dispose() {
-    _scrollController.dispose();
-    super.dispose();
+  void _scrollToAyat(int ayatNumber, {int retryCount = 0}) {
+    if (!mounted) return;
+
+    final key = _ayatKeys[ayatNumber];
+
+    // Jika widget sudah ter-render (karena masuk dalam cacheExtent), scroll dengan sangat smooth
+    if (key != null && key.currentContext != null) {
+      Scrollable.ensureVisible(
+        key.currentContext!,
+        alignment: 0.0,
+        duration: const Duration(milliseconds: 1000),
+        curve: Curves.fastOutSlowIn,
+      );
+    } else if (retryCount < 5) {
+      // Jika belum ada, lakukan animasi cepat ke area estimasi
+      if (!_scrollController.hasClients || _scrollController.position.maxScrollExtent == 0) {
+        Future.delayed(const Duration(milliseconds: 100), () => _scrollToAyat(ayatNumber, retryCount: retryCount + 1));
+        return;
+      }
+
+      // Rata-rata tinggi ayat di surat panjang sekitar 550-600px (Arab + Latin + Terjemah)
+      double estimation = (ayatNumber - 1) * 580.0;
+      double maxScroll = _scrollController.position.maxScrollExtent;
+      double target = estimation.clamp(0.0, maxScroll);
+      
+      // Animasi cepat (1.2 detik) ke area target
+      _scrollController.animateTo(
+        target,
+        duration: const Duration(milliseconds: 1200),
+        curve: Curves.easeInOutCubic,
+      ).then((_) {
+        // Setelah sampai, panggil lagi untuk mendapatkan posisi presisi via ensureVisible
+        _scrollToAyat(ayatNumber, retryCount: retryCount + 1);
+      });
+    }
   }
 
   @override
@@ -83,6 +124,12 @@ class _DetailSuratScreenState extends State<DetailSuratScreen> {
         backgroundColor: AppColors.background,
         iconTheme: const IconThemeData(color: AppColors.primaryGreen),
         actions: [
+          if (_lastReadAyat != null)
+            IconButton(
+              icon: const Icon(Icons.bookmark, color: AppColors.primaryYellow),
+              tooltip: 'Ke Ayat Terakhir Dibaca',
+              onPressed: () => _scrollToAyat(_lastReadAyat!),
+            ),
           IconButton(
             icon: Icon(
               _isMushafMode ? Icons.list_alt : Icons.menu_book,
@@ -124,7 +171,9 @@ class _DetailSuratScreenState extends State<DetailSuratScreen> {
             
             // Jika ada initialAyat, trigger scroll
             if (widget.initialAyat != null && widget.initialAyat! > 0) {
-              _scrollToAyat(widget.initialAyat!);
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                _scrollToAyat(widget.initialAyat!);
+              });
             }
           }
 
@@ -146,7 +195,8 @@ class _DetailSuratScreenState extends State<DetailSuratScreen> {
   Widget _buildTafsirView(SurahDetail detail) {
     return ListView.separated(
       controller: _scrollController,
-      cacheExtent: 10000, // Pre-build items dalam rentang 10000 pixel
+      physics: const BouncingScrollPhysics(),
+      cacheExtent: 30000, // Tingkatkan cache secara signifikan (30.000 pixel) agar ayat ratusan sudah ter-render lebih awal
       padding: const EdgeInsets.fromLTRB(20, 0, 20, 40),
       itemCount: detail.ayat.length,
       separatorBuilder: (context, index) => const Divider(color: Colors.transparent, height: 16),
@@ -170,6 +220,13 @@ class _DetailSuratScreenState extends State<DetailSuratScreen> {
         List<InlineSpan> spans = [];
 
         for (var a in detail.ayat) {
+          final bool isCurrentBookmark = _lastReadAyat == a.nomorAyat;
+          
+          // Tambahkan anchor key di awal ayat agar scrolling tepat ke awal teks
+          spans.add(
+            WidgetSpan(child: SizedBox.shrink(key: _ayatKeys[a.nomorAyat])),
+          );
+
           // Tambahkan teks ayat
           spans.add(
             TextSpan(
@@ -179,20 +236,45 @@ class _DetailSuratScreenState extends State<DetailSuratScreen> {
                 fontFamily: 'QuranFont',
                 color: AppColors.textDark,
                 height: 2.2,
-                wordSpacing: 2, // Tambahkan sedikit spasi antar kata agar justified lebih rapi
+                wordSpacing: 2, 
               ),
             ),
           );
           
-          // Tambahkan penanda ayat (inline)
+          // Tambahkan penanda ayat (inline) yang bisa diklik
           spans.add(
             WidgetSpan(
               alignment: PlaceholderAlignment.middle,
-              child: QuranNumberMarker(
-                number: a.nomorAyat.toString(),
-                size: fontSize * 1.1, // Proporsional dengan font
-                isInline: true,
-                color: const Color(0xFFC5A358),
+              child: GestureDetector(
+                onTap: () async {
+                  if (_lastReadAyat == a.nomorAyat) {
+                    await BookmarkService.clearLastRead();
+                    if (mounted) {
+                      setState(() => _lastReadAyat = null);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Penanda dihapus'), duration: Duration(seconds: 1)),
+                      );
+                    }
+                  } else {
+                    await BookmarkService.saveLastRead(
+                      surah: widget.nomorSurat,
+                      surahName: detail.namaLatin,
+                      ayat: a.nomorAyat,
+                    );
+                    if (mounted) {
+                      setState(() => _lastReadAyat = a.nomorAyat);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Penanda dipindahkan ke ayat ${a.nomorAyat}'), duration: const Duration(seconds: 2)),
+                      );
+                    }
+                  }
+                },
+                child: QuranNumberMarker(
+                  number: a.nomorAyat.toString(),
+                  size: fontSize * 1.2, 
+                  isInline: true,
+                  color: isCurrentBookmark ? AppColors.primaryYellow : const Color(0xFFC5A358),
+                ),
               ),
             ),
           );
@@ -204,6 +286,8 @@ class _DetailSuratScreenState extends State<DetailSuratScreen> {
         return _buildMushafFrame(
           surahName: detail.nama,
           child: ListView( // Gunakan ListView agar area scroll lebih stabil
+            controller: _scrollController,
+            physics: const BouncingScrollPhysics(),
             padding: EdgeInsets.zero,
             children: [
               // Bismillah dipisah agar tidak merusak rata kanan-kiri body utama
@@ -387,9 +471,21 @@ class _DetailSuratScreenState extends State<DetailSuratScreen> {
                       },
                     ),
                     IconButton(
-                      icon: const Icon(Icons.play_arrow, color: AppColors.primaryGreen, size: 24),
+                      icon: Icon(
+                        _playingAyat == ayat.nomorAyat ? Icons.stop_circle : Icons.play_arrow, 
+                        color: AppColors.primaryGreen, 
+                        size: 24
+                      ),
                       onPressed: () {
-                        // Implement audio
+                        // Ambil audio pertama
+                        String? audioUrl = ayat.audio['01'] ?? ayat.audio.values.firstOrNull;
+                        if (audioUrl != null) {
+                          _playAudio(ayat.nomorAyat, audioUrl);
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Audio tidak tersedia untuk ayat ini')),
+                          );
+                        }
                       },
                     ),
                     IconButton(
