@@ -15,6 +15,7 @@ import 'bookmark_screen.dart';
 import 'profile_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../widgets/location_picker_sheet.dart';
+import '../widgets/all_features_sheet.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -26,6 +27,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
   int _currentPage = 0;
+  bool _showAllFeaturesGrid = false;
   late Future<Jadwal> futureJadwal;
   late Timer _timer;
   late PageController _pageController;
@@ -225,15 +227,24 @@ class _HomeScreenState extends State<HomeScreen> {
           const SizedBox(height: 24),
           _buildPrayerTimeCard(),
           const SizedBox(height: 30),
-          _buildFeaturesGrid(),
-          const SizedBox(height: 30),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Inspirasi Harian', style: TextStyle(color: AppColors.primaryGreen, fontSize: 16, fontWeight: FontWeight.bold)),
-              Text('Lihat Semua', style: TextStyle(color: AppColors.secondaryGreen, fontSize: 12)),
+              const Text('Menu Utama', style: TextStyle(color: AppColors.primaryGreen, fontSize: 16, fontWeight: FontWeight.bold)),
+              GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _showAllFeaturesGrid = !_showAllFeaturesGrid;
+                  });
+                },
+                child: Text(_showAllFeaturesGrid ? 'Tutup' : 'Lihat Semua', style: const TextStyle(color: AppColors.secondaryGreen, fontSize: 12, fontWeight: FontWeight.w600)),
+              ),
             ],
           ),
+          const SizedBox(height: 16),
+          _buildFeaturesGrid(),
+          const SizedBox(height: 30),
+          const Text('Inspirasi Harian', style: TextStyle(color: AppColors.primaryGreen, fontSize: 16, fontWeight: FontWeight.bold)),
           const SizedBox(height: 16),
           _buildInspirationCard(),
         ],
@@ -516,40 +527,92 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildFeaturesGrid() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        FeatureMenuButton(
-          icon: Icons.menu_book,
-          label: 'Al-Quran',
-          onTap: () {
-             setState(() => _selectedIndex = 1);
-          },
-        ),
-        FeatureMenuButton(
-          icon: Icons.auto_stories,
-          label: 'Tahlil & Yasin',
-          onTap: () {
-            Navigator.push(context, MaterialPageRoute(builder: (context) => const TahlilScreen()));
-          },
-        ),
-        FeatureMenuButton(
-          icon: Icons.brightness_high,
-          label: 'Tasbih',
-          onTap: () {
-            Navigator.push(context, MaterialPageRoute(builder: (context) => const TasbihScreen()));
-          },
-        ),
-        FeatureMenuButton(
-          icon: Icons.explore,
-          label: 'Kiblat',
-          onTap: () {
-            Navigator.push(context, MaterialPageRoute(builder: (context) => const KiblatScreen()));
-          },
-        ),
-      ],
+    return AnimatedCrossFade(
+      duration: const Duration(milliseconds: 300),
+      crossFadeState: _showAllFeaturesGrid ? CrossFadeState.showSecond : CrossFadeState.showFirst,
+      firstChild: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: _buildFirstRowFeatures(),
+      ),
+      secondChild: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: _buildFirstRowFeatures(),
+          ),
+          const SizedBox(height: 20),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: _buildSecondRowFeatures(),
+          ),
+        ],
+      ),
     );
   }
+
+  List<Widget> _buildFirstRowFeatures() {
+    return [
+      FeatureMenuButton(
+        icon: Icons.menu_book,
+        label: 'Al-Quran',
+        onTap: () {
+           setState(() => _selectedIndex = 1);
+        },
+      ),
+      FeatureMenuButton(
+        icon: Icons.auto_stories,
+        label: 'Tahlil & Yasin',
+        onTap: () {
+          Navigator.push(context, MaterialPageRoute(builder: (context) => const TahlilScreen()));
+        },
+      ),
+      FeatureMenuButton(
+        icon: Icons.brightness_high,
+        label: 'Tasbih',
+        onTap: () {
+          Navigator.push(context, MaterialPageRoute(builder: (context) => const TasbihScreen()));
+        },
+      ),
+      FeatureMenuButton(
+        icon: Icons.explore,
+        label: 'Kiblat',
+        onTap: () {
+          Navigator.push(context, MaterialPageRoute(builder: (context) => const KiblatScreen()));
+        },
+      ),
+    ];
+  }
+
+  List<Widget> _buildSecondRowFeatures() {
+    return [
+      FeatureMenuButton(
+        icon: Icons.headphones,
+        label: 'Murottal',
+        onTap: () {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Halaman Murottal akan segera dibuat!')),
+          );
+        },
+      ),
+      FeatureMenuButton(
+        icon: Icons.pan_tool,
+        label: 'Doa-doa',
+        onTap: () {},
+      ),
+      FeatureMenuButton(
+        icon: Icons.calendar_month,
+        label: 'Jadwal',
+        onTap: () {},
+      ),
+      // Tombol bayangan agar tata letaknya seimbang (4 kolom)
+      const Opacity(
+        opacity: 0,
+        child: FeatureMenuButton(icon: Icons.error, label: 'Hidden', onTap: _emptyFunction),
+      ),
+    ];
+  }
+
+  static void _emptyFunction() {}
 
   final List<Map<String, String>> _inspirations = const [
     {
