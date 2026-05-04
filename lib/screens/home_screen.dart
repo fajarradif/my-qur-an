@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:geolocator/geolocator.dart';
 import '../theme/colors.dart';
 import '../widgets/feature_menu_button.dart';
 import '../widgets/last_read_card.dart';
@@ -12,6 +13,8 @@ import 'tasbih_screen.dart';
 import 'kiblat_screen.dart';
 import 'bookmark_screen.dart';
 import 'profile_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../widgets/location_picker_sheet.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -27,17 +30,122 @@ class _HomeScreenState extends State<HomeScreen> {
   late Timer _timer;
   late PageController _pageController;
   String _currentTime = "";
+  String _currentLocationName = "Mencari lokasi...";
+  
+  // Default ke Pamekasan jika gagal
+  final String _defaultCityId = 'c52f1bd66cc19d05628bd8bf27af3ad6';
+  final String _defaultCityName = 'Pamekasan, Madura';
 
   @override
   void initState() {
     super.initState();
     _pageController = PageController();
-    // Kota Pamekasan ID (API v3): c52f1bd66cc19d05628bd8bf27af3ad6
-    futureJadwal = ApiService.getJadwalSholat('c52f1bd66cc19d05628bd8bf27af3ad6');
+    
+    // Set fallback awal sebelum loading selesai
+    futureJadwal = ApiService.getJadwalSholat(_defaultCityId);
+    _initializeLocationAndJadwal();
     
     // Update jam setiap detik
     _currentTime = _formatDateTime(DateTime.now());
     _timer = Timer.periodic(const Duration(seconds: 1), (Timer t) => _updateTime());
+  }
+
+  Future<void> _initializeLocationAndJadwal({bool forceGps = false}) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      bool isManual = prefs.getBool('is_manual_location') ?? false;
+
+      // Jika forceGps, kita paksa pakai GPS dan hapus status manual
+      if (forceGps) {
+        isManual = false;
+        await prefs.setBool('is_manual_location', false);
+      }
+
+      if (isManual) {
+        // Mode Manual: Ambil dari cache
+        String? cachedCityId = prefs.getString('manual_city_id');
+        String? cachedCityName = prefs.getString('manual_city_name');
+        
+        if (cachedCityId != null && cachedCityName != null && mounted) {
+          setState(() {
+            _currentLocationName = cachedCityName;
+            futureJadwal = ApiService.getJadwalSholat(cachedCityId);
+          });
+          return;
+        }
+      }
+
+      // Mode GPS (Otomatis)
+      if (mounted) setState(() => _currentLocationName = "Mencari lokasi (GPS)...");
+      
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) throw Exception('GPS mati');
+
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) throw Exception('Izin GPS ditolak');
+      }
+      if (permission == LocationPermission.deniedForever) throw Exception('Izin GPS ditolak permanen');
+
+      Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.low,
+      ).timeout(const Duration(seconds: 5), onTimeout: () {
+        throw Exception('Mencari lokasi terlalu lama (timeout)');
+      });
+
+      String? cityName = await ApiService.getCityNameFromCoords(position.latitude, position.longitude);
+      
+      if (cityName != null) {
+        String? cityId = await ApiService.searchCityId(cityName);
+        
+        if (cityId != null && mounted) {
+          setState(() {
+            _currentLocationName = cityName;
+            futureJadwal = ApiService.getJadwalSholat(cityId);
+          });
+          return;
+        }
+      }
+      throw Exception('Kota tidak ditemukan di API');
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _currentLocationName = _defaultCityName;
+        });
+      }
+    }
+  }
+
+  Future<void> _setManualLocation(String cityId, String cityName) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('is_manual_location', true);
+    await prefs.setString('manual_city_id', cityId);
+    await prefs.setString('manual_city_name', cityName);
+
+    if (mounted) {
+      setState(() {
+        _currentLocationName = cityName;
+        futureJadwal = ApiService.getJadwalSholat(cityId);
+      });
+    }
+  }
+
+  void _showLocationPicker() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => const LocationPickerSheet(),
+    ).then((result) {
+      if (result != null && result is Map) {
+        if (result['action'] == 'gps') {
+          _initializeLocationAndJadwal(forceGps: true);
+        } else if (result['action'] == 'manual') {
+          _setManualLocation(result['id'].toString(), result['name'].toString());
+        }
+      }
+    });
   }
 
   @override
@@ -158,12 +266,18 @@ class _HomeScreenState extends State<HomeScreen> {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                const Text('Pamekasan, Madura', style: TextStyle(color: AppColors.mutedGreen, fontSize: 12)),
-                const SizedBox(width: 8),
-                Text(_currentTime, style: const TextStyle(color: AppColors.primaryYellow, fontSize: 12, fontWeight: FontWeight.bold)),
-              ],
+            GestureDetector(
+              onTap: _showLocationPicker,
+              child: Row(
+                children: [
+                  const Icon(Icons.location_on, size: 14, color: AppColors.primaryYellow),
+                  const SizedBox(width: 4),
+                  Text(_currentLocationName, style: const TextStyle(color: AppColors.mutedGreen, fontSize: 12)),
+                  const Icon(Icons.arrow_drop_down, size: 16, color: AppColors.mutedGreen),
+                  const SizedBox(width: 8),
+                  Text(_currentTime, style: const TextStyle(color: AppColors.primaryYellow, fontSize: 12, fontWeight: FontWeight.bold)),
+                ],
+              ),
             ),
             const SizedBox(height: 4),
             const Text('Assalamualaikum', style: TextStyle(color: AppColors.primaryGreen, fontSize: 22, fontWeight: FontWeight.bold)),

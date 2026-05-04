@@ -62,6 +62,57 @@ class ApiService {
     }
   }
 
+  // Cari nama kota dari koordinat GPS menggunakan BigDataCloud API
+  static Future<String?> getCityNameFromCoords(double lat, double lon) async {
+    try {
+      final response = await http.get(Uri.parse(
+          'https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=$lat&longitude=$lon&localityLanguage=id'));
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        String city = data['city'] ?? data['locality'] ?? '';
+        
+        // Bersihkan nama kota (misal: "Kota Jakarta Selatan" -> "Jakarta Selatan")
+        city = city.replaceAll(RegExp(r'(Kota|Kabupaten)\s+', caseSensitive: false), '').trim();
+        return city.isNotEmpty ? city : null;
+      }
+      return null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // Cari ID Kota di API MyQuran berdasarkan nama kota
+  static Future<String?> searchCityId(String cityName) async {
+    try {
+      final response = await http.get(Uri.parse('$muslimBaseUrl/sholat/kota/cari/$cityName'));
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data['status'] == true && data['data'] != null && data['data'].isNotEmpty) {
+          return data['data'][0]['id'];
+        }
+      }
+      return null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // Cari daftar kota untuk fitur manual
+  static Future<List<Map<String, dynamic>>> searchCities(String keyword) async {
+    try {
+      final response = await http.get(Uri.parse('$muslimBaseUrl/sholat/kota/cari/$keyword'));
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data['status'] == true && data['data'] != null) {
+          return List<Map<String, dynamic>>.from(data['data']);
+        }
+      }
+      return [];
+    } catch (e) {
+      return [];
+    }
+  }
+
   // 4. Mengambil Data Tahlil Lengkap (Local Assets)
   static Future<List<Tahlil>> getTahlilList() async {
     try {
