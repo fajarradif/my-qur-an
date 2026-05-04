@@ -437,7 +437,168 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  final List<Map<String, String>> _inspirations = const [
+    {
+      'arabic': 'فَاذْكُرُونِي أَذْكُرْكُمْ وَاشْكُرُوا لِي وَلَا تَكْفُرُونِ',
+      'translation': '"Maka ingatlah kepada-Ku, Aku pun akan ingat kepadamu. Bersyukurlah kepada-Ku dan janganlah kamu ingkar kepada-Ku."',
+      'source': 'QS. Al-Baqarah: 152',
+    },
+    {
+      'arabic': 'إِنَّ مَعَ الْعُسْرِ يُسْرًا',
+      'translation': '"Sesungguhnya bersama kesulitan ada kemudahan."',
+      'source': 'QS. Al-Insyirah: 6',
+    },
+    {
+      'arabic': 'وَلَسَوْفَ يُعْطِيكَ رَبُّكَ فَتَرْضَىٰ',
+      'translation': '"Dan sungguh, kelak Tuhanmu pasti memberikan karunia-Nya kepadamu, sehingga engkau rida."',
+      'source': 'QS. Ad-Duha: 5',
+    },
+    {
+      'arabic': 'يَا أَيُّهَا الَّذِينَ آمَنُوا اسْتَعِينُوا بِالصَّبْرِ وَالصَّلَاةِ ۚ إِنَّ اللَّهَ مَعَ الصَّابِرِينَ',
+      'translation': '"Wahai orang-orang yang beriman! Mohonlah pertolongan (kepada Allah) dengan sabar dan salat. Sungguh, Allah beserta orang-orang yang sabar."',
+      'source': 'QS. Al-Baqarah: 153',
+    },
+    {
+      'arabic': 'لَا يُكَلِّفُ اللَّهُ نَفْسًا إِلَّا وُسْعَهَا',
+      'translation': '"Allah tidak membebani seseorang melainkan sesuai dengan kesanggupannya."',
+      'source': 'QS. Al-Baqarah: 286',
+    },
+    {
+      'arabic': 'وَقَالَ رَبُّكُمُ ادْعُونِي أَسْتَجِبْ لَكُمْ',
+      'translation': '"Dan Tuhanmu berfirman, \'Berdoalah kepada-Ku, niscaya akan Aku perkenankan bagimu.\'"',
+      'source': 'QS. Ghafir: 60',
+    },
+    {
+      'arabic': 'وَمَنْ يَتَّقِ اللَّهَ يَجْعَلْ لَهُ مَخْرَجًا',
+      'translation': '"Barangsiapa bertakwa kepada Allah niscaya Dia akan membukakan jalan keluar baginya."',
+      'source': 'QS. At-Talaq: 2',
+    },
+    {
+      'arabic': 'وَلَا تَهِنُوا وَلَا تَحْزَنُوا وَأَنتُمُ الْأَعْلَوْنَ إِن كُنتُم مُّؤْمِنِينَ',
+      'translation': '"Janganlah kamu bersikap lemah, dan janganlah (pula) kamu bersedih hati, padahal kamulah orang-orang yang paling tinggi (derajatnya), jika kamu orang-orang yang beriman."',
+      'source': 'QS. Ali \'Imran: 139',
+    },
+    {
+      'arabic': 'أَلَا بِذِكْرِ اللَّهِ تَطْمَئِنُّ الْقُلُوبُ',
+      'translation': '"Ingatlah, hanya dengan mengingati Allah-lah hati menjadi tenteram."',
+      'source': 'QS. Ar-Ra\'d: 28',
+    },
+    {
+      'arabic': 'لَئِن شَكَرْتُمْ لَأَزِيدَنَّكُمْ ۖ وَلَئِن كَفَرْتُمْ إِنَّ عَذَابِي لَشَدِيدٌ',
+      'translation': '"Sesungguhnya jika kamu bersyukur, pasti Kami akan menambah (nikmat) kepadamu, dan jika kamu mengingkari (nikmat-Ku), maka sesungguhnya azab-Ku sangat pedih."',
+      'source': 'QS. Ibrahim: 7',
+    },
+    {
+      'arabic': 'وَعَسَىٰ أَن تَكْرَهُوا شَيْئًا وَهُوَ خَيْرٌ لَّكُمْ ۖ وَعَسَىٰ أَن تُحِبُّوا شَيْئًا وَهُوَ شَرٌّ لَّكُمْ',
+      'translation': '"Boleh jadi kamu membenci sesuatu, padahal ia amat baik bagimu, dan boleh jadi (pula) kamu menyukai sesuatu, padahal ia amat buruk bagimu."',
+      'source': 'QS. Al-Baqarah: 216',
+    },
+    {
+      'arabic': 'لَا تَقْنَطُوا مِن رَّحْمَةِ اللَّهِ ۚ إِنَّ اللَّهَ يَغْفِرُ الذُّنُوبَ جَمِيعًا',
+      'translation': '"Janganlah kamu berputus asa dari rahmat Allah. Sesungguhnya Allah mengampuni dosa-dosa semuanya."',
+      'source': 'QS. Az-Zumar: 53',
+    },
+    {
+      'arabic': 'لَا تَحْزَنْ إِنَّ اللَّهَ مَعَنَا',
+      'translation': '"Janganlah kamu berduka cita, sesungguhnya Allah beserta kita."',
+      'source': 'QS. At-Tawbah: 40',
+    },
+    {
+      'arabic': 'وَاللَّهُ خَيْرُ الْمَاكِرِينَ',
+      'translation': '"Dan Allah adalah sebaik-baik pembalas tipu daya."',
+      'source': 'QS. Al-Anfal: 30',
+    },
+    {
+      'arabic': 'إِنَّمَا الْمُؤْمِنُونَ إِخْوَةٌ',
+      'translation': '"Orang-orang beriman itu sesungguhnya bersaudara."',
+      'source': 'QS. Al-Hujurat: 10',
+    },
+    {
+      'arabic': 'فَبِأَيِّ آلَاءِ رَبِّكُمَا تُكَذِّبَانِ',
+      'translation': '"Maka nikmat Tuhan kamu yang manakah yang kamu dustakan?"',
+      'source': 'QS. Ar-Rahman: 13',
+    },
+    {
+      'arabic': 'وَإِذَا سَأَلَكَ عِبَادِي عَنِّي فَإِنِّي قَرِيبٌ ۖ أُجِيبُ دَعْوَةَ الدَّاعِ إِذَا دَعَانِ',
+      'translation': '"Dan apabila hamba-hamba-Ku bertanya kepadamu tentang Aku, maka (jawablah), bahwasanya Aku adalah dekat. Aku mengabulkan permohonan orang yang berdoa apabila ia memohon kepada-Ku."',
+      'source': 'QS. Al-Baqarah: 186',
+    },
+    {
+      'arabic': 'يُرِيدُ اللَّهُ أَن يُخَفِّفَ عَنكُمْ ۚ وَخُلِقَ الْإِنسَانُ ضَعِيفًا',
+      'translation': '"Allah hendak memberikan keringanan kepadamu, dan manusia dijadikan bersifat lemah."',
+      'source': 'QS. An-Nisa: 28',
+    },
+    {
+      'arabic': 'إِنَّمَا أَشْكُو بَثِّي وَحُزْنِي إِلَى اللَّهِ',
+      'translation': '"Hanya kepada Allah aku mengadukan kesusahan dan kesedihanku."',
+      'source': 'QS. Yusuf: 86',
+    },
+    {
+      'arabic': 'لَا تَخَافَا ۖ إِنَّنِي مَعَكُمَا أَسْمَعُ وَأَرَىٰ',
+      'translation': '"Janganlah kamu berdua khawatir, sesungguhnya Aku beserta kamu berdua, Aku mendengar dan melihat."',
+      'source': 'QS. Ta-Ha: 46',
+    },
+    {
+      'arabic': 'رَبِّ إِنِّي لِمَا أَنزَلْتَ إِلَيَّ مِنْ خَيْرٍ فَقِيرٌ',
+      'translation': '"Ya Tuhanku sesungguhnya aku sangat memerlukan sesuatu kebaikan yang Engkau turunkan kepadaku."',
+      'source': 'QS. Al-Qasas: 24',
+    },
+    {
+      'arabic': 'وَأَحْسِنُوا ۛ إِنَّ اللَّهَ يُحِبُّ الْمُحْسِنِينَ',
+      'translation': '"Dan berbuat baiklah, karena sesungguhnya Allah menyukai orang-orang yang berbuat baik."',
+      'source': 'QS. Al-Baqarah: 195',
+    },
+    {
+      'arabic': 'وَهُوَ مَعَكُمْ أَيْنَ مَا كُنتُمْ',
+      'translation': '"Dan Dia bersama kamu di mana saja kamu berada."',
+      'source': 'QS. Al-Hadid: 4',
+    },
+    {
+      'arabic': 'حَسْبُنَا اللَّهُ وَنِعْمَ الْوَكِيلُ',
+      'translation': '"Cukuplah Allah menjadi Penolong kami dan Allah adalah sebaik-baik Pelindung."',
+      'source': 'QS. Ali \'Imran: 173',
+    },
+    {
+      'arabic': 'رَبَّنَا آتِنَا فِي الدُّنْيَا حَسَنَةً وَفِي الْآخِرَةِ حَسَنَةً وَقِنَا عَذَابَ النَّارِ',
+      'translation': '"Ya Tuhan kami, berilah kami kebaikan di dunia dan kebaikan di akhirat dan peliharalah kami dari siksa neraka."',
+      'source': 'QS. Al-Baqarah: 201',
+    },
+    {
+      'arabic': 'إِنَّ اللَّهَ يُحِبُّ التَّوَّابِينَ وَيُحِبُّ الْمُتَطَهِّرِينَ',
+      'translation': '"Sesungguhnya Allah menyukai orang-orang yang bertaubat dan menyukai orang-orang yang mensucikan diri."',
+      'source': 'QS. Al-Baqarah: 222',
+    },
+    {
+      'arabic': 'وَاسْتَغْفِرُوا اللَّهَ ۖ إِنَّ اللَّهَ غَفُورٌ رَّحِيمٌ',
+      'translation': '"Dan mohonlah ampunan kepada Allah; sesungguhnya Allah Maha Pengampun lagi Maha Penyayang."',
+      'source': 'QS. Al-Muzzammil: 20',
+    },
+    {
+      'arabic': 'وَتَوَكَّلْ عَلَى اللَّهِ ۚ وَكَفَىٰ بِاللَّهِ وَكِيلًا',
+      'translation': '"Dan bertawakallah kepada Allah. Dan cukuplah Allah sebagai Pemelihara."',
+      'source': 'QS. Al-Ahzab: 3',
+    },
+    {
+      'arabic': 'إِنَّ اللَّهَ مَعَ الَّذِينَ اتَّقَوا وَّالَّذِينَ هُم مُّحْسِنُونَ',
+      'translation': '"Sesungguhnya Allah beserta orang-orang yang bertakwa dan orang-orang yang berbuat kebaikan."',
+      'source': 'QS. An-Nahl: 128',
+    },
+    {
+      'arabic': 'وَقُل رَّبِّ زِدْنِي عِلْمًا',
+      'translation': '"Dan katakanlah: \'Ya Tuhanku, tambahkanlah kepadaku ilmu pengetahuan.\'"',
+      'source': 'QS. Ta-Ha: 114',
+    },
+    {
+      'arabic': 'رَبَّنَا لَا تُزِغْ قُلُوبَنَا بَعْدَ إِذْ هَدَيْتَنَا وَهَبْ لَنَا مِن لَّدُنكَ رَحْمَةً',
+      'translation': '"Ya Tuhan kami, janganlah Engkau jadikan hati kami condong kepada kesesatan sesudah Engkau beri petunjuk kepada kami, dan karuniakanlah kepada kami rahmat dari sisi Engkau."',
+      'source': 'QS. Ali \'Imran: 8',
+    }
+  ];
+
   Widget _buildInspirationCard() {
+    final int todayIndex = DateTime.now().day % _inspirations.length;
+    final inspiration = _inspirations[todayIndex];
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
@@ -450,10 +611,10 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       child: Column(
         children: [
-          const Text(
-            'فَاذْكُرُونِي أَذْكُرْكُمْ وَاشْكُرُوا لِي وَلَا تَكْفُرُونِ',
+          Text(
+            inspiration['arabic']!,
             textAlign: TextAlign.center,
-            style: TextStyle(
+            style: const TextStyle(
               color: AppColors.primaryGreen,
               fontSize: 28,
               fontFamily: 'QuranFont',
@@ -461,10 +622,10 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
           const SizedBox(height: 20),
-          const Text(
-            '"Maka ingatlah kepada-Ku, Aku pun akan ingat kepadamu. Bersyukurlah kepada-Ku dan janganlah kamu ingkar kepada-Ku."',
+          Text(
+            inspiration['translation']!,
             textAlign: TextAlign.center,
-            style: TextStyle(
+            style: const TextStyle(
               color: AppColors.mutedGreen,
               fontSize: 13,
               fontStyle: FontStyle.italic,
@@ -480,7 +641,7 @@ class _HomeScreenState extends State<HomeScreen> {
                  color: AppColors.primaryYellow.withValues(alpha: 0.2),
                  borderRadius: BorderRadius.circular(8),
                ),
-               child: const Text('QS. Al-Baqarah: 152', style: TextStyle(color: AppColors.primaryYellow, fontSize: 10, fontWeight: FontWeight.bold)),
+               child: Text(inspiration['source']!, style: const TextStyle(color: AppColors.primaryYellow, fontSize: 10, fontWeight: FontWeight.bold)),
             ),
           )
         ],
