@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_qiblah/flutter_qiblah.dart';
+import 'package:geolocator/geolocator.dart';
 import '../theme/colors.dart';
 
 class KiblatScreen extends StatefulWidget {
@@ -11,6 +12,62 @@ class KiblatScreen extends StatefulWidget {
 }
 
 class _KiblatScreenState extends State<KiblatScreen> {
+  bool _hasPermission = false;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkLocationPermission();
+  }
+
+  Future<void> _checkLocationPermission() async {
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _hasPermission = false;
+        });
+      }
+      return;
+    }
+
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+            _hasPermission = false;
+          });
+        }
+        return;
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _hasPermission = false;
+        });
+      }
+      return;
+    }
+
+    if (mounted) {
+      setState(() {
+        _hasPermission = true;
+        _isLoading = false;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -22,28 +79,63 @@ class _KiblatScreenState extends State<KiblatScreen> {
         backgroundColor: AppColors.background,
         iconTheme: const IconThemeData(color: AppColors.primaryGreen),
       ),
-      body: FutureBuilder(
-        future: FlutterQiblah.androidDeviceSensorSupport(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator(color: AppColors.primaryGreen));
-          }
-          if (snapshot.hasError) {
-            return Center(child: Text("Error: ${snapshot.error}"));
-          }
-          if (snapshot.data == false) {
-            return const Center(
-              child: Padding(
-                padding: EdgeInsets.all(32.0),
-                child: Text(
-                  "Device tidak mendukung sensor kompas/magnetometer. Silakan gunakan device lain.",
-                  textAlign: TextAlign.center,
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator(color: AppColors.primaryGreen))
+          : !_hasPermission
+              ? _buildPermissionDenied()
+              : FutureBuilder(
+                  future: FlutterQiblah.androidDeviceSensorSupport(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator(color: AppColors.primaryGreen));
+                    }
+                    if (snapshot.hasError) {
+                      return Center(child: Text("Error: ${snapshot.error}"));
+                    }
+                    if (snapshot.data == false) {
+                      return const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(32.0),
+                          child: Text(
+                            "Device tidak mendukung sensor kompas/magnetometer. Silakan gunakan device lain.",
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      );
+                    }
+                    return _buildCompass();
+                  },
                 ),
+    );
+  }
+
+  Widget _buildPermissionDenied() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.location_off, size: 80, color: Colors.grey),
+            const SizedBox(height: 24),
+            const Text(
+              "Izin lokasi diperlukan untuk menentukan arah kiblat.",
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 16),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: _checkLocationPermission,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primaryGreen,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
               ),
-            );
-          }
-          return _buildCompass();
-        },
+              child: const Text("Berikan Izin"),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -65,22 +157,35 @@ class _KiblatScreenState extends State<KiblatScreen> {
         }
 
         final qiblahDirection = snapshot.data!;
+        
+        // Menghitung selisih derajat (Sisa Derajat ke Kiblat)
+        double relativeOffset = qiblahDirection.offset - qiblahDirection.direction;
+        
+        relativeOffset = relativeOffset % 360;
+        if (relativeOffset > 180) relativeOffset -= 360;
+        if (relativeOffset < -180) relativeOffset += 360;
+
+        bool isAligned = relativeOffset.abs() < 3;
 
         return Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
-                "${qiblahDirection.offset.toStringAsFixed(0)}°",
-                style: const TextStyle(
-                  fontSize: 48,
+                "${relativeOffset.toStringAsFixed(0)}°",
+                style: TextStyle(
+                  fontSize: 64,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.primaryGreen,
+                  color: isAligned ? Colors.orangeAccent : AppColors.primaryGreen,
                 ),
               ),
-              const Text(
-                "Derajat dari Utara",
-                style: TextStyle(color: AppColors.mutedGreen, fontSize: 14),
+              Text(
+                isAligned ? "Sudah Pas Hadap Kiblat!" : "Putar HP kamu",
+                style: TextStyle(
+                  color: isAligned ? Colors.orangeAccent : AppColors.mutedGreen,
+                  fontSize: 16,
+                  fontWeight: isAligned ? FontWeight.bold : FontWeight.normal,
+                ),
               ),
               const SizedBox(height: 50),
               Stack(
@@ -93,7 +198,7 @@ class _KiblatScreenState extends State<KiblatScreen> {
                   ),
                   // Qibla Needle
                   Transform.rotate(
-                    angle: (qiblahDirection.qiblah * (pi / 180) * -1),
+                    angle: (relativeOffset * (pi / 180)),
                     child: _buildQiblaNeedle(),
                   ),
                 ],
@@ -102,7 +207,7 @@ class _KiblatScreenState extends State<KiblatScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                 decoration: BoxDecoration(
-                  color: AppColors.primaryGreen.withValues(alpha: 0.1),
+                  color: AppColors.primaryGreen.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: const Text(
@@ -123,7 +228,7 @@ class _KiblatScreenState extends State<KiblatScreen> {
       height: 300,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        border: Border.all(color: AppColors.primaryGreen.withValues(alpha: 0.2), width: 8),
+        border: Border.all(color: AppColors.primaryGreen.withOpacity(0.2), width: 8),
       ),
       child: Stack(
         alignment: Alignment.center,
@@ -141,7 +246,7 @@ class _KiblatScreenState extends State<KiblatScreen> {
                 child: Container(
                   width: i % 2 == 0 ? 2 : 1,
                   height: i % 18 == 0 ? 15 : 8,
-                  color: AppColors.primaryGreen.withValues(alpha: 0.3),
+                  color: AppColors.primaryGreen.withOpacity(0.3),
                 ),
               ),
             ),
@@ -171,7 +276,7 @@ class _KiblatScreenState extends State<KiblatScreen> {
                     gradient: LinearGradient(
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
-                      colors: [AppColors.primaryYellow, AppColors.primaryYellow.withValues(alpha: 0)],
+                      colors: [AppColors.primaryYellow, AppColors.primaryYellow.withOpacity(0)],
                     ),
                   ),
                 ),

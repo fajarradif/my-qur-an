@@ -79,5 +79,7 @@
 		<key>NSAllowsArbitraryLoads</key>
 		<true/>
 	</dict>
+	<key>NSMotionUsageDescription</key>
+	<string>Aplikasi membutuhkan akses sensor motion untuk menentukan arah kiblat yang akurat.</string>
 </dict>
 </plist>
