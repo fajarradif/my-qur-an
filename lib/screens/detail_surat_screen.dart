@@ -67,14 +67,15 @@ class _DetailSuratScreenState extends State<DetailSuratScreen> {
   Future<void> _playAudio(int ayatNo, String audioUrl) async {
     try {
       final currentMediaItem = _audioPlayer.sequenceState?.currentSource?.tag as MediaItem?;
-      final isCurrentlyLoaded = currentMediaItem?.extras?['ayatNo'] == ayatNo && currentMediaItem?.extras?['isMurottal'] == false;
+      // Jika klik ayat yang sama DAN Syekh yang sama dengan yang sedang di-load
+      final isCurrentlyLoaded = currentMediaItem?.extras?['ayatNo'] == ayatNo && 
+                                currentMediaItem?.extras?['isMurottal'] == false &&
+                                currentMediaItem?.extras?['qoriId'] == _selectedQori;
 
-      // Jika klik ayat yang sama dengan yang sedang di-load
       if (isCurrentlyLoaded) {
         if (_audioPlayer.playing) {
           await _audioPlayer.pause();
         } else {
-          // Kalau audionya sudah selesai, kita seek ke 0 sebelum play lagi
           if (_audioPlayer.processingState == ProcessingState.completed) {
             await _audioPlayer.seek(Duration.zero);
           }
@@ -83,7 +84,7 @@ class _DetailSuratScreenState extends State<DetailSuratScreen> {
         return;
       }
 
-      // Jika klik ayat baru
+      // Jika klik ayat baru atau Syekh baru
       await _audioPlayer.stop();
       await _audioPlayer.setAudioSource(AudioSource.uri(
         Uri.parse(audioUrl),
@@ -93,7 +94,7 @@ class _DetailSuratScreenState extends State<DetailSuratScreen> {
           title: "Ayat $ayatNo",
           artist: _qoriNames[_selectedQori] ?? "Unknown",
           artUri: Uri.parse('https://images.unsplash.com/photo-1584286595398-a59f21d313f5?q=80&w=1000&auto=format&fit=crop'),
-          extras: {'ayatNo': ayatNo, 'isMurottal': false},
+          extras: {'ayatNo': ayatNo, 'isMurottal': false, 'qoriId': _selectedQori},
         ),
       ));
       await _audioPlayer.play();
@@ -119,14 +120,15 @@ class _DetailSuratScreenState extends State<DetailSuratScreen> {
       }
 
       final currentMediaItem = _audioPlayer.sequenceState?.currentSource?.tag as MediaItem?;
-      final isCurrentlyLoaded = currentMediaItem?.extras?['isMurottal'] == true && currentMediaItem?.id == audioUrl;
+      final isCurrentlyLoaded = currentMediaItem?.extras?['isMurottal'] == true && 
+                                currentMediaItem?.extras?['qoriId'] == _selectedQori &&
+                                currentMediaItem?.id == audioUrl;
 
       // Jika sedang diputar dan bukan force play, maka pause/resume
       if (isCurrentlyLoaded && !forcePlay) {
         if (_audioPlayer.playing) {
           await _audioPlayer.pause();
         } else {
-          // Kalau audionya sudah selesai, kita seek ke 0 sebelum play lagi
           if (_audioPlayer.processingState == ProcessingState.completed) {
             await _audioPlayer.seek(Duration.zero);
           }
@@ -145,7 +147,7 @@ class _DetailSuratScreenState extends State<DetailSuratScreen> {
           title: "Surah ${detail.namaLatin}",
           artist: _qoriNames[_selectedQori] ?? "Unknown",
           artUri: Uri.parse('https://images.unsplash.com/photo-1584286595398-a59f21d313f5?q=80&w=1000&auto=format&fit=crop'),
-          extras: {'isMurottal': true},
+          extras: {'isMurottal': true, 'qoriId': _selectedQori},
         ),
       ));
       await _audioPlayer.play();
@@ -552,8 +554,25 @@ class _DetailSuratScreenState extends State<DetailSuratScreen> {
                     setState(() {
                       _selectedQori = val;
                     });
-                    if (isMurottalPlaying) {
-                      _playMurottal(detail, forcePlay: true);
+
+                    // Jika ada audio yang lagi jalan (baik murottal atau ayat)
+                    // Kita otomatis pindahkan ke Syekh yang baru di posisi yang sama
+                    if (isMurottalPlaying || isMurottalLoaded) {
+                       _playMurottal(detail, forcePlay: true);
+                    } else {
+                      // Cek apakah ada ayat tunggal yang lagi jalan
+                      final currentItem = _audioPlayer.sequenceState?.currentSource?.tag as MediaItem?;
+                      if (currentItem != null && currentItem.extras?['ayatNo'] != null) {
+                        int ayatNo = currentItem.extras!['ayatNo'];
+                        // Cari data ayatnya untuk ambil URL audio Syekh yang baru
+                        try {
+                          final ayat = detail.ayat.firstWhere((a) => a.nomorAyat == ayatNo);
+                          String? audioUrl = ayat.audio[_selectedQori] ?? ayat.audio.values.firstOrNull;
+                          if (audioUrl != null) {
+                            _playAudio(ayatNo, audioUrl);
+                          }
+                        } catch (_) {}
+                      }
                     }
                   }
                 },
