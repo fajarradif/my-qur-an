@@ -16,6 +16,7 @@ import 'profile_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../widgets/location_picker_sheet.dart';
 import '../widgets/all_features_sheet.dart';
+import 'murottal_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -591,9 +592,7 @@ class _HomeScreenState extends State<HomeScreen> {
         icon: Icons.headphones,
         label: 'Murottal',
         onTap: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Halaman Murottal akan segera dibuat!')),
-          );
+          Navigator.push(context, MaterialPageRoute(builder: (context) => const MurottalScreen()));
         },
       ),
       FeatureMenuButton(
