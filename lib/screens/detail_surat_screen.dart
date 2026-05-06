@@ -22,6 +22,15 @@ class _DetailSuratScreenState extends State<DetailSuratScreen> {
   bool _isMushafMode = false;
   int? _lastReadAyat;
   int? _playingAyat;
+  bool _isPlayingMurottal = false;
+  String _selectedQori = '05'; // Default Misyari Rasyid
+  final Map<String, String> _qoriNames = {
+    '01': 'Abdullah Al-Juhany',
+    '02': 'Abdul Muhsin Al-Qasim',
+    '03': 'Abdurrahman as-Sudais',
+    '04': 'Ibrahim Al-Dossari',
+    '05': 'Misyari Rasyid',
+  };
   final AudioPlayer _audioPlayer = AudioPlayer();
   final ScrollController _scrollController = ScrollController();
   final Map<int, GlobalKey> _ayatKeys = {};
@@ -35,7 +44,10 @@ class _DetailSuratScreenState extends State<DetailSuratScreen> {
     // Listen to audio player state to reset _playingAyat ketika selesai
     _audioPlayer.onPlayerComplete.listen((event) {
       if (mounted) {
-        setState(() => _playingAyat = null);
+        setState(() {
+          _playingAyat = null;
+          _isPlayingMurottal = false;
+        });
       }
     });
   }
@@ -58,6 +70,9 @@ class _DetailSuratScreenState extends State<DetailSuratScreen> {
 
   Future<void> _playAudio(int ayatNo, String audioUrl) async {
     try {
+      if (_isPlayingMurottal) {
+         setState(() => _isPlayingMurottal = false);
+      }
       if (_playingAyat == ayatNo) {
         await _audioPlayer.stop();
         setState(() => _playingAyat = null);
@@ -70,6 +85,36 @@ class _DetailSuratScreenState extends State<DetailSuratScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Gagal memutar audio: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
+  Future<void> _playMurottal(SurahDetail detail, {bool forcePlay = false}) async {
+    try {
+      if (_isPlayingMurottal && !forcePlay) {
+        await _audioPlayer.pause();
+        setState(() => _isPlayingMurottal = false);
+      } else {
+        await _audioPlayer.stop();
+        setState(() => _playingAyat = null);
+        
+        final audioUrl = detail.audioFull[_selectedQori];
+        if (audioUrl != null) {
+          await _audioPlayer.play(UrlSource(audioUrl));
+          setState(() => _isPlayingMurottal = true);
+        } else {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Audio Murottal tidak tersedia')),
+            );
+          }
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal memutar murottal: $e'), backgroundColor: Colors.red),
         );
       }
     }
@@ -408,6 +453,8 @@ class _DetailSuratScreenState extends State<DetailSuratScreen> {
               Text('${detail.jumlahAyat} AYAT', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500)),
             ],
           ),
+          const SizedBox(height: 20),
+          _buildMurottalPlayer(detail),
           if (_lastReadAyat != null) ...[
             const SizedBox(height: 16),
             Container(
@@ -429,6 +476,81 @@ class _DetailSuratScreenState extends State<DetailSuratScreen> {
               ),
             ),
           ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMurottalPlayer(SurahDetail detail) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        children: [
+          // Dropdown Imam
+          Expanded(
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                value: _selectedQori,
+                dropdownColor: AppColors.primaryGreen,
+                icon: const Icon(Icons.keyboard_arrow_down, color: Colors.white),
+                isExpanded: true,
+                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500, fontSize: 14),
+                items: _qoriNames.entries.map((e) {
+                  return DropdownMenuItem<String>(
+                    value: e.key,
+                    child: Text(e.value, style: const TextStyle(fontSize: 13)),
+                  );
+                }).toList(),
+                onChanged: (val) {
+                  if (val != null) {
+                    setState(() {
+                      _selectedQori = val;
+                    });
+                    if (_isPlayingMurottal) {
+                      _playMurottal(detail, forcePlay: true);
+                    }
+                  }
+                },
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          // Play/Pause Button
+          InkWell(
+            onTap: () => _playMurottal(detail),
+            child: CircleAvatar(
+              backgroundColor: AppColors.primaryYellow,
+              radius: 20,
+              child: Icon(
+                _isPlayingMurottal ? Icons.pause : Icons.play_arrow,
+                color: AppColors.primaryGreen,
+                size: 24,
+              ),
+            ),
+          ),
+          // Stop Button
+          if (_isPlayingMurottal) ...[
+            const SizedBox(width: 8),
+            InkWell(
+              onTap: () async {
+                await _audioPlayer.stop();
+                setState(() => _isPlayingMurottal = false);
+              },
+              child: const CircleAvatar(
+                backgroundColor: Colors.white24,
+                radius: 20,
+                child: Icon(
+                  Icons.stop,
+                  color: Colors.white,
+                  size: 20,
+                ),
+              ),
+            ),
+          ]
         ],
       ),
     );
@@ -477,8 +599,8 @@ class _DetailSuratScreenState extends State<DetailSuratScreen> {
                         size: 24
                       ),
                       onPressed: () {
-                        // Ambil audio pertama
-                        String? audioUrl = ayat.audio['01'] ?? ayat.audio.values.firstOrNull;
+                        // Ambil audio sesuai imam (Qori) yang dipilih
+                        String? audioUrl = ayat.audio[_selectedQori] ?? ayat.audio.values.firstOrNull;
                         if (audioUrl != null) {
                           _playAudio(ayat.nomorAyat, audioUrl);
                         } else {
