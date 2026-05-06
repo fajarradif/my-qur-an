@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:geolocator/geolocator.dart';
+import '../services/hijri_helper.dart';
 import '../theme/colors.dart';
 import '../widgets/feature_menu_button.dart';
 import '../widgets/last_read_card.dart';
@@ -17,6 +18,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../widgets/location_picker_sheet.dart';
 import 'murottal_screen.dart';
 import 'doa_screen.dart';
+import 'hijri_calendar_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -222,6 +224,7 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 LastReadCard(onRefresh: () => setState(() {})),
                 _buildCountdownCard(),
+                _buildHijriCard(),
               ],
             ),
           ),
@@ -258,7 +261,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildPageIndicator() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
-      children: List.generate(2, (index) {
+      children: List.generate(3, (index) {
         return AnimatedContainer(
           duration: const Duration(milliseconds: 300),
           margin: const EdgeInsets.symmetric(horizontal: 4),
@@ -313,6 +316,72 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildHijriCard() {
+    final hijri = HijriHelper.fromGregorian(DateTime.now());
+    final hijriDay = hijri['day'];
+    final hijriMonth = HijriHelper.getMonthName(hijri['month']);
+    final hijriYear = hijri['year'];
+
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [AppColors.deepGreen, AppColors.emeraldGreen],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primaryGreen.withValues(alpha: 0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Stack(
+        children: [
+          Positioned(
+            right: -20,
+            top: -20,
+            child: Icon(
+              Icons.dark_mode,
+              color: Colors.white.withValues(alpha: 0.1),
+              size: 150,
+            ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.calendar_month, color: AppColors.primaryYellow, size: 20),
+                  const SizedBox(width: 8),
+                  const Text('Kalender Hijriah', style: TextStyle(color: Colors.white70, fontSize: 14)),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Text(
+                '$hijriDay $hijriMonth',
+                style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold),
+              ),
+              Text(
+                '$hijriYear Hijriah',
+                style: const TextStyle(color: AppColors.primaryYellow, fontSize: 18, fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                DateFormat('EEEE, d MMMM yyyy', 'id_ID').format(DateTime.now()),
+                style: const TextStyle(color: Colors.white54, fontSize: 12),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
@@ -461,7 +530,15 @@ class _HomeScreenState extends State<HomeScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Text('Jadwal Sholat Hari Ini', style: TextStyle(color: AppColors.primaryGreen, fontWeight: FontWeight.bold, fontSize: 14)),
-                  Text(jadwal.tanggal, style: const TextStyle(color: AppColors.mutedGreen, fontSize: 10)),
+                  Builder(
+                    builder: (context) {
+                      final hijri = HijriHelper.fromGregorian(DateTime.now());
+                      return Text(
+                        '${hijri['day']} ${HijriHelper.getMonthName(hijri['month'])} ${hijri['year']} H',
+                        style: const TextStyle(color: AppColors.mutedGreen, fontSize: 10, fontWeight: FontWeight.w600),
+                      );
+                    }
+                  ),
                 ],
               ),
               const SizedBox(height: 20),
@@ -603,9 +680,11 @@ class _HomeScreenState extends State<HomeScreen> {
         },
       ),
       FeatureMenuButton(
-        icon: Icons.calendar_month,
-        label: 'Jadwal',
-        onTap: () {},
+        icon: Icons.event_note,
+        label: 'Kalender',
+        onTap: () {
+          Navigator.push(context, MaterialPageRoute(builder: (context) => const HijriCalendarScreen()));
+        },
       ),
       // Tombol bayangan agar tata letaknya seimbang (4 kolom)
       const Opacity(
