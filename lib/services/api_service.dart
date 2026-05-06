@@ -142,4 +142,52 @@ class ApiService {
       throw Exception('Terjadi kesalahan koneksi API Doa');
     }
   }
+
+  // Helper untuk mendapatkan jadwal sholat selanjutnya
+  static Map<String, dynamic> getNextPrayer(Jadwal jadwal) {
+    final now = DateTime.now();
+    final Map<String, String> times = {
+      'Subuh': jadwal.subuh,
+      'Dzuhur': jadwal.dzuhur,
+      'Ashar': jadwal.ashar,
+      'Maghrib': jadwal.maghrib,
+      'Isya': jadwal.isya,
+    };
+
+    for (var entry in times.entries) {
+      final prayerTime = _parseTime(entry.value);
+      if (prayerTime.isAfter(now)) {
+        return {'name': entry.key, 'time': entry.value};
+      }
+    }
+
+    // Jika sudah lewat semua, berarti sholat pertama besok (Subuh)
+    return {'name': 'Subuh', 'time': jadwal.subuh};
+  }
+
+  // Helper untuk menghitung mundur
+  static String getCountdown(String targetTime) {
+    final now = DateTime.now();
+    final target = _parseTime(targetTime);
+    
+    var diff = target.difference(now);
+    
+    // Jika waktu sudah lewat (untuk kasus Subuh besok)
+    if (diff.isNegative) {
+      diff = diff + const Duration(hours: 24);
+    }
+
+    String twoDigits(int n) => n.toString().padLeft(2, "0");
+    String hours = twoDigits(diff.inHours);
+    String minutes = twoDigits(diff.inMinutes.remainder(60));
+    String seconds = twoDigits(diff.inSeconds.remainder(60));
+
+    return "$hours:$minutes:$seconds";
+  }
+
+  static DateTime _parseTime(String timeStr) {
+    final now = DateTime.now();
+    final parts = timeStr.split(':');
+    return DateTime(now.year, now.month, now.day, int.parse(parts[0]), int.parse(parts[1]));
+  }
 }

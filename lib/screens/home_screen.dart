@@ -20,6 +20,7 @@ import 'murottal_screen.dart';
 import 'doa_screen.dart';
 import 'hijri_calendar_screen.dart';
 import 'dzikir_pagi_petang_screen.dart';
+import '../models/news.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -35,6 +36,8 @@ class _HomeScreenState extends State<HomeScreen> {
   late Future<Jadwal> futureJadwal;
   late Timer _timer;
   late PageController _pageController;
+  late ScrollController _scrollController;
+  bool _showStickyHeader = false;
   String _currentTime = "";
   String _currentLocationName = "Mencari lokasi...";
   
@@ -51,6 +54,15 @@ class _HomeScreenState extends State<HomeScreen> {
     futureJadwal = ApiService.getJadwalSholat(_defaultCityId);
     _initializeLocationAndJadwal();
     
+    _scrollController = ScrollController();
+    _scrollController.addListener(() {
+      if (_scrollController.offset > 300 && !_showStickyHeader) {
+        setState(() => _showStickyHeader = true);
+      } else if (_scrollController.offset <= 300 && _showStickyHeader) {
+        setState(() => _showStickyHeader = false);
+      }
+    });
+
     // Update jam setiap detik
     _currentTime = _formatDateTime(DateTime.now());
     _timer = Timer.periodic(const Duration(seconds: 1), (Timer t) => _updateTime());
@@ -158,6 +170,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void dispose() {
     _timer.cancel();
     _pageController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -190,6 +203,14 @@ class _HomeScreenState extends State<HomeScreen> {
                 const ProfileScreen(),
               ],
             ),
+            AnimatedPositioned(
+              duration: const Duration(milliseconds: 400),
+              curve: Curves.easeInOut,
+              top: (_showStickyHeader && _selectedIndex == 0) ? 0 : -80,
+              left: 0,
+              right: 0,
+              child: _buildStickyHeader(),
+            ),
             Positioned(
               left: 20,
               right: 20,
@@ -204,6 +225,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildHomeContent() {
     return SingleChildScrollView(
+      controller: _scrollController,
       padding: const EdgeInsets.fromLTRB(20, 30, 20, 100),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -254,6 +276,10 @@ class _HomeScreenState extends State<HomeScreen> {
           const Text('Inspirasi Harian', style: TextStyle(color: AppColors.primaryGreen, fontSize: 16, fontWeight: FontWeight.bold)),
           const SizedBox(height: 16),
           _buildInspirationCard(),
+          const SizedBox(height: 30),
+          const Text('Warta Islami', style: TextStyle(color: AppColors.primaryGreen, fontSize: 16, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 16),
+          _buildNewsSection(),
         ],
       ),
     );
@@ -908,6 +934,151 @@ class _HomeScreenState extends State<HomeScreen> {
           )
         ],
       ),
+    );
+  }
+
+  final List<News> _newsList = [
+    News(
+      title: 'Mengenal Sejarah Pembangunan Masjid Nabawi di Madinah',
+      source: 'Republika',
+      time: '2 jam yang lalu',
+      imageUrl: 'https://static.republika.co.id/uploads/images/inpicture_slide/masjid-nabawi-madinah_210511145831-294.jpg',
+      url: 'https://republika.co.id',
+    ),
+    News(
+      title: 'Tips Menjaga Konsistensi Ibadah Pasca Ramadhan',
+      source: 'Sindonews',
+      time: '5 jam yang lalu',
+      imageUrl: 'https://pict.sindonews.net/dyn/850/pena/news/2024/04/15/67/1359404/tips-menjaga-istiqamah-beribadah-setelah-ramadhan-vml.jpg',
+      url: 'https://sindonews.com',
+    ),
+    News(
+      title: 'Update Kondisi Palestina: Bantuan Kemanusiaan Terus Mengalir',
+      source: 'Antara News',
+      time: '8 jam yang lalu',
+      imageUrl: 'https://img.antaranews.com/cache/1200x800/2023/11/04/antarafoto-bantuan-kemanusiaan-untuk-palestina-041123-adn-3.jpg.webp',
+      url: 'https://antaranews.com',
+    ),
+  ];
+
+  Widget _buildNewsSection() {
+    return SizedBox(
+      height: 240,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        itemCount: _newsList.length,
+        itemBuilder: (context, index) {
+          final news = _newsList[index];
+          return Container(
+            width: 280,
+            margin: const EdgeInsets.only(right: 16),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 5)),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Image.network(
+                    news.imageUrl,
+                    height: 140,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => Container(
+                      height: 140,
+                      color: AppColors.iconBgGreen,
+                      child: const Icon(Icons.image_not_supported, color: AppColors.primaryGreen),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Text(news.source, style: const TextStyle(color: AppColors.primaryYellow, fontWeight: FontWeight.bold, fontSize: 10)),
+                            const SizedBox(width: 8),
+                            Text('•', style: TextStyle(color: Colors.grey[400])),
+                            const SizedBox(width: 8),
+                            Text(news.time, style: TextStyle(color: Colors.grey[500], fontSize: 10)),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          news.title,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(color: AppColors.primaryGreen, fontWeight: FontWeight.bold, fontSize: 14, height: 1.3),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildStickyHeader() {
+    return FutureBuilder<Jadwal>(
+      future: futureJadwal,
+      builder: (context, snapshot) {
+        String nextPrayerName = "Memuat...";
+        String nextPrayerTime = "--:--";
+        String countdown = "--:--:--";
+
+        if (snapshot.hasData && snapshot.data != null) {
+          try {
+            final next = ApiService.getNextPrayer(snapshot.data!);
+            nextPrayerName = next['name'];
+            nextPrayerTime = next['time'];
+            countdown = ApiService.getCountdown(next['time']);
+          } catch (e) {
+            // Jika gagal parse, biarkan default
+          }
+        }
+
+        if (snapshot.hasError) return const SizedBox.shrink();
+
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          decoration: BoxDecoration(
+            color: AppColors.deepGreen.withValues(alpha: 0.98),
+            boxShadow: [
+              BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 10, offset: const Offset(0, 2)),
+            ],
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.access_time_filled, color: AppColors.primaryYellow, size: 18),
+              const SizedBox(width: 12),
+              Text(
+                nextPrayerName,
+                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                nextPrayerTime,
+                style: const TextStyle(color: AppColors.primaryYellow, fontWeight: FontWeight.bold, fontSize: 14),
+              ),
+              const Spacer(),
+              Text(
+                '- $countdown',
+                style: const TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w500),
+              ),
+            ],
+          ),
+        );
+      }
     );
   }
 
