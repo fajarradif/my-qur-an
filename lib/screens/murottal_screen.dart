@@ -168,7 +168,7 @@ class _MurottalScreenState extends State<MurottalScreen> {
         color: AppColors.primaryGreen,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
-          BoxShadow(color: AppColors.primaryGreen.withOpacity(0.3), blurRadius: 10, offset: const Offset(0, 4)),
+          BoxShadow(color: AppColors.primaryGreen.withValues(alpha: 0.3), blurRadius: 10, offset: const Offset(0, 4)),
         ],
       ),
       child: DropdownButtonHideUnderline(
@@ -186,7 +186,9 @@ class _MurottalScreenState extends State<MurottalScreen> {
           }).toList(),
           onChanged: (val) {
             if (val != null) {
-              setState(() => _selectedQori = val);
+              if (mounted) {
+                setState(() => _selectedQori = val);
+              }
               // Jika ada audio yang lagi jalan, pindah qori
               final currentMediaItem = _audioPlayer.sequenceState?.currentSource?.tag as MediaItem?;
               if (_audioPlayer.playing && currentMediaItem != null) {
@@ -241,9 +243,9 @@ class _MurottalScreenState extends State<MurottalScreen> {
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
-            BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4)),
+            BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 10, offset: const Offset(0, 4)),
           ],
-          border: isThisSurahLoaded ? Border.all(color: AppColors.primaryGreen.withOpacity(0.3), width: 1) : null,
+          border: isThisSurahLoaded ? Border.all(color: AppColors.primaryGreen.withValues(alpha: 0.3), width: 1) : null,
         ),
         child: Row(
           children: [

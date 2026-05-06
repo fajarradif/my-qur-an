@@ -320,7 +320,7 @@ class _DetailSuratScreenState extends State<DetailSuratScreen> {
                 fontSize: fontSize,
                 fontFamily: 'QuranFont',
                 color: AppColors.textDark,
-                backgroundColor: isCurrentBookmark ? AppColors.primaryYellow.withOpacity(0.25) : null,
+                backgroundColor: isCurrentBookmark ? AppColors.primaryYellow.withValues(alpha: 0.25) : null,
                 height: 2.2,
                 wordSpacing: 2, 
               ),

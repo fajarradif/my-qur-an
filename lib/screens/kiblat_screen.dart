@@ -207,7 +207,7 @@ class _KiblatScreenState extends State<KiblatScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                 decoration: BoxDecoration(
-                  color: AppColors.primaryGreen.withOpacity(0.1),
+                  color: AppColors.primaryGreen.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: const Text(
@@ -228,7 +228,7 @@ class _KiblatScreenState extends State<KiblatScreen> {
       height: 300,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        border: Border.all(color: AppColors.primaryGreen.withOpacity(0.2), width: 8),
+        border: Border.all(color: AppColors.primaryGreen.withValues(alpha: 0.2), width: 8),
       ),
       child: Stack(
         alignment: Alignment.center,
@@ -246,7 +246,7 @@ class _KiblatScreenState extends State<KiblatScreen> {
                 child: Container(
                   width: i % 2 == 0 ? 2 : 1,
                   height: i % 18 == 0 ? 15 : 8,
-                  color: AppColors.primaryGreen.withOpacity(0.3),
+                  color: AppColors.primaryGreen.withValues(alpha: 0.3),
                 ),
               ),
             ),
@@ -276,7 +276,7 @@ class _KiblatScreenState extends State<KiblatScreen> {
                     gradient: LinearGradient(
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
-                      colors: [AppColors.primaryYellow, AppColors.primaryYellow.withOpacity(0)],
+                      colors: [AppColors.primaryYellow, AppColors.primaryYellow.withValues(alpha: 0)],
                     ),
                   ),
                 ),

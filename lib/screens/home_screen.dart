@@ -15,8 +15,8 @@ import 'bookmark_screen.dart';
 import 'profile_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../widgets/location_picker_sheet.dart';
-import '../widgets/all_features_sheet.dart';
 import 'murottal_screen.dart';
+import 'doa_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -92,7 +92,7 @@ class _HomeScreenState extends State<HomeScreen> {
       if (permission == LocationPermission.deniedForever) throw Exception('Izin GPS ditolak permanen');
 
       Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.low,
+        locationSettings: const LocationSettings(accuracy: LocationAccuracy.low),
       ).timeout(const Duration(seconds: 5), onTimeout: () {
         throw Exception('Mencari lokasi terlalu lama (timeout)');
       });
@@ -598,7 +598,9 @@ class _HomeScreenState extends State<HomeScreen> {
       FeatureMenuButton(
         icon: Icons.pan_tool,
         label: 'Doa-doa',
-        onTap: () {},
+        onTap: () {
+          Navigator.push(context, MaterialPageRoute(builder: (context) => const DoaScreen()));
+        },
       ),
       FeatureMenuButton(
         icon: Icons.calendar_month,

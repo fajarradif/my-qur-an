@@ -5,6 +5,7 @@ import '../models/surah.dart';
 import '../models/surah_detail.dart';
 import '../models/jadwal.dart';
 import '../models/tahlil.dart';
+import '../models/doa.dart';
 
 class ApiService {
   static const String baseUrl = 'https://equran.id/api/v2';
@@ -122,6 +123,23 @@ class ApiService {
       return tahlilList.map((json) => Tahlil.fromJson(json)).toList();
     } catch (e) {
       throw Exception('Gagal memuat data Tahlil Lokal: $e');
+    }
+  }
+
+  // 5. Mengambil Daftar Doa Harian (API MyQuran)
+  static Future<List<Doa>> getDoaList() async {
+    try {
+      final response = await http.get(Uri.parse('https://api.myquran.com/v2/doa/semua'));
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = json.decode(response.body);
+        if (data['status'] == true) {
+          final List<dynamic> doaList = data['data'];
+          return doaList.map((json) => Doa.fromJson(json)).toList();
+        }
+      }
+      throw Exception('Gagal memuat daftar doa');
+    } catch (e) {
+      throw Exception('Terjadi kesalahan koneksi API Doa');
     }
   }
 }

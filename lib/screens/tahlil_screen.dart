@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import '../theme/colors.dart';
 import '../models/tahlil.dart';
-import '../models/ayat.dart';
 import '../models/surah_detail.dart';
 import '../services/api_service.dart';
 import '../services/bookmark_service.dart';
-import 'detail_surat_screen.dart';
 import '../widgets/quran_number_marker.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_background/just_audio_background.dart';
