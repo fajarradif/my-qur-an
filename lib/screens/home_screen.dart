@@ -208,7 +208,9 @@ class _HomeScreenState extends State<HomeScreen> {
           const SizedBox(height: 30),
           
           SizedBox(
-            height: (MediaQuery.of(context).size.width - 40) * 0.58,
+            height: MediaQuery.of(context).size.width > 40 
+                ? (MediaQuery.of(context).size.width - 40) * 0.58 
+                : 0,
             child: PageView(
               controller: _pageController,
               onPageChanged: (index) {

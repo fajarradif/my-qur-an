@@ -24,7 +24,9 @@ class LastReadCard extends StatelessWidget {
 
         return Container(
           width: double.infinity,
-          height: (MediaQuery.of(context).size.width - 40) * 0.58,
+          height: MediaQuery.of(context).size.width > 40 
+              ? (MediaQuery.of(context).size.width - 40) * 0.58 
+              : 0,
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
           decoration: BoxDecoration(
             gradient: LinearGradient(

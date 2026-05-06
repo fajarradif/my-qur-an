@@ -22,8 +22,6 @@ class _DetailSuratScreenState extends State<DetailSuratScreen> {
   late Future<SurahDetail> futureSurahDetail;
   bool _isMushafMode = false;
   int? _lastReadAyat;
-  int? _playingAyat;
-  bool _isPlayingMurottal = false;
   String _selectedQori = '05'; // Default Misyari Rasyid
   final Map<String, String> _qoriNames = {
     '01': 'Abdullah Al-Juhany',
@@ -42,13 +40,10 @@ class _DetailSuratScreenState extends State<DetailSuratScreen> {
     futureSurahDetail = ApiService.getDetailSurat(widget.nomorSurat);
     _loadLastRead();
     
-    // Listen to audio player state to reset _playingAyat ketika selesai
+    // Listen to audio player state untuk update UI secara real-time berdasarkan state mesin
     _audioPlayer.playerStateStream.listen((state) {
-      if (mounted && state.processingState == ProcessingState.completed) {
-        setState(() {
-          _playingAyat = null;
-          _isPlayingMurottal = false;
-        });
+      if (mounted) {
+        setState(() {});
       }
     });
   }
@@ -71,27 +66,37 @@ class _DetailSuratScreenState extends State<DetailSuratScreen> {
 
   Future<void> _playAudio(int ayatNo, String audioUrl) async {
     try {
-      if (_isPlayingMurottal) {
-         setState(() => _isPlayingMurottal = false);
+      final currentMediaItem = _audioPlayer.sequenceState?.currentSource?.tag as MediaItem?;
+      final isCurrentlyLoaded = currentMediaItem?.extras?['ayatNo'] == ayatNo && currentMediaItem?.extras?['isMurottal'] == false;
+
+      // Jika klik ayat yang sama dengan yang sedang di-load
+      if (isCurrentlyLoaded) {
+        if (_audioPlayer.playing) {
+          await _audioPlayer.pause();
+        } else {
+          // Kalau audionya sudah selesai, kita seek ke 0 sebelum play lagi
+          if (_audioPlayer.processingState == ProcessingState.completed) {
+            await _audioPlayer.seek(Duration.zero);
+          }
+          await _audioPlayer.play();
+        }
+        return;
       }
-      if (_playingAyat == ayatNo) {
-        await _audioPlayer.stop();
-        setState(() => _playingAyat = null);
-      } else {
-        await _audioPlayer.stop();
-        await _audioPlayer.setAudioSource(AudioSource.uri(
-          Uri.parse(audioUrl),
-          tag: MediaItem(
-            id: audioUrl,
-            album: "My Quran",
-            title: "Ayat $ayatNo",
-            artist: _qoriNames[_selectedQori] ?? "Unknown",
-            artUri: Uri.parse('https://images.unsplash.com/photo-1584286595398-a59f21d313f5?q=80&w=1000&auto=format&fit=crop'),
-          ),
-        ));
-        await _audioPlayer.play();
-        setState(() => _playingAyat = ayatNo);
-      }
+
+      // Jika klik ayat baru
+      await _audioPlayer.stop();
+      await _audioPlayer.setAudioSource(AudioSource.uri(
+        Uri.parse(audioUrl),
+        tag: MediaItem(
+          id: audioUrl,
+          album: "My Quran",
+          title: "Ayat $ayatNo",
+          artist: _qoriNames[_selectedQori] ?? "Unknown",
+          artUri: Uri.parse('https://images.unsplash.com/photo-1584286595398-a59f21d313f5?q=80&w=1000&auto=format&fit=crop'),
+          extras: {'ayatNo': ayatNo, 'isMurottal': false},
+        ),
+      ));
+      await _audioPlayer.play();
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -103,35 +108,47 @@ class _DetailSuratScreenState extends State<DetailSuratScreen> {
 
   Future<void> _playMurottal(SurahDetail detail, {bool forcePlay = false}) async {
     try {
-      if (_isPlayingMurottal && !forcePlay) {
-        await _audioPlayer.pause();
-        setState(() => _isPlayingMurottal = false);
-      } else {
-        await _audioPlayer.stop();
-        setState(() => _playingAyat = null);
-        
-        final audioUrl = detail.audioFull[_selectedQori];
-        if (audioUrl != null) {
-          await _audioPlayer.setAudioSource(AudioSource.uri(
-            Uri.parse(audioUrl),
-            tag: MediaItem(
-              id: audioUrl,
-              album: "My Quran Murottal",
-              title: "Surah ${detail.namaLatin}",
-              artist: _qoriNames[_selectedQori] ?? "Unknown",
-              artUri: Uri.parse('https://images.unsplash.com/photo-1584286595398-a59f21d313f5?q=80&w=1000&auto=format&fit=crop'),
-            ),
-          ));
-          await _audioPlayer.play();
-          setState(() => _isPlayingMurottal = true);
-        } else {
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Audio Murottal tidak tersedia')),
-            );
-          }
+      final audioUrl = detail.audioFull[_selectedQori];
+      if (audioUrl == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Audio Murottal tidak tersedia')),
+          );
         }
+        return;
       }
+
+      final currentMediaItem = _audioPlayer.sequenceState?.currentSource?.tag as MediaItem?;
+      final isCurrentlyLoaded = currentMediaItem?.extras?['isMurottal'] == true && currentMediaItem?.id == audioUrl;
+
+      // Jika sedang diputar dan bukan force play, maka pause/resume
+      if (isCurrentlyLoaded && !forcePlay) {
+        if (_audioPlayer.playing) {
+          await _audioPlayer.pause();
+        } else {
+          // Kalau audionya sudah selesai, kita seek ke 0 sebelum play lagi
+          if (_audioPlayer.processingState == ProcessingState.completed) {
+            await _audioPlayer.seek(Duration.zero);
+          }
+          await _audioPlayer.play();
+        }
+        return;
+      }
+
+      // Jika klik Play tapi ganti qori/belum diload
+      await _audioPlayer.stop();
+      await _audioPlayer.setAudioSource(AudioSource.uri(
+        Uri.parse(audioUrl),
+        tag: MediaItem(
+          id: audioUrl,
+          album: "My Quran Murottal",
+          title: "Surah ${detail.namaLatin}",
+          artist: _qoriNames[_selectedQori] ?? "Unknown",
+          artUri: Uri.parse('https://images.unsplash.com/photo-1584286595398-a59f21d313f5?q=80&w=1000&auto=format&fit=crop'),
+          extras: {'isMurottal': true},
+        ),
+      ));
+      await _audioPlayer.play();
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -503,6 +520,10 @@ class _DetailSuratScreenState extends State<DetailSuratScreen> {
   }
 
   Widget _buildMurottalPlayer(SurahDetail detail) {
+    final currentItem = _audioPlayer.sequenceState?.currentSource?.tag as MediaItem?;
+    final isMurottalLoaded = currentItem?.extras?['isMurottal'] == true && currentItem?.id == detail.audioFull[_selectedQori];
+    final isMurottalPlaying = isMurottalLoaded && _audioPlayer.playing && _audioPlayer.processingState != ProcessingState.completed;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
@@ -531,7 +552,7 @@ class _DetailSuratScreenState extends State<DetailSuratScreen> {
                     setState(() {
                       _selectedQori = val;
                     });
-                    if (_isPlayingMurottal) {
+                    if (isMurottalPlaying) {
                       _playMurottal(detail, forcePlay: true);
                     }
                   }
@@ -547,37 +568,22 @@ class _DetailSuratScreenState extends State<DetailSuratScreen> {
               backgroundColor: AppColors.primaryYellow,
               radius: 20,
               child: Icon(
-                _isPlayingMurottal ? Icons.pause : Icons.play_arrow,
+                isMurottalPlaying ? Icons.pause : Icons.play_arrow,
                 color: AppColors.primaryGreen,
                 size: 24,
               ),
             ),
           ),
-          // Stop Button
-          if (_isPlayingMurottal) ...[
-            const SizedBox(width: 8),
-            InkWell(
-              onTap: () async {
-                await _audioPlayer.stop();
-                setState(() => _isPlayingMurottal = false);
-              },
-              child: const CircleAvatar(
-                backgroundColor: Colors.white24,
-                radius: 20,
-                child: Icon(
-                  Icons.stop,
-                  color: Colors.white,
-                  size: 20,
-                ),
-              ),
-            ),
-          ]
         ],
       ),
     );
   }
 
   Widget _buildAyatCard(Ayat ayat, String detailNamaLatin) {
+    final currentItem = _audioPlayer.sequenceState?.currentSource?.tag as MediaItem?;
+    final isThisAyatLoaded = currentItem?.extras?['ayatNo'] == ayat.nomorAyat && currentItem?.extras?['isMurottal'] == false;
+    final isPlaying = isThisAyatLoaded && _audioPlayer.playing && _audioPlayer.processingState != ProcessingState.completed;
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -615,9 +621,9 @@ class _DetailSuratScreenState extends State<DetailSuratScreen> {
                     ),
                     IconButton(
                       icon: Icon(
-                        _playingAyat == ayat.nomorAyat ? Icons.stop_circle : Icons.play_arrow, 
+                        isPlaying ? Icons.pause_circle_filled : Icons.play_circle_filled, 
                         color: AppColors.primaryGreen, 
-                        size: 24
+                        size: 28
                       ),
                       onPressed: () {
                         // Ambil audio sesuai imam (Qori) yang dipilih
