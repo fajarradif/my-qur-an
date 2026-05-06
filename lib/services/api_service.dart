@@ -143,6 +143,51 @@ class ApiService {
     }
   }
 
+  // 6. Mengambil Berita Islami (Republika Islam)
+  static Future<List<Map<String, dynamic>>> getNews() async {
+    try {
+      final response = await http.get(Uri.parse('https://api-berita-indonesia.vercel.app/republika/islam/'));
+      
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data['success'] == true) {
+          return List<Map<String, dynamic>>.from(data['data']['posts']);
+        }
+      }
+      throw Exception('Gagal memuat berita');
+    } catch (e) {
+      print('Error News API: $e');
+      // Kembalikan data fallback jika API gagal agar tidak kosong
+      return [
+        {
+          'title': 'Pentingnya Menjaga Ukhuwah Islamiyah di Era Digital',
+          'pubDate': DateTime.now().toIso8601String(),
+          'thumbnail': 'https://images.unsplash.com/photo-1542810634-71277d95dcbb?q=80&w=500&auto=format&fit=crop',
+        },
+        {
+          'title': 'Tips Mendidik Anak Agar Cinta Al-Quran Sejak Dini',
+          'pubDate': DateTime.now().toIso8601String(),
+          'thumbnail': 'https://images.unsplash.com/photo-1584281723501-4479e001859c?q=80&w=500&auto=format&fit=crop',
+        },
+        {
+          'title': 'Sejarah Singkat Pembangunan Masjid Nabawi',
+          'pubDate': DateTime.now().toIso8601String(),
+          'thumbnail': 'https://images.unsplash.com/photo-1591604129939-f1efa4d9f7fa?q=80&w=500&auto=format&fit=crop',
+        },
+        {
+          'title': 'Keutamaan Menjaga Wudhu dalam Kehidupan Sehari-hari',
+          'pubDate': DateTime.now().toIso8601String(),
+          'thumbnail': 'https://images.unsplash.com/photo-1564121211835-e88c852648ab?q=80&w=500&auto=format&fit=crop',
+        },
+        {
+          'title': 'Adab-adab Berdoa Agar Cepat Dikabulkan Allah',
+          'pubDate': DateTime.now().toIso8601String(),
+          'thumbnail': 'https://images.unsplash.com/photo-1507692049790-de58290a4334?q=80&w=500&auto=format&fit=crop',
+        }
+      ];
+    }
+  }
+
   // Helper untuk mendapatkan jadwal sholat selanjutnya
   static Map<String, dynamic> getNextPrayer(Jadwal jadwal) {
     final now = DateTime.now();

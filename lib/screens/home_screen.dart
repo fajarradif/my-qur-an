@@ -34,6 +34,7 @@ class _HomeScreenState extends State<HomeScreen> {
   int _currentPage = 0;
   bool _showAllFeaturesGrid = false;
   late Future<Jadwal> futureJadwal;
+  Future<List<Map<String, dynamic>>>? futureNews;
   late Timer _timer;
   late PageController _pageController;
   late ScrollController _scrollController;
@@ -52,6 +53,7 @@ class _HomeScreenState extends State<HomeScreen> {
     
     // Set fallback awal sebelum loading selesai
     futureJadwal = ApiService.getJadwalSholat(_defaultCityId);
+    futureNews = ApiService.getNews();
     _initializeLocationAndJadwal();
     
     _scrollController = ScrollController();
@@ -937,94 +939,85 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  final List<News> _newsList = [
-    News(
-      title: 'Mengenal Sejarah Pembangunan Masjid Nabawi di Madinah',
-      source: 'Republika',
-      time: '2 jam yang lalu',
-      imageUrl: 'https://static.republika.co.id/uploads/images/inpicture_slide/masjid-nabawi-madinah_210511145831-294.jpg',
-      url: 'https://republika.co.id',
-    ),
-    News(
-      title: 'Tips Menjaga Konsistensi Ibadah Pasca Ramadhan',
-      source: 'Sindonews',
-      time: '5 jam yang lalu',
-      imageUrl: 'https://pict.sindonews.net/dyn/850/pena/news/2024/04/15/67/1359404/tips-menjaga-istiqamah-beribadah-setelah-ramadhan-vml.jpg',
-      url: 'https://sindonews.com',
-    ),
-    News(
-      title: 'Update Kondisi Palestina: Bantuan Kemanusiaan Terus Mengalir',
-      source: 'Antara News',
-      time: '8 jam yang lalu',
-      imageUrl: 'https://img.antaranews.com/cache/1200x800/2023/11/04/antarafoto-bantuan-kemanusiaan-untuk-palestina-041123-adn-3.jpg.webp',
-      url: 'https://antaranews.com',
-    ),
-  ];
-
   Widget _buildNewsSection() {
-    return SizedBox(
-      height: 240,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        itemCount: _newsList.length,
-        itemBuilder: (context, index) {
-          final news = _newsList[index];
-          return Container(
-            width: 280,
-            margin: const EdgeInsets.only(right: 16),
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 5)),
-              ],
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(20),
-              child: Column(
+    if (futureNews == null) {
+      return const Center(child: CircularProgressIndicator(color: AppColors.primaryYellow));
+    }
+    return FutureBuilder<List<Map<String, dynamic>>>(
+      future: futureNews,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator(color: AppColors.primaryYellow));
+        }
+        if (snapshot.hasError || !snapshot.hasData) {
+          return const Text('Gagal memuat berita', style: TextStyle(color: Colors.red));
+        }
+
+        final newsList = snapshot.data!;
+
+        return ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: newsList.length > 5 ? 5 : newsList.length, // Tampilkan maksimal 5 berita
+          itemBuilder: (context, index) {
+            final news = newsList[index];
+            return Container(
+              margin: const EdgeInsets.only(bottom: 20),
+              child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Image.network(
-                    news.imageUrl,
-                    height: 140,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => Container(
-                      height: 140,
-                      color: AppColors.iconBgGreen,
-                      child: const Icon(Icons.image_not_supported, color: AppColors.primaryGreen),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(12),
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          children: [
-                            Text(news.source, style: const TextStyle(color: AppColors.primaryYellow, fontWeight: FontWeight.bold, fontSize: 10)),
-                            const SizedBox(width: 8),
-                            Text('•', style: TextStyle(color: Colors.grey[400])),
-                            const SizedBox(width: 8),
-                            Text(news.time, style: TextStyle(color: Colors.grey[500], fontSize: 10)),
-                          ],
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: AppColors.emeraldGreen.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: const Text(
+                            'NASIONAL',
+                            style: TextStyle(color: AppColors.emeraldGreen, fontSize: 10, fontWeight: FontWeight.bold),
+                          ),
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          news.title,
-                          maxLines: 2,
+                          news['title'],
+                          maxLines: 3,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(color: AppColors.primaryGreen, fontWeight: FontWeight.bold, fontSize: 14, height: 1.3),
+                          style: const TextStyle(color: AppColors.primaryGreen, fontWeight: FontWeight.bold, fontSize: 15, height: 1.3),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          DateFormat('d MMM yyyy').format(DateTime.parse(news['pubDate'])),
+                          style: TextStyle(color: Colors.grey[500], fontSize: 10),
                         ),
                       ],
                     ),
                   ),
+                  const SizedBox(width: 16),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.network(
+                      news['thumbnail'],
+                      width: 100,
+                      height: 80,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => Container(
+                        width: 100,
+                        height: 80,
+                        color: AppColors.iconBgGreen,
+                        child: const Icon(Icons.image_not_supported, color: AppColors.primaryGreen),
+                      ),
+                    ),
+                  ),
                 ],
               ),
-            ),
-          );
-        },
-      ),
+            );
+          },
+        );
+      }
     );
   }
 
