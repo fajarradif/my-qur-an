@@ -19,6 +19,7 @@ import '../widgets/location_picker_sheet.dart';
 import 'murottal_screen.dart';
 import 'doa_screen.dart';
 import 'hijri_calendar_screen.dart';
+import 'dzikir_pagi_petang_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -222,9 +223,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 });
               },
               children: [
+                _buildHijriCard(),
                 LastReadCard(onRefresh: () => setState(() {})),
                 _buildCountdownCard(),
-                _buildHijriCard(),
               ],
             ),
           ),
@@ -686,10 +687,12 @@ class _HomeScreenState extends State<HomeScreen> {
           Navigator.push(context, MaterialPageRoute(builder: (context) => const HijriCalendarScreen()));
         },
       ),
-      // Tombol bayangan agar tata letaknya seimbang (4 kolom)
-      const Opacity(
-        opacity: 0,
-        child: FeatureMenuButton(icon: Icons.error, label: 'Hidden', onTap: _emptyFunction),
+      FeatureMenuButton(
+        icon: Icons.auto_awesome,
+        label: 'Zikir',
+        onTap: () {
+          Navigator.push(context, MaterialPageRoute(builder: (context) => const DzikirPagiPetangScreen()));
+        },
       ),
     ];
   }
