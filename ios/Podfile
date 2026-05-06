@@ -1,0 +1,25 @@
+# Set jalur absolut ke script podhelper Flutter (Hasil instalasi Homebrew)
+install_path = '/usr/local/share/flutter/packages/flutter_tools/bin/podhelper.rb'
+load install_path if File.exist?(install_path)
+
+# Set versi minimum iOS
+platform :ios, '13.0'
+
+target 'Runner' do
+  use_frameworks!
+  use_modular_headers!
+
+  # Fungsi ini sekarang akan terbaca karena podhelper sudah di-load di atas
+  flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
+end
+
+post_install do |installer|
+  installer.pods_project.targets.each do |target|
+    flutter_additional_ios_build_settings(target)
+    
+    # Tambahan untuk memastikan arsitektur simulator aman
+    target.build_configurations.each do |config|
+      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'
+    end
+  end
+end
