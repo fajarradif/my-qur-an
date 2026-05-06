@@ -1,8 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:just_audio_background/just_audio_background.dart';
+import 'package:audio_session/audio_session.dart';
 import 'screens/home_screen.dart';
 import 'theme/app_theme.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  await JustAudioBackground.init(
+    androidNotificationChannelId: 'com.example.myQuran.audio',
+    androidNotificationChannelName: 'Audio playback',
+    androidNotificationOngoing: true,
+  );
+
+  final session = await AudioSession.instance;
+  await session.configure(const AudioSessionConfiguration.music());
+
   runApp(const MyQuranApp());
 }
 

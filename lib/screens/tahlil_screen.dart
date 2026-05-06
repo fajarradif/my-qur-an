@@ -7,7 +7,8 @@ import '../services/api_service.dart';
 import '../services/bookmark_service.dart';
 import 'detail_surat_screen.dart';
 import '../widgets/quran_number_marker.dart';
-import 'package:audioplayers/audioplayers.dart';
+import 'package:just_audio/just_audio.dart';
+import 'package:just_audio_background/just_audio_background.dart';
 
 class TahlilScreen extends StatefulWidget {
   const TahlilScreen({super.key});
@@ -31,8 +32,10 @@ class _TahlilScreenState extends State<TahlilScreen> {
     futureYasin = ApiService.getDetailSurat(36); // Surah Yasin
     _loadLastRead();
     
-    _audioPlayer.onPlayerComplete.listen((event) {
-      if (mounted) setState(() => _playingAyat = null);
+    _audioPlayer.playerStateStream.listen((state) {
+      if (mounted && state.processingState == ProcessingState.completed) {
+        setState(() => _playingAyat = null);
+      }
     });
   }
 
@@ -49,7 +52,17 @@ class _TahlilScreenState extends State<TahlilScreen> {
         setState(() => _playingAyat = null);
       } else {
         await _audioPlayer.stop();
-        await _audioPlayer.play(UrlSource(audioUrl));
+        await _audioPlayer.setAudioSource(AudioSource.uri(
+          Uri.parse(audioUrl),
+          tag: MediaItem(
+            id: audioUrl,
+            album: "My Quran",
+            title: "Ayat Yasin $ayatNo",
+            artist: "Misyari Rasyid",
+            artUri: Uri.parse('https://images.unsplash.com/photo-1584286595398-a59f21d313f5?q=80&w=1000&auto=format&fit=crop'),
+          ),
+        ));
+        await _audioPlayer.play();
         setState(() => _playingAyat = ayatNo);
       }
     } catch (e) {
