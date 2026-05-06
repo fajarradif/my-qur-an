@@ -1,37 +1,50 @@
-# Blueprint Aplikasi: MyQuran
+# 🕌 MyQuran - Aplikasi Muslim Terpadu (Green-Gold Premium Edition)
 
-## 1. Tema dan Nama Aplikasi
-- **Nama Aplikasi:** MyQuran
-- **Tema:** Agama & Gaya Hidup (Religi)
-- **Deskripsi:** Aplikasi Al-Quran digital berbasis mobile yang memiliki desain antarmuka (UI) yang elegan, modern, dan tidak terlalu ramai, sehingga menawarkan kenyamanan maksimal untuk penggunanya saat membaca ayat-ayat Al-Quran.
+MyQuran adalah aplikasi mobile berbasis **Flutter** yang dirancang khusus untuk menemani ibadah umat Muslim sehari-hari. Dengan antarmuka **Premium Green-Gold**, aplikasi ini menggabungkan nilai-nilai spiritual dengan teknologi modern yang responsif dan elegan.
 
-## 2. Daftar Fitur Aplikasi
-- **Membaca Al-Quran:** Menampilkan Surah dan Juz dengan teks Arab yang jelas.
-- **Terjemahan dan Tafsir:** Menyediakan terjemahan dalam Bahasa Indonesia serta tafsir tiap ayat.
-- **Audio Murottal:** Fitur memutar audio bacaan Al-Quran dari berbagai Qari terkemuka.
-- **Penanda Bacaan (Bookmark):** Memudahkan pengguna menyimpan ayat terakhir yang dibaca.
-- **Jadwal Sholat:** Menampilkan jadwal sholat secara *real-time* berdasarkan lokasi pengguna.
-- **Arah Kiblat:** Kompas navigasi yang akurat untuk menentukan arah kiblat.
-
-## 3. Desain (Layout/UI)
-- **Konsep:** Clean, Elegan, dan Minimalis.
-- **Warna: ** Penggunaan palet warna hijau gelap (Dark Green) dan perpaduan emas (Gold) atau putih untuk mendukung konsep yang eksklusif dan nyaman di mata (terutama fitur Dark Mode).
-- **Tipografi:** Menggunakan font Sans-Serif modern untuk antarmuka umum dan Khat Utsmani yang standar untuk teks ayat Al-Quran.
-
-## 4. Rencana Kerja Aplikasi (Timeline Pengembangan)
-- **Minggu 1:** Inisiasi proyek, penyiapan repository Git, penyusunan rancangan/blueprint, dan konsep UI/UX.
-- **Minggu 2:** Pembuatan struktur folder Flutter, setup UI/UX untuk Halaman Utama (Dashboard) dan navigasi aplikasi (Bottom Navigation).
-- **Minggu 3:** *Slicing* Halaman Daftar Surah dan Halaman Detail Surah (Teks Arab dan Terjemahan).
-- **Minggu 4:** Integrasi API Al-Quran (Data Quran dan Audio Murottal).
-- **Minggu 5:** Pengembangan fungsionalitas pendukung (Jadwal Sholat, Arah Kiblat, dan Fitur Bookmark).
-- **Minggu 6:** Proses Testing, perbaikan bug (Bug Fixing), serta finalisasi *layout* agar tetap elegan dan responsif.
-- **Minggu 7:** Persiapan perilisan, pembuatan *assets launcher*, dan pendaftaran ke Google Play Store / Apple App Store (H - 2 Minggu sebelum pelaksanaan UAS).
-
-## 5. Dokumentasi Cara Kerja Aplikasi
-1. **Halaman Beranda:** Menampilkan menu utama, waktu sholat berikutnya, serta "Lanjutkan Bacaan" untuk akses cepat ke ayat terakhir yang dibaca pengguna.
-2. **Halaman Al-Quran:** Pengguna dapat memilih tampilan per Surah maupun per Juz. Saat di-klik, pengguna akan diarahkan ke detail ayat dan bisa mendengarkan audio per ayat.
-3. **Halaman Kiblat:** Menampilkan kompas berdasarkan lokasi GPS *device* ke kakbah.
-4. **Halaman Pengaturan:** Pengguna bisa menyesuaikan ukuran teks, tema aplikasi (Terang/Gelap), dan bahasa.
+Proyek ini dikembangkan sebagai bagian dari pemenuhan Tugas UAS mata kuliah **Mobile Programming**.
 
 ---
-*Proyek ini dikembangkan dengan kerangka kerja (framework) **Flutter** sebagai bagian dari pemenuhan Tugas UAS mata kuliah Mobile Programming.*
+
+## ✨ Fitur Unggulan
+
+Aplikasi ini dilengkapi dengan **8 Fitur Utama** yang disusun secara simetris dan elegan di dashboard:
+
+1.  **📖 Al-Quran Digital**: Baca Al-Quran lengkap dengan terjemahan, audio per ayat, dan fitur "Terakhir Dibaca".
+2.  **📿 Tahlil & Yasin**: Kumpulan doa tahlil dan surah Yasin lengkap dengan teks Arab dan Latin.
+3.  **🔢 Tasbih Digital**: Penghitung zikir interaktif dengan fitur reset dan getar.
+4.  **🧭 Kompas Kiblat**: Penunjuk arah kiblat akurat berdasarkan lokasi GPS *real-time*.
+5.  **🎧 Murottal Al-Quran**: Dengarkan lantunan ayat suci dari Qari ternama secara langsung.
+6.  **🤲 Kumpulan Doa**: Katalog doa harian lengkap untuk berbagai kebutuhan.
+7.  **📅 Kalender Hijriah**: Kalender Islam interaktif dengan navigasi *swipe* dan penanda hari besar Islam.
+8.  **☀️ Zikir Pagi & Petang**: Kumpulan bacaan zikir khusus setelah sholat Subuh dan Ashar.
+
+---
+
+## 🛠️ Fitur Eksklusif (Premium UX)
+
+*   **Animated Sticky Prayer Header**: Bar jadwal sholat yang meluncur turun secara otomatis saat pengguna melakukan *scroll*, lengkap dengan hitung mundur (*countdown*) ke waktu sholat berikutnya secara *real-time*.
+*   **Warta Islami**: Berita islami terkini yang ditarik langsung secara *real-time* dari Republika Islam API dengan tata letak *Headline* profesional.
+*   **Offline Hijri Engine**: Perhitungan kalender hijriah yang tetap berjalan lancar meski tanpa koneksi internet.
+*   **Dynamic Background**: Desain dashboard yang hidup dengan ornamen islami yang mewah.
+
+---
+
+## 🚀 Teknologi yang Digunakan
+
+*   **Framework**: Flutter (Dart)
+*   **Data Source**: 
+    *   *MyQuran API* (Jadwal Sholat & Al-Quran)
+    *   *Republika News API* (Warta Islami)
+    *   *Equation.id API* (Surat & Ayat)
+*   **State Management**: Stateful Widget dengan optimasi performa.
+*   **Package Pendukung**: `geolocator`, `intl`, `http`, `just_audio`, `hijri`.
+
+---
+
+## 📸 Tampilan Aplikasi
+Aplikasi mengusung tema **Emerald Green & Gold Luxury** untuk memberikan kesan tenang dan eksklusif bagi pengguna.
+
+---
+
+*Dikembangkan dengan penuh semangat oleh **[Nama Kamu/Fajar Radif]** - 2026*

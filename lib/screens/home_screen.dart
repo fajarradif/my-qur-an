@@ -949,11 +949,13 @@ class _HomeScreenState extends State<HomeScreen> {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator(color: AppColors.primaryYellow));
         }
-        if (snapshot.hasError || !snapshot.hasData) {
-          return const Text('Gagal memuat berita', style: TextStyle(color: Colors.red));
+        
+        // Selalu ambil data, kalau snapshot kosong pakai list kosong biar nggak eror
+        final newsList = snapshot.data ?? [];
+        
+        if (newsList.isEmpty) {
+           return const SizedBox.shrink();
         }
-
-        final newsList = snapshot.data!;
 
         return ListView.builder(
           shrinkWrap: true,

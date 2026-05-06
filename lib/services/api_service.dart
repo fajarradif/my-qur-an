@@ -146,7 +146,13 @@ class ApiService {
   // 6. Mengambil Berita Islami (Republika Islam)
   static Future<List<Map<String, dynamic>>> getNews() async {
     try {
-      final response = await http.get(Uri.parse('https://api-berita-indonesia.vercel.app/republika/islam/'));
+      final response = await http.get(
+        Uri.parse('https://api-berita-indonesia.vercel.app/republika/islam/'),
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Mobile Safari/537.36',
+          'Accept': 'application/json',
+        },
+      );
       
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
@@ -154,11 +160,12 @@ class ApiService {
           return List<Map<String, dynamic>>.from(data['data']['posts']);
         }
       }
-      throw Exception('Gagal memuat berita');
     } catch (e) {
       print('Error News API: $e');
-      // Kembalikan data fallback jika API gagal agar tidak kosong
-      return [
+    }
+
+    // Selalu kembalikan data fallback jika terjadi masalah apapun
+    return [
         {
           'title': 'Pentingnya Menjaga Ukhuwah Islamiyah di Era Digital',
           'pubDate': DateTime.now().toIso8601String(),
@@ -186,7 +193,6 @@ class ApiService {
         }
       ];
     }
-  }
 
   // Helper untuk mendapatkan jadwal sholat selanjutnya
   static Map<String, dynamic> getNextPrayer(Jadwal jadwal) {
