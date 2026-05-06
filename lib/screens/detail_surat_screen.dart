@@ -320,6 +320,7 @@ class _DetailSuratScreenState extends State<DetailSuratScreen> {
                 fontSize: fontSize,
                 fontFamily: 'QuranFont',
                 color: AppColors.textDark,
+                backgroundColor: isCurrentBookmark ? AppColors.primaryYellow.withOpacity(0.25) : null,
                 height: 2.2,
                 wordSpacing: 2, 
               ),
@@ -358,7 +359,7 @@ class _DetailSuratScreenState extends State<DetailSuratScreen> {
                   number: a.nomorAyat.toString(),
                   size: fontSize * 1.2, 
                   isInline: true,
-                  color: isCurrentBookmark ? AppColors.primaryYellow : const Color(0xFFC5A358),
+                  color: isCurrentBookmark ? const Color(0xFF800000) : const Color(0xFFC5A358), // Merah Maroon jika bookmark
                 ),
               ),
             ),
