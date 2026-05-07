@@ -80,9 +80,9 @@ class _TasbihScreenState extends State<TasbihScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: AppColors.background,
+        backgroundColor: AppColors.bg(context),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Set Target Dzikir', style: TextStyle(color: AppColors.primaryGreen, fontWeight: FontWeight.bold)),
+        title: Text('Set Target Dzikir', style: TextStyle(color: AppColors.primaryGreen, fontWeight: FontWeight.bold)),
         content: TextField(
           controller: targetEditController,
           keyboardType: TextInputType.number,
@@ -91,7 +91,7 @@ class _TasbihScreenState extends State<TasbihScreen> {
           decoration: InputDecoration(
             hintText: 'Contoh: 33, 99, 100',
             filled: true,
-            fillColor: AppColors.surface,
+            fillColor: AppColors.sf(context),
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
           ),
         ),

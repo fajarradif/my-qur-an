@@ -738,7 +738,12 @@ class _HomeScreenState extends State<HomeScreen> {
         icon: Icons.menu_book,
         label: 'Al-Quran',
         onTap: () {
-           setState(() => _selectedIndex = 1);
+          setState(() => _selectedIndex = 1);
+          _mainPageController.animateToPage(
+            1,
+            duration: const Duration(milliseconds: 500),
+            curve: Curves.easeInOutQuart,
+          );
         },
       ),
       FeatureMenuButton(

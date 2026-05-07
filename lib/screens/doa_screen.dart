@@ -42,13 +42,13 @@ class _DoaScreenState extends State<DoaScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.bg(context),
       appBar: AppBar(
-        title: const Text('Doa-doa Harian', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text('Doa-doa Harian', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.isDark(context) ? Colors.white : AppColors.primaryGreen)),
         centerTitle: true,
         elevation: 0,
-        backgroundColor: AppColors.background,
-        iconTheme: const IconThemeData(color: AppColors.primaryGreen),
+        backgroundColor: AppColors.bg(context),
+        iconTheme: IconThemeData(color: AppColors.isDark(context) ? Colors.white : AppColors.primaryGreen),
       ),
       body: Column(
         children: [
@@ -63,11 +63,11 @@ class _DoaScreenState extends State<DoaScreen> {
                   return Center(
                     child: Padding(
                       padding: const EdgeInsets.all(20),
-                      child: Text('Error: ${snapshot.error}', textAlign: TextAlign.center),
+                      child: Text('Error: ${snapshot.error}', textAlign: TextAlign.center, style: TextStyle(color: AppColors.isDark(context) ? Colors.white : Colors.black)),
                     ),
                   );
                 } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return const Center(child: Text('Tidak ada data doa.'));
+                  return Center(child: Text('Tidak ada data doa.', style: TextStyle(color: AppColors.isDark(context) ? Colors.white : Colors.black)));
                 }
 
                 if (_allDoas.isEmpty) {
@@ -97,11 +97,13 @@ class _DoaScreenState extends State<DoaScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
       child: TextField(
         controller: _searchController,
+        style: TextStyle(color: AppColors.isDark(context) ? Colors.white : Colors.black),
         decoration: InputDecoration(
           hintText: 'Cari doa...',
-          prefixIcon: const Icon(Icons.search, color: AppColors.primaryGreen),
+          hintStyle: TextStyle(color: AppColors.isDark(context) ? Colors.white54 : Colors.grey),
+          prefixIcon: Icon(Icons.search, color: AppColors.isDark(context) ? AppColors.primaryYellow : AppColors.primaryGreen),
           filled: true,
-          fillColor: AppColors.surface,
+          fillColor: AppColors.sf(context),
           contentPadding: const EdgeInsets.symmetric(vertical: 12),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
@@ -122,10 +124,10 @@ class _DoaScreenState extends State<DoaScreen> {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: AppColors.sf(context),
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
-            BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4)),
+            BoxShadow(color: Colors.black.withOpacity(AppColors.isDark(context) ? 0.3 : 0.03), blurRadius: 10, offset: const Offset(0, 4)),
           ],
         ),
         child: Row(
@@ -136,16 +138,16 @@ class _DoaScreenState extends State<DoaScreen> {
                 color: AppColors.primaryGreen.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.menu_book, color: AppColors.primaryGreen, size: 20),
+              child: Icon(Icons.menu_book, color: AppColors.isDark(context) ? AppColors.primaryYellow : AppColors.primaryGreen, size: 20),
             ),
             const SizedBox(width: 16),
             Expanded(
               child: Text(
                 doa.judul,
-                style: const TextStyle(color: AppColors.primaryGreen, fontSize: 15, fontWeight: FontWeight.bold),
+                style: TextStyle(color: AppColors.isDark(context) ? Colors.white : AppColors.primaryGreen, fontSize: 15, fontWeight: FontWeight.bold),
               ),
             ),
-            const Icon(Icons.arrow_forward_ios, color: AppColors.primaryGreen, size: 14),
+            Icon(Icons.arrow_forward_ios, color: AppColors.isDark(context) ? AppColors.primaryYellow : AppColors.primaryGreen, size: 14),
           ],
         ),
       ),
@@ -160,12 +162,12 @@ class DoaDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.bg(context),
       appBar: AppBar(
-        title: const Text('Detail Doa', style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: AppColors.background,
+        title: Text('Detail Doa', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.isDark(context) ? Colors.white : AppColors.primaryGreen)),
+        backgroundColor: AppColors.bg(context),
         elevation: 0,
-        iconTheme: const IconThemeData(color: AppColors.primaryGreen),
+        iconTheme: IconThemeData(color: AppColors.isDark(context) ? Colors.white : AppColors.primaryGreen),
         actions: [
           IconButton(
             icon: const Icon(Icons.copy),
@@ -186,8 +188,8 @@ class DoaDetailScreen extends StatelessWidget {
             Text(
               doa.judul,
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: AppColors.primaryGreen,
+              style: TextStyle(
+                color: AppColors.isDark(context) ? AppColors.primaryYellow : AppColors.primaryGreen,
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
               ),
@@ -196,8 +198,8 @@ class DoaDetailScreen extends StatelessWidget {
             Text(
               doa.doa,
               textAlign: TextAlign.right,
-              style: const TextStyle(
-                color: AppColors.primaryGreen,
+              style: TextStyle(
+                color: AppColors.isDark(context) ? Colors.white : AppColors.primaryGreen,
                 fontSize: 26,
                 fontFamily: 'QuranFont',
                 height: 2,
@@ -207,20 +209,20 @@ class DoaDetailScreen extends StatelessWidget {
             if (doa.latin.isNotEmpty) ...[
               Text(
                 doa.latin,
-                style: const TextStyle(
-                  color: AppColors.primaryGreen,
+                style: TextStyle(
+                  color: AppColors.isDark(context) ? Colors.white70 : AppColors.primaryGreen,
                   fontSize: 16,
                   fontStyle: FontStyle.italic,
                 ),
               ),
               const SizedBox(height: 16),
             ],
-            const Divider(color: AppColors.primaryGreen, thickness: 0.5),
+            Divider(color: AppColors.isDark(context) ? Colors.white24 : AppColors.primaryGreen, thickness: 0.5),
             const SizedBox(height: 16),
-            const Text(
+            Text(
               'Artinya:',
               style: TextStyle(
-                color: AppColors.primaryGreen,
+                color: AppColors.isDark(context) ? AppColors.primaryYellow : AppColors.primaryGreen,
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
               ),
@@ -228,8 +230,8 @@ class DoaDetailScreen extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               doa.artinya,
-              style: const TextStyle(
-                color: AppColors.primaryGreen,
+              style: TextStyle(
+                color: AppColors.isDark(context) ? Colors.white70 : AppColors.primaryGreen,
                 fontSize: 15,
                 height: 1.5,
               ),

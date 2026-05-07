@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../main.dart'; // Import main.dart buat akses MyQuranApp.of
 
 class AppColors {
   // ============ LIGHT THEME ============
@@ -32,35 +33,35 @@ class AppColors {
   static const Color darkGold = Color(0xFFFFCC4D);
 
   // ============ ADAPTIVE HELPERS ============
-  // Pakai ini di widget supaya otomatis ikut tema
+  // Sekarang nembak langsung ke MyQuranApp.of(context) biar instan!
   
   static Color bg(BuildContext context) =>
-    Theme.of(context).brightness == Brightness.dark ? darkBackground : background;
+    MyQuranApp.of(context).isDarkMode ? darkBackground : background;
 
   static Color sf(BuildContext context) =>
-    Theme.of(context).brightness == Brightness.dark ? darkSurface : surface;
+    MyQuranApp.of(context).isDarkMode ? darkSurface : surface;
 
   static Color card(BuildContext context) =>
-    Theme.of(context).brightness == Brightness.dark ? darkCard : surface;
+    MyQuranApp.of(context).isDarkMode ? darkCard : surface;
 
   static Color green(BuildContext context) =>
-    Theme.of(context).brightness == Brightness.dark ? darkPrimaryGreen : primaryGreen;
+    MyQuranApp.of(context).isDarkMode ? darkPrimaryGreen : primaryGreen;
 
   static Color gold(BuildContext context) =>
-    Theme.of(context).brightness == Brightness.dark ? darkGold : primaryYellow;
+    MyQuranApp.of(context).isDarkMode ? darkGold : primaryYellow;
 
   static Color muted(BuildContext context) =>
-    Theme.of(context).brightness == Brightness.dark ? darkMutedGreen : mutedGreen;
+    MyQuranApp.of(context).isDarkMode ? darkMutedGreen : mutedGreen;
 
   static Color text1(BuildContext context) =>
-    Theme.of(context).brightness == Brightness.dark ? darkTextPrimary : textDark;
+    MyQuranApp.of(context).isDarkMode ? darkTextPrimary : textDark;
 
   static Color text2(BuildContext context) =>
-    Theme.of(context).brightness == Brightness.dark ? darkTextSecondary : mutedGreen;
+    MyQuranApp.of(context).isDarkMode ? darkTextSecondary : mutedGreen;
 
   static Color iconBg(BuildContext context) =>
-    Theme.of(context).brightness == Brightness.dark ? darkIconBg : iconBgGreen;
+    MyQuranApp.of(context).isDarkMode ? darkIconBg : iconBgGreen;
 
   static bool isDark(BuildContext context) =>
-    Theme.of(context).brightness == Brightness.dark;
+    MyQuranApp.of(context).isDarkMode;
 }

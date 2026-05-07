@@ -7,6 +7,8 @@ import '../services/bookmark_service.dart';
 import '../widgets/quran_number_marker.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_background/just_audio_background.dart';
+import '../main.dart';
+import 'dart:ui';
 
 class TahlilScreen extends StatefulWidget {
   const TahlilScreen({super.key});
@@ -83,12 +85,14 @@ class _TahlilScreenState extends State<TahlilScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = MyQuranApp.of(context).isDarkMode;
+    
     return DefaultTabController(
       length: 2,
       child: Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: AppColors.bg(context),
         appBar: AppBar(
-          backgroundColor: AppColors.deepGreen,
+          backgroundColor: AppColors.primaryGreen,
           elevation: 0,
           leading: IconButton(
             icon: const Icon(Icons.arrow_back, color: Colors.white),
@@ -102,42 +106,28 @@ class _TahlilScreenState extends State<TahlilScreen> {
           actions: [
             IconButton(
               icon: Icon(
-                _isMushafMode ? Icons.list_alt : Icons.menu_book,
+                isDark ? Icons.light_mode : Icons.dark_mode,
                 color: Colors.white,
               ),
-              tooltip: _isMushafMode ? 'Mode Detail' : 'Mode Lafadz',
               onPressed: () {
                 setState(() {
-                  _isMushafMode = !_isMushafMode;
+                  MyQuranApp.of(context).toggleTheme();
                 });
               },
             ),
-          ],
-          bottom: PreferredSize(
-            preferredSize: const Size.fromHeight(60),
-            child: Container(
-              margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-              padding: const EdgeInsets.all(4),
-              decoration: BoxDecoration(
-                color: AppColors.iconBgGreen.withValues(alpha: 0.3),
-                borderRadius: BorderRadius.circular(15),
-              ),
-              child: TabBar(
-                indicator: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  color: AppColors.primaryYellow,
-                ),
-                labelColor: AppColors.deepGreen,
-                unselectedLabelColor: Colors.white70,
-                labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                indicatorSize: TabBarIndicatorSize.tab,
-                dividerColor: Colors.transparent,
-                tabs: const [
-                  Tab(text: 'Tahlil'),
-                  Tab(text: 'Yasin'),
-                ],
-              ),
+            IconButton(
+              icon: Icon(_isMushafMode ? Icons.list_alt : Icons.menu_book, color: Colors.white),
+              onPressed: () => setState(() => _isMushafMode = !_isMushafMode),
             ),
+          ],
+          bottom: TabBar(
+            labelColor: AppColors.primaryYellow,
+            unselectedLabelColor: Colors.white70,
+            indicatorColor: AppColors.primaryYellow,
+            tabs: const [
+              Tab(text: 'TAHLIL'),
+              Tab(text: 'SURAH YASIN'),
+            ],
           ),
         ),
         body: TabBarView(
@@ -157,11 +147,9 @@ class _TahlilScreenState extends State<TahlilScreen> {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator(color: AppColors.primaryGreen));
         } else if (snapshot.hasError) {
-          return _buildErrorState(snapshot.error.toString(), () {
-            setState(() => futureTahlil = ApiService.getTahlilList());
-          });
+          return Center(child: Text('Error: ${snapshot.error}', style: TextStyle(color: AppColors.text1(context))));
         } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return const Center(child: Text('Data Tahlil tidak tersedia'));
+          return Center(child: Text('Data Tahlil tidak tersedia', style: TextStyle(color: AppColors.text1(context))));
         }
 
         final tahlilData = snapshot.data!;
@@ -169,12 +157,82 @@ class _TahlilScreenState extends State<TahlilScreen> {
           padding: const EdgeInsets.all(20),
           itemCount: tahlilData.length,
           itemBuilder: (context, index) {
+            final tahlil = tahlilData[index];
             return _isMushafMode 
-                ? _buildMushafTahlilCard(tahlilData[index])
-                : _buildTahlilCard(tahlilData[index]);
+                ? _buildMushafTahlilCard(tahlil)
+                : _buildTahlilCard(tahlil);
           },
         );
       },
+    );
+  }
+
+  Widget _buildTahlilCard(Tahlil tahlil) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppColors.sf(context),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(AppColors.isDark(context) ? 0.3 : 0.03), blurRadius: 10, offset: const Offset(0, 4)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            tahlil.title,
+            style: TextStyle(
+              color: AppColors.gold(context),
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            tahlil.arabic,
+            textAlign: TextAlign.right,
+            style: TextStyle(
+              color: AppColors.text1(context),
+              fontSize: 26,
+              fontFamily: 'QuranFont',
+              height: 2,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            tahlil.translation,
+            style: TextStyle(
+              color: AppColors.text2(context),
+              fontSize: 14,
+              height: 1.5,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMushafTahlilCard(Tahlil tahlil) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 24),
+      decoration: BoxDecoration(
+        color: AppColors.sf(context),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.gold(context).withOpacity(0.3), width: 1),
+      ),
+      child: Text(
+        tahlil.arabic,
+        textAlign: TextAlign.right,
+        style: TextStyle(
+          fontSize: 28,
+          fontFamily: 'QuranFont',
+          color: AppColors.text1(context),
+          height: 2.2,
+        ),
+      ),
     );
   }
 
@@ -185,11 +243,9 @@ class _TahlilScreenState extends State<TahlilScreen> {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator(color: AppColors.primaryGreen));
         } else if (snapshot.hasError) {
-          return _buildErrorState(snapshot.error.toString(), () {
-            setState(() => futureYasin = ApiService.getDetailSurat(36));
-          });
+          return Center(child: Text('Error: ${snapshot.error}', style: TextStyle(color: AppColors.text1(context))));
         } else if (!snapshot.hasData) {
-          return const Center(child: Text('Data Yasin tidak tersedia'));
+          return Center(child: Text('Data Yasin tidak tersedia', style: TextStyle(color: AppColors.text1(context))));
         }
 
         final yasin = snapshot.data!;
@@ -209,24 +265,91 @@ class _TahlilScreenState extends State<TahlilScreen> {
     );
   }
 
-  Widget _buildMushafTahlilCard(Tahlil tahlil) {
+  Widget _buildAyatCard(String nomor, String arab, String latin, String terjemahan) {
+    final bool isCurrentBookmark = _lastReadAyat == int.tryParse(nomor);
+    final bool isPlaying = _playingAyat == int.tryParse(nomor);
+
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 24),
+      margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: AppColors.sf(context),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.iconBgGreen.withValues(alpha: 0.3)),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(AppColors.isDark(context) ? 0.3 : 0.03), blurRadius: 10, offset: const Offset(0, 4)),
+        ],
+        border: isCurrentBookmark ? Border.all(color: AppColors.primaryYellow, width: 1) : null,
       ),
-      child: Text(
-        tahlil.arabic,
-        textAlign: TextAlign.right,
-        style: const TextStyle(
-          fontSize: 28,
-          fontFamily: 'QuranFont',
-          color: AppColors.textDark,
-          height: 2.2,
-        ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: AppColors.green(context).withOpacity(0.1),
+              borderRadius: const BorderRadius.only(topLeft: Radius.circular(20), topRight: Radius.circular(20)),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                QuranNumberMarker(
+                  number: nomor,
+                  size: 24,
+                  color: isCurrentBookmark 
+                    ? AppColors.primaryYellow 
+                    : (AppColors.isDark(context) ? AppColors.gold(context) : AppColors.primaryGreen),
+                ),
+                Row(
+                  children: [
+                    IconButton(
+                      icon: Icon(isPlaying ? Icons.stop_circle : Icons.play_circle_fill, color: AppColors.gold(context)),
+                      onPressed: () => _playAudio(int.parse(nomor), 'https://cdn.islamic.network/quran/audio/128/ar.alafasy/${36 * 1000 + int.parse(nomor)}.mp3'),
+                    ),
+                    IconButton(
+                      icon: Icon(isCurrentBookmark ? Icons.bookmark : Icons.bookmark_border, color: AppColors.gold(context)),
+                      onPressed: () async {
+                        if (isCurrentBookmark) {
+                          await BookmarkService.clearLastRead();
+                          setState(() => _lastReadAyat = null);
+                        } else {
+                          await BookmarkService.saveLastRead(surah: 36, surahName: 'Yasin', ayat: int.parse(nomor));
+                          setState(() => _lastReadAyat = int.parse(nomor));
+                        }
+                      },
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  arab,
+                  textAlign: TextAlign.right,
+                  style: TextStyle(
+                    color: AppColors.text1(context),
+                    fontSize: 26,
+                    fontFamily: 'QuranFont',
+                    height: 2,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  latin,
+                  style: TextStyle(color: AppColors.gold(context), fontSize: 14, fontStyle: FontStyle.italic),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  terjemahan,
+                  style: TextStyle(color: AppColors.text2(context), fontSize: 13, height: 1.5),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -238,10 +361,10 @@ class _TahlilScreenState extends State<TahlilScreen> {
       spans.add(
         TextSpan(
           text: '${a.teksArab} ',
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 26,
             fontFamily: 'QuranFont',
-            color: AppColors.textDark,
+            color: AppColors.text1(context),
             height: 2.2,
           ),
         ),
@@ -253,31 +376,19 @@ class _TahlilScreenState extends State<TahlilScreen> {
             onTap: () async {
               if (_lastReadAyat == a.nomorAyat) {
                 await BookmarkService.clearLastRead();
-                if (mounted) {
-                  setState(() => _lastReadAyat = null);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Penanda dihapus'), duration: Duration(seconds: 1)),
-                  );
-                }
+                setState(() => _lastReadAyat = null);
               } else {
-                await BookmarkService.saveLastRead(
-                  surah: 36,
-                  surahName: 'Yasin',
-                  ayat: a.nomorAyat,
-                );
-                if (mounted) {
-                  setState(() => _lastReadAyat = a.nomorAyat);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Penanda dipindahkan ke ayat ${a.nomorAyat}'), duration: const Duration(seconds: 2)),
-                  );
-                }
+                await BookmarkService.saveLastRead(surah: 36, surahName: 'Yasin', ayat: a.nomorAyat);
+                setState(() => _lastReadAyat = a.nomorAyat);
               }
             },
             child: QuranNumberMarker(
               number: a.nomorAyat.toString(),
               size: 28,
               isInline: true,
-              color: isCurrentBookmark ? AppColors.primaryYellow : const Color(0xFFC5A358),
+              color: isCurrentBookmark 
+                ? AppColors.primaryYellow 
+                : (AppColors.isDark(context) ? AppColors.gold(context) : AppColors.primaryGreen),
             ),
           ),
         ),
@@ -290,263 +401,13 @@ class _TahlilScreenState extends State<TahlilScreen> {
       child: Container(
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
-          color: const Color(0xFFFDF7E7),
+          color: AppColors.sf(context),
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: const Color(0xFFC5A358), width: 2),
-          boxShadow: [
-            BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 15),
-          ],
+          border: Border.all(color: AppColors.gold(context).withOpacity(0.3), width: 1),
         ),
-        child: Column(
-          children: [
-            const Text(
-              'بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيْمِ',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 28,
-                fontFamily: 'QuranFont',
-                color: AppColors.primaryGreen,
-              ),
-            ),
-            const SizedBox(height: 24),
-            Text.rich(
-              TextSpan(children: spans),
-              textAlign: TextAlign.justify,
-              textDirection: TextDirection.rtl,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTahlilCard(Tahlil tahlil) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 20),
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 15,
-            offset: const Offset(0, 5),
-          ),
-        ],
-        border: Border.all(color: AppColors.iconBgGreen.withValues(alpha: 0.5), width: 1),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            children: [
-              QuranNumberMarker(
-                number: tahlil.id.toString(),
-                color: AppColors.primaryGreen,
-                size: 32,
-                textStyle: const TextStyle(color: AppColors.primaryGreen, fontWeight: FontWeight.bold, fontSize: 10),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  tahlil.title,
-                  style: const TextStyle(
-                    color: AppColors.primaryGreen,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          Text(
-            tahlil.arabic,
-            textAlign: TextAlign.right,
-            style: const TextStyle(
-              fontSize: 26,
-              fontFamily: 'QuranFont',
-              color: AppColors.textDark,
-              height: 2.2,
-            ),
-          ),
-          const SizedBox(height: 20),
-          if (tahlil.latin.isNotEmpty) ...[
-            Text(
-              tahlil.latin,
-              style: const TextStyle(
-                fontSize: 14,
-                color: AppColors.secondaryGreen,
-                height: 1.5,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            const SizedBox(height: 12),
-          ],
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AppColors.iconBgGreen.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Text(
-              tahlil.translation,
-              style: const TextStyle(
-                fontSize: 13,
-                color: AppColors.textDark,
-                height: 1.6,
-                fontStyle: FontStyle.italic,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAyatCard(String number, String arabic, String latin, String translation) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 20),
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 15,
-            offset: const Offset(0, 5),
-          ),
-        ],
-        border: Border.all(color: AppColors.iconBgGreen.withValues(alpha: 0.5), width: 1),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            children: [
-              QuranNumberMarker(
-                number: number,
-                color: AppColors.primaryGreen,
-                size: 32,
-                textStyle: const TextStyle(color: AppColors.primaryGreen, fontWeight: FontWeight.bold, fontSize: 10),
-              ),
-              const Spacer(),
-              IconButton(
-                icon: Icon(
-                  _lastReadAyat == int.tryParse(number) ? Icons.bookmark : Icons.bookmark_border,
-                  color: AppColors.primaryGreen,
-                ),
-                onPressed: () async {
-                  int ayatNo = int.tryParse(number) ?? 0;
-                  if (_lastReadAyat == ayatNo) {
-                    await BookmarkService.clearLastRead();
-                    if (mounted) setState(() => _lastReadAyat = null);
-                  } else {
-                    await BookmarkService.saveLastRead(
-                      surah: 36,
-                      surahName: 'Yasin',
-                      ayat: ayatNo,
-                    );
-                    if (mounted) setState(() => _lastReadAyat = ayatNo);
-                  }
-                },
-              ),
-              IconButton(
-                icon: Icon(
-                  _playingAyat == int.tryParse(number) ? Icons.stop_circle_outlined : Icons.play_circle_outline, 
-                  color: AppColors.primaryGreen
-                ),
-                onPressed: () async {
-                  int ayatNo = int.tryParse(number) ?? 0;
-                  // Untuk Yasin, kita ambil data dari snapshot (ini agak tricky karena _buildAyatCard di luar builder)
-                  // Tapi kita bisa asumsikan audio URL bisa didapat dari API atau cache
-                  // Di sini saya akan mencari audio dari futureYasin
-                  final yasin = await futureYasin;
-                  final ayat = yasin.ayat.firstWhere((a) => a.nomorAyat == ayatNo);
-                  String? audioUrl = ayat.audio['01'] ?? ayat.audio.values.firstOrNull;
-                  
-                  if (audioUrl != null) {
-                    _playAudio(ayatNo, audioUrl);
-                  }
-                },
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          Text(
-            arabic,
-            textAlign: TextAlign.right,
-            style: const TextStyle(
-              fontSize: 26,
-              fontFamily: 'QuranFont',
-              color: AppColors.textDark,
-              height: 2.2,
-            ),
-          ),
-          const SizedBox(height: 20),
-          Text(
-            latin,
-            style: const TextStyle(
-              fontSize: 14,
-              color: AppColors.secondaryGreen,
-              height: 1.5,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AppColors.iconBgGreen.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Text(
-              translation,
-              style: const TextStyle(
-                fontSize: 13,
-                color: AppColors.textDark,
-                height: 1.6,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildErrorState(String error, VoidCallback onRetry) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.error_outline, color: Colors.red, size: 60),
-            const SizedBox(height: 16),
-            Text(
-              'Oops! Terjadi kesalahan',
-              style: TextStyle(color: AppColors.primaryGreen, fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              error,
-              textAlign: TextAlign.center,
-              style: const TextStyle(color: AppColors.mutedGreen, fontSize: 14),
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: onRetry,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primaryGreen,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              ),
-              child: const Text('Coba Lagi'),
-            ),
-          ],
+        child: RichText(
+          textAlign: TextAlign.center,
+          text: TextSpan(children: spans),
         ),
       ),
     );

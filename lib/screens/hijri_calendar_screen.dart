@@ -52,7 +52,7 @@ class _HijriCalendarScreenState extends State<HijriCalendarScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.bg(context),
       appBar: AppBar(
         title: const Text('Kalender Hijriah', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         backgroundColor: AppColors.primaryGreen,
@@ -129,7 +129,7 @@ class _HijriCalendarScreenState extends State<HijriCalendarScreen> {
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: weekdays.map((day) => Text(
           day,
-          style: const TextStyle(color: AppColors.mutedGreen, fontWeight: FontWeight.bold, fontSize: 14),
+          style: TextStyle(color: AppColors.isDark(context) ? Colors.white70 : AppColors.mutedGreen, fontWeight: FontWeight.bold, fontSize: 14),
         )).toList(),
       ),
     );
@@ -158,10 +158,10 @@ class _HijriCalendarScreenState extends State<HijriCalendarScreen> {
 
           return Container(
             decoration: BoxDecoration(
-              color: isToday ? AppColors.primaryGreen : (isHoliday ? AppColors.primaryYellow.withValues(alpha: 0.2) : AppColors.surface),
+              color: isToday ? AppColors.primaryGreen : (isHoliday ? AppColors.primaryYellow.withValues(alpha: 0.2) : AppColors.sf(context)),
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
-                BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 5, offset: const Offset(0, 2)),
+                BoxShadow(color: Colors.black.withValues(alpha: AppColors.isDark(context) ? 0.3 : 0.05), blurRadius: 5, offset: const Offset(0, 2)),
               ],
               border: Border.all(
                 color: isToday ? AppColors.primaryYellow : (isHoliday ? AppColors.primaryYellow : Colors.transparent),
@@ -175,7 +175,7 @@ class _HijriCalendarScreenState extends State<HijriCalendarScreen> {
                   Text(
                     day.toString(),
                     style: TextStyle(
-                      color: isToday ? Colors.white : (isHoliday ? AppColors.primaryGreen : AppColors.primaryGreen),
+                      color: isToday ? Colors.white : (isHoliday ? (AppColors.isDark(context) ? AppColors.primaryYellow : AppColors.primaryGreen) : (AppColors.isDark(context) ? Colors.white : AppColors.primaryGreen)),
                       fontWeight: FontWeight.bold,
                       fontSize: 18,
                     ),
@@ -197,18 +197,18 @@ class _HijriCalendarScreenState extends State<HijriCalendarScreen> {
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
       padding: const EdgeInsets.all(15),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: AppColors.sf(context),
         borderRadius: BorderRadius.circular(15),
         border: Border.all(color: AppColors.primaryYellow.withValues(alpha: 0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
-              Icon(Icons.stars, color: AppColors.primaryYellow, size: 18),
-              SizedBox(width: 8),
-              Text('Hari Penting Bulan Ini', style: TextStyle(color: AppColors.primaryGreen, fontWeight: FontWeight.bold, fontSize: 14)),
+              const Icon(Icons.stars, color: AppColors.primaryYellow, size: 18),
+              const SizedBox(width: 8),
+              Text('Hari Penting Bulan Ini', style: TextStyle(color: AppColors.isDark(context) ? AppColors.primaryYellow : AppColors.primaryGreen, fontWeight: FontWeight.bold, fontSize: 14)),
             ],
           ),
           const SizedBox(height: 10),
@@ -218,7 +218,7 @@ class _HijriCalendarScreenState extends State<HijriCalendarScreen> {
               children: [
                 Text('${e.key} :', style: const TextStyle(color: AppColors.primaryYellow, fontWeight: FontWeight.bold)),
                 const SizedBox(width: 8),
-                Text(e.value, style: const TextStyle(color: AppColors.primaryGreen, fontSize: 13)),
+                Text(e.value, style: TextStyle(color: AppColors.isDark(context) ? Colors.white70 : AppColors.primaryGreen, fontSize: 13)),
               ],
             ),
           )).toList(),
@@ -232,17 +232,17 @@ class _HijriCalendarScreenState extends State<HijriCalendarScreen> {
       padding: const EdgeInsets.all(20),
       margin: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.iconBgGreen.withValues(alpha: 0.3),
+        color: AppColors.primaryGreen.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
         children: [
           const Icon(Icons.info_outline, color: AppColors.primaryGreen),
           const SizedBox(width: 12),
-          const Expanded(
+          Expanded(
             child: Text(
               'Kalender ini dihitung secara astronomis. Mungkin terdapat selisih 1 hari dengan pengamatan hilal.',
-              style: TextStyle(color: AppColors.primaryGreen, fontSize: 12),
+              style: TextStyle(color: AppColors.isDark(context) ? Colors.white70 : AppColors.primaryGreen, fontSize: 12),
             ),
           ),
         ],
