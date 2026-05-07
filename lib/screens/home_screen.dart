@@ -39,6 +39,7 @@ class _HomeScreenState extends State<HomeScreen> {
   late Future<Jadwal> futureJadwal;
   Future<List<Map<String, dynamic>>>? futureNews;
   late Timer _timer;
+  late Timer _autoScrollTimer;
   late PageController _pageController;
   late PageController _mainPageController;
   late ScrollController _scrollController;
@@ -53,7 +54,8 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    _pageController = PageController();
+    // Kita mulai dari halaman besar (999) biar bisa geser ke kiri juga kalau mau
+    _pageController = PageController(initialPage: 999); 
     _mainPageController = PageController(initialPage: _selectedIndex);
     
     // Listener buat Liquid NavBar biar ngikutin swipe
@@ -82,6 +84,25 @@ class _HomeScreenState extends State<HomeScreen> {
     // Update jam setiap detik
     _currentTime = _formatDateTime(DateTime.now());
     _timer = Timer.periodic(const Duration(seconds: 1), (Timer t) => _updateTime());
+
+    _startAutoScrollTimer();
+  }
+
+  void _startAutoScrollTimer() {
+    _autoScrollTimer = Timer.periodic(const Duration(seconds: 4), (timer) {
+      if (_pageController.hasClients) {
+        _pageController.nextPage(
+          duration: const Duration(milliseconds: 800),
+          curve: Curves.easeInOutQuart,
+        );
+      }
+    });
+  }
+
+  void _stopAutoScrollTimer() {
+    if (_autoScrollTimer.isActive) {
+      _autoScrollTimer.cancel();
+    }
   }
 
   Future<void> _initializeLocationAndJadwal({bool forceGps = false}) async {
@@ -185,6 +206,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void dispose() {
     _timer.cancel();
+    _autoScrollTimer.cancel();
     _pageController.dispose();
     _scrollController.dispose();
     super.dispose();
@@ -260,18 +282,24 @@ class _HomeScreenState extends State<HomeScreen> {
             height: MediaQuery.of(context).size.width > 40 
                 ? (MediaQuery.of(context).size.width - 40) * 0.58 
                 : 0,
-            child: PageView(
-              controller: _pageController,
-              onPageChanged: (index) {
-                setState(() {
-                  _currentPage = index;
-                });
-              },
-              children: [
-                _buildHijriCard(),
-                LastReadCard(onRefresh: () => setState(() {})),
-                _buildCountdownCard(),
-              ],
+            child: Listener(
+              onPointerDown: (_) => _stopAutoScrollTimer(),
+              onPointerUp: (_) => _startAutoScrollTimer(),
+              onPointerCancel: (_) => _startAutoScrollTimer(),
+              child: PageView.builder(
+                controller: _pageController,
+                onPageChanged: (index) {
+                  setState(() {
+                    _currentPage = index % 3;
+                  });
+                },
+                itemBuilder: (context, index) {
+                  final realIndex = index % 3;
+                  if (realIndex == 0) return _buildHijriCard();
+                  if (realIndex == 1) return LastReadCard(onRefresh: () => setState(() {}));
+                  return _buildCountdownCard();
+                },
+              ),
             ),
           ),
           const SizedBox(height: 12),
@@ -950,7 +978,7 @@ class _HomeScreenState extends State<HomeScreen> {
             inspiration['arabic']!,
             textAlign: TextAlign.center,
             style: TextStyle(
-              color: AppColors.green(context),
+              color: AppColors.gold(context),
               fontSize: 28,
               fontFamily: 'QuranFont',
               height: 1.5,
