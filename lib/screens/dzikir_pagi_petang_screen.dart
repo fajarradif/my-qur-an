@@ -57,6 +57,18 @@ class DzikirList extends StatelessWidget {
         'info': 'Dibaca 1x (Penyebab masuk surga jika meninggal hari itu)',
       },
       {
+        'title': 'Zikir Perlindungan',
+        'arabic': 'بِسْمِ اللَّهِ الَّذِي لَا يَضُرُّ مَعَ اسْمِهِ شَيْءٌ فِي الْأَرْضِ وَلَا فِي السَّمَاءِ وَهُوَ السَّMِيعُ الْعَلِيمُ',
+        'latin': 'Bismillahilladzi laa yadhurru ma’asmihi syai’un fil ardhi...',
+        'info': 'Dibaca 3x (Mencukupi perlindungan dari segala bahaya)',
+      },
+      {
+        'title': 'Keridhaan kepada Allah',
+        'arabic': 'رَضِيتُ بِاللَّهِ رَبًّا وَبِالْإِسْلَامِ دِينًا وَبِمُحَمَّدٍ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ نَبِيًّا',
+        'latin': 'Radhiitu billahi rabba, wabil islaami diina...',
+        'info': 'Dibaca 3x (Allah menjamin keridhaan-Nya di hari kiamat)',
+      },
+      {
         'title': 'Membaca Al-Ikhlas, Al-Falaq, An-Naas',
         'arabic': 'قُلْ هُوَ اللَّهُ أَحَدٌ ... قُلْ أَعُوذُ بِرَبِّ الْفَلَقِ ... قُلْ أَعُوذُ بِرَبِّ النَّاسِ',
         'latin': 'Qul huwallahu ahad... Qul a’udzu birabbil falaq... Qul a’udzu birabbin naas...',

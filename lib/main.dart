@@ -4,6 +4,7 @@ import 'package:just_audio_background/just_audio_background.dart';
 import 'package:audio_session/audio_session.dart';
 import 'screens/home_screen.dart';
 import 'theme/app_theme.dart';
+import 'theme/theme_provider.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -18,22 +19,72 @@ Future<void> main() async {
   final session = await AudioSession.instance;
   await session.configure(const AudioSessionConfiguration.music());
 
-  runApp(const MyQuranApp());
+  final themeProvider = ThemeProvider();
+  runApp(MyQuranApp(themeProvider: themeProvider));
 }
 
-class MyQuranApp extends StatelessWidget {
-  const MyQuranApp({super.key});
+class MyQuranApp extends StatefulWidget {
+  final ThemeProvider themeProvider;
+  
+  const MyQuranApp({super.key, required this.themeProvider});
+
+  /// Akses ThemeProvider dari mana saja di widget tree
+  static ThemeProvider of(BuildContext context) {
+    final inherited = context.dependOnInheritedWidgetOfExactType<ThemeInherited>();
+    return inherited!.themeProvider;
+  }
+
+  @override
+  State<MyQuranApp> createState() => _MyQuranAppState();
+}
+
+class _MyQuranAppState extends State<MyQuranApp> {
+  @override
+  void initState() {
+    super.initState();
+    widget.themeProvider.addListener(_onThemeChanged);
+  }
+
+  @override
+  void dispose() {
+    widget.themeProvider.removeListener(_onThemeChanged);
+    super.dispose();
+  }
+
+  void _onThemeChanged() {
+    if (mounted) setState(() {});
+  }
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'MyQuran',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme,
-      // Desain baru ini dikhususkan untuk tampilan terang/bersih (Light Mode) 
-      // yang memadukan Hijau Tua dan Emas
-      themeMode: ThemeMode.light, 
-      home: const HomeScreen(),
+    return ThemeInherited(
+      themeProvider: widget.themeProvider,
+      child: MaterialApp(
+        title: 'MyQuran',
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.lightTheme,
+        darkTheme: AppTheme.darkTheme,
+        themeMode: widget.themeProvider.isDarkMode ? ThemeMode.dark : ThemeMode.light,
+        themeAnimationDuration: const Duration(milliseconds: 300),
+        themeAnimationCurve: Curves.easeInOut,
+        home: const HomeScreen(),
+      ),
     );
+  }
+}
+
+/// InheritedWidget untuk menyebarkan ThemeProvider ke seluruh widget tree
+class ThemeInherited extends InheritedWidget {
+  final ThemeProvider themeProvider;
+
+  const ThemeInherited({
+    super.key,
+    required this.themeProvider,
+    required super.child,
+  });
+
+  @override
+  bool updateShouldNotify(ThemeInherited oldWidget) {
+    return themeProvider.isDarkMode != oldWidget.themeProvider.isDarkMode;
   }
 }

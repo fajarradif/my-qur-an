@@ -26,9 +26,9 @@ class _QuranScreenState extends State<QuranScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.bg(context),
       appBar: AppBar(
-        backgroundColor: AppColors.deepGreen,
+        backgroundColor: AppColors.isDark(context) ? AppColors.darkSurface : AppColors.deepGreen,
         elevation: 0,
         title: const Text('AL-QURAN', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
         centerTitle: true,
@@ -55,9 +55,9 @@ class _QuranScreenState extends State<QuranScreen> {
       child: Column(
         children: [
           TabBar(
-            labelColor: AppColors.primaryYellow,
-            unselectedLabelColor: AppColors.mutedGreen,
-            indicatorColor: AppColors.primaryYellow,
+            labelColor: AppColors.gold(context),
+            unselectedLabelColor: AppColors.muted(context),
+            indicatorColor: AppColors.gold(context),
             dividerColor: Colors.transparent,
             tabs: const [
               Tab(text: 'Surah'),
@@ -78,9 +78,9 @@ class _QuranScreenState extends State<QuranScreen> {
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           // Ketika proses download JSON sedang berjalan, tampilkan muter-muter
-          return const Padding(
-            padding: EdgeInsets.all(40.0),
-            child: Center(child: CircularProgressIndicator(color: AppColors.primaryGreen)),
+          return Padding(
+            padding: const EdgeInsets.all(40.0),
+            child: Center(child: CircularProgressIndicator(color: AppColors.green(context))),
           );
         } else if (snapshot.hasError) {
           // Jika tidak ada koneksi/error, tampilkan warna merah
@@ -95,7 +95,7 @@ class _QuranScreenState extends State<QuranScreen> {
             ),
           );
         } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return const Center(child: Text('Tidak ada data surat.'));
+          return Center(child: Text('Tidak ada data surat.', style: TextStyle(color: AppColors.muted(context))));
         }
 
         final surahs = snapshot.data!;
@@ -104,21 +104,21 @@ class _QuranScreenState extends State<QuranScreen> {
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(), // Scroll mengikuti SingleChildScrollView luar
           itemCount: surahs.length, // Menampilkan 114 kotak
-          separatorBuilder: (context, index) => const Divider(color: AppColors.background, height: 24, thickness: 2),
+          separatorBuilder: (context, index) => Divider(color: AppColors.bg(context), height: 24, thickness: 2),
           itemBuilder: (context, index) {
             final surah = surahs[index];
             return ListTile(
               contentPadding: EdgeInsets.zero,
               leading: QuranNumberMarker(number: surah.nomor.toString()),
-              title: Text(surah.namaLatin, style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primaryGreen)),
+              title: Text(surah.namaLatin, style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.green(context))),
               // Tambahan informasi jumlah ayat
-              subtitle: Text('Ayat: ${surah.jumlahAyat}', style: const TextStyle(color: AppColors.mutedGreen, fontSize: 12)),
+              subtitle: Text('Ayat: ${surah.jumlahAyat}', style: TextStyle(color: AppColors.muted(context), fontSize: 12)),
               trailing: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(surah.nama, style: const TextStyle(color: AppColors.primaryYellow, fontSize: 22, fontWeight: FontWeight.bold, fontFamily: 'QuranFont')),
+                  Text(surah.nama, style: TextStyle(color: AppColors.gold(context), fontSize: 22, fontWeight: FontWeight.bold, fontFamily: 'QuranFont')),
                   const SizedBox(width: 16),
-                  const Icon(Icons.play_circle_fill, color: AppColors.primaryYellow),
+                  Icon(Icons.play_circle_fill, color: AppColors.gold(context)),
                 ],
               ),
               onTap: () async {

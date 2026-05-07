@@ -13,9 +13,9 @@ class _BookmarkScreenState extends State<BookmarkScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.bg(context),
       appBar: AppBar(
-        backgroundColor: AppColors.deepGreen,
+        backgroundColor: AppColors.isDark(context) ? AppColors.darkSurface : AppColors.deepGreen,
         title: const Text('BOOKMARKS', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         centerTitle: true,
         elevation: 0,
@@ -26,9 +26,9 @@ class _BookmarkScreenState extends State<BookmarkScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'Terakhir Dibaca',
-                style: TextStyle(color: AppColors.primaryGreen, fontSize: 18, fontWeight: FontWeight.bold),
+                style: TextStyle(color: AppColors.green(context), fontSize: 18, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 16),
               LastReadCard(onRefresh: () => setState(() {})),
@@ -45,22 +45,21 @@ class _BookmarkScreenState extends State<BookmarkScreen> {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: AppColors.primaryGreen.withValues(alpha: 0.05),
+        color: AppColors.green(context).withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppColors.primaryGreen.withValues(alpha: 0.1)),
+        border: Border.all(color: AppColors.green(context).withValues(alpha: 0.1)),
       ),
       child: Column(
         children: [
-          const Icon(Icons.auto_awesome, color: AppColors.primaryYellow, size: 32),
+          Icon(Icons.auto_awesome, color: AppColors.gold(context), size: 32),
           const SizedBox(height: 16),
-          const Text(
+          Text(
             'Lanjutkan tilawahmu hari ini untuk mendapatkan pahala dan ketenangan hati.',
             textAlign: TextAlign.center,
-            style: TextStyle(color: AppColors.primaryGreen, fontSize: 14, fontStyle: FontStyle.italic),
+            style: TextStyle(color: AppColors.green(context), fontSize: 14, fontStyle: FontStyle.italic),
           ),
         ],
       ),
     );
   }
 }
-

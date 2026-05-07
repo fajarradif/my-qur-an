@@ -70,7 +70,7 @@ class QuranNumberMarker extends StatelessWidget {
             style: textStyle ?? TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: isSmall ? 8 : (number.length > 2 ? 10 : 12),
-              color: color ?? AppColors.primaryGreen,
+              color: color ?? AppColors.green(context),
               fontFamily: 'Roboto', // Keep number clear
             ),
           ),

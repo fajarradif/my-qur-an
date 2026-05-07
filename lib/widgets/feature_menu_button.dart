@@ -23,23 +23,23 @@ class FeatureMenuButton extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
-              color: AppColors.surface,
+              color: AppColors.sf(context),
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.04),
+                  color: Colors.black.withValues(alpha: AppColors.isDark(context) ? 0.2 : 0.04),
                   blurRadius: 15,
                   offset: const Offset(0, 5),
                 ),
               ],
             ),
-            child: Icon(icon, size: 28, color: AppColors.primaryGreen),
+            child: Icon(icon, size: 28, color: AppColors.green(context)),
           ),
           const SizedBox(height: 12),
           Text(
             label, 
-            style: const TextStyle(
-              color: AppColors.mutedGreen, 
+            style: TextStyle(
+              color: AppColors.muted(context), 
               fontSize: 12,
               fontWeight: FontWeight.w500,
             )

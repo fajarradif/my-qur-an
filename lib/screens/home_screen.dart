@@ -193,6 +193,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.bg(context),
       body: SafeArea(
         child: Stack(
           children: [
@@ -261,25 +262,25 @@ class _HomeScreenState extends State<HomeScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Menu Utama', style: TextStyle(color: AppColors.primaryGreen, fontSize: 16, fontWeight: FontWeight.bold)),
+              Text('Menu Utama', style: TextStyle(color: AppColors.green(context), fontSize: 16, fontWeight: FontWeight.bold)),
               GestureDetector(
                 onTap: () {
                   setState(() {
                     _showAllFeaturesGrid = !_showAllFeaturesGrid;
                   });
                 },
-                child: Text(_showAllFeaturesGrid ? 'Tutup' : 'Lihat Semua', style: const TextStyle(color: AppColors.secondaryGreen, fontSize: 12, fontWeight: FontWeight.w600)),
+                child: Text(_showAllFeaturesGrid ? 'Tutup' : 'Lihat Semua', style: TextStyle(color: AppColors.isDark(context) ? AppColors.darkPrimaryGreen : AppColors.secondaryGreen, fontSize: 12, fontWeight: FontWeight.w600)),
               ),
             ],
           ),
           const SizedBox(height: 16),
           _buildFeaturesGrid(),
           const SizedBox(height: 30),
-          const Text('Inspirasi Harian', style: TextStyle(color: AppColors.primaryGreen, fontSize: 16, fontWeight: FontWeight.bold)),
+          Text('Inspirasi Harian', style: TextStyle(color: AppColors.green(context), fontSize: 16, fontWeight: FontWeight.bold)),
           const SizedBox(height: 16),
           _buildInspirationCard(),
           const SizedBox(height: 30),
-          const Text('Warta Islami', style: TextStyle(color: AppColors.primaryGreen, fontSize: 16, fontWeight: FontWeight.bold)),
+          Text('Warta Islami', style: TextStyle(color: AppColors.green(context), fontSize: 16, fontWeight: FontWeight.bold)),
           const SizedBox(height: 16),
           _buildNewsSection(),
         ],
@@ -297,7 +298,7 @@ class _HomeScreenState extends State<HomeScreen> {
           height: 8,
           width: _currentPage == index ? 24 : 8,
           decoration: BoxDecoration(
-            color: _currentPage == index ? AppColors.primaryGreen : AppColors.mutedGreen.withValues(alpha: 0.3),
+            color: _currentPage == index ? AppColors.green(context) : AppColors.muted(context).withValues(alpha: 0.3),
             borderRadius: BorderRadius.circular(4),
           ),
         );
@@ -316,17 +317,17 @@ class _HomeScreenState extends State<HomeScreen> {
               onTap: _showLocationPicker,
               child: Row(
                 children: [
-                  const Icon(Icons.location_on, size: 14, color: AppColors.primaryYellow),
+                  Icon(Icons.location_on, size: 14, color: AppColors.gold(context)),
                   const SizedBox(width: 4),
-                  Text(_currentLocationName, style: const TextStyle(color: AppColors.mutedGreen, fontSize: 12)),
-                  const Icon(Icons.arrow_drop_down, size: 16, color: AppColors.mutedGreen),
+                  Text(_currentLocationName, style: TextStyle(color: AppColors.muted(context), fontSize: 12)),
+                  Icon(Icons.arrow_drop_down, size: 16, color: AppColors.muted(context)),
                   const SizedBox(width: 8),
-                  Text(_currentTime, style: const TextStyle(color: AppColors.primaryYellow, fontSize: 12, fontWeight: FontWeight.bold)),
+                  Text(_currentTime, style: TextStyle(color: AppColors.gold(context), fontSize: 12, fontWeight: FontWeight.bold)),
                 ],
               ),
             ),
             const SizedBox(height: 4),
-            const Text('Assalamualaikum', style: TextStyle(color: AppColors.primaryGreen, fontSize: 22, fontWeight: FontWeight.bold)),
+            Text('Assalamualaikum', style: TextStyle(color: AppColors.green(context), fontSize: 22, fontWeight: FontWeight.bold)),
           ],
         ),
         Container(
@@ -547,10 +548,10 @@ class _HomeScreenState extends State<HomeScreen> {
           width: double.infinity,
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: AppColors.surface,
+            color: AppColors.sf(context),
             borderRadius: BorderRadius.circular(24),
             boxShadow: [
-              BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 15, offset: const Offset(0, 5)),
+              BoxShadow(color: Colors.black.withValues(alpha: AppColors.isDark(context) ? 0.2 : 0.04), blurRadius: 15, offset: const Offset(0, 5)),
             ],
           ),
           child: Column(
@@ -593,7 +594,7 @@ class _HomeScreenState extends State<HomeScreen> {
         Text(
           name,
           style: TextStyle(
-            color: isActive ? AppColors.primaryYellow : AppColors.mutedGreen,
+            color: isActive ? AppColors.gold(context) : AppColors.muted(context),
             fontSize: 11,
             fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
           ),
@@ -893,10 +894,10 @@ class _HomeScreenState extends State<HomeScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: AppColors.sf(context),
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 15, offset: const Offset(0, 5)),
+          BoxShadow(color: Colors.black.withValues(alpha: AppColors.isDark(context) ? 0.2 : 0.04), blurRadius: 15, offset: const Offset(0, 5)),
         ],
       ),
       child: Column(
@@ -904,8 +905,8 @@ class _HomeScreenState extends State<HomeScreen> {
           Text(
             inspiration['arabic']!,
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: AppColors.primaryGreen,
+            style: TextStyle(
+              color: AppColors.green(context),
               fontSize: 28,
               fontFamily: 'QuranFont',
               height: 1.5,
@@ -915,8 +916,8 @@ class _HomeScreenState extends State<HomeScreen> {
           Text(
             inspiration['translation']!,
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: AppColors.mutedGreen,
+            style: TextStyle(
+              color: AppColors.muted(context),
               fontSize: 13,
               fontStyle: FontStyle.italic,
               height: 1.5,
@@ -928,10 +929,10 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Container(
                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                decoration: BoxDecoration(
-                 color: AppColors.primaryYellow.withValues(alpha: 0.2),
+                 color: AppColors.gold(context).withValues(alpha: 0.2),
                  borderRadius: BorderRadius.circular(8),
                ),
-               child: Text(inspiration['source']!, style: const TextStyle(color: AppColors.primaryYellow, fontSize: 10, fontWeight: FontWeight.bold)),
+               child: Text(inspiration['source']!, style: TextStyle(color: AppColors.gold(context), fontSize: 10, fontWeight: FontWeight.bold)),
             ),
           )
         ],
@@ -988,7 +989,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           news['title'],
                           maxLines: 3,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(color: AppColors.primaryGreen, fontWeight: FontWeight.bold, fontSize: 15, height: 1.3),
+                          style: TextStyle(color: AppColors.green(context), fontWeight: FontWeight.bold, fontSize: 15, height: 1.3),
                         ),
                         const SizedBox(height: 8),
                         Text(
@@ -1081,10 +1082,10 @@ class _HomeScreenState extends State<HomeScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
       decoration: BoxDecoration(
-        color: AppColors.surface.withValues(alpha: 0.95),
+        color: AppColors.sf(context).withValues(alpha: 0.95),
         borderRadius: BorderRadius.circular(30),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 20, offset: const Offset(0, 10)),
+          BoxShadow(color: Colors.black.withValues(alpha: AppColors.isDark(context) ? 0.3 : 0.1), blurRadius: 20, offset: const Offset(0, 10)),
         ],
       ),
       child: Row(
@@ -1101,7 +1102,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _navItem(int index, IconData icon, String label) {
     final isSelected = index == _selectedIndex;
-    final color = isSelected ? AppColors.primaryYellow : AppColors.mutedGreen;
+    final color = isSelected ? AppColors.gold(context) : AppColors.muted(context);
 
     return GestureDetector(
       behavior: HitTestBehavior.opaque,

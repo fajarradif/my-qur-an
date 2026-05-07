@@ -233,6 +233,8 @@ class _MurottalScreenState extends State<MurottalScreen> {
     final currentItem = _audioPlayer.sequenceState?.currentSource?.tag as MediaItem?;
     final bool isThisSurahLoaded = currentItem?.extras?['surahNo'] == surah.nomor && currentItem?.extras?['qoriId'] == _selectedQori;
     final bool isPlaying = isThisSurahLoaded && _audioPlayer.playing && _audioPlayer.processingState != ProcessingState.completed;
+    final bool isBuffering = isThisSurahLoaded && 
+        (_audioPlayer.processingState == ProcessingState.buffering || _audioPlayer.processingState == ProcessingState.loading);
 
     return InkWell(
       onTap: () => _playMurottal(surah),
@@ -274,11 +276,13 @@ class _MurottalScreenState extends State<MurottalScreen> {
               style: const TextStyle(color: AppColors.primaryGreen, fontSize: 20, fontFamily: 'QuranFont'),
             ),
             const SizedBox(width: 16),
-            Icon(
-              isPlaying ? Icons.pause_circle_filled : Icons.play_circle_filled,
-              color: AppColors.primaryGreen,
-              size: 32,
-            ),
+            isBuffering 
+              ? const SizedBox(width: 32, height: 32, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primaryGreen))
+              : Icon(
+                  isPlaying ? Icons.pause_circle_filled : Icons.play_circle_filled,
+                  color: AppColors.primaryGreen,
+                  size: 32,
+                ),
           ],
         ),
       ),
