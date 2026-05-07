@@ -203,41 +203,33 @@ class _DetailSuratScreenState extends State<DetailSuratScreen> {
     return Scaffold(
       backgroundColor: AppColors.bg(context),
       appBar: AppBar(
-        title: Text(_isMushafMode ? 'Mushaf Mode' : 'Tafsir & Ayat', 
-          style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.text1(context))),
+        title: FutureBuilder<SurahDetail>(
+          future: futureSurahDetail,
+          builder: (context, snapshot) {
+            if (!snapshot.hasData) return const SizedBox.shrink();
+            return Text(
+              snapshot.data!.namaLatin,
+              style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.text1(context), fontSize: 18),
+            );
+          },
+        ),
         centerTitle: true,
         elevation: 0,
         backgroundColor: AppColors.bg(context),
         iconTheme: IconThemeData(color: AppColors.green(context)),
         actions: [
-          if (_lastReadAyat != null)
-            IconButton(
-              icon: const Icon(Icons.bookmark, color: AppColors.primaryYellow),
-              tooltip: 'Ke Ayat Terakhir Dibaca',
-              onPressed: () => _scrollToAyat(_lastReadAyat!),
-            ),
-          IconButton(
-            icon: Icon(
-              AppColors.isDark(context) ? Icons.wb_sunny : Icons.nightlight_round,
-              color: AppColors.green(context),
-            ),
-            tooltip: 'Ganti Tema',
-            onPressed: () {
-              MyQuranApp.of(context).toggleTheme();
+          FutureBuilder<SurahDetail>(
+            future: futureSurahDetail,
+            builder: (context, snapshot) {
+              if (!snapshot.hasData) return const SizedBox.shrink();
+              return IconButton(
+                icon: Icon(Icons.tune, color: AppColors.green(context)),
+                tooltip: 'Pengaturan',
+                onPressed: () => _showControlPanel(snapshot.data!),
+              );
             },
           ),
-          IconButton(
-            icon: Icon(
-              _isMushafMode ? Icons.list_alt : Icons.menu_book,
-              color: AppColors.primaryGreen,
-            ),
-            tooltip: _isMushafMode ? 'Mode Tafsir' : 'Mode Mushaf',
-            onPressed: () {
-              setState(() {
-                _isMushafMode = !_isMushafMode;
-              });
-            },
-          ),
+          const SizedBox(width: 8),
         ],
       ),
       body: FutureBuilder<SurahDetail>(
@@ -273,16 +265,9 @@ class _DetailSuratScreenState extends State<DetailSuratScreen> {
             }
           }
 
-          return Column(
-            children: [
-              // Sembunyikan header card jika di Mode Mushaf untuk memberi ruang maksimal
-              if (!_isMushafMode) _buildHeader(detail),
-              if (!_isMushafMode) const SizedBox(height: 16),
-              Expanded(
-                child: _isMushafMode ? _buildMushafView(detail) : _buildTafsirView(detail),
-              ),
-            ],
-          );
+          return _isMushafMode 
+            ? _buildMushafView(detail) 
+            : _buildTafsirView(detail);
         },
       ),
     );
@@ -292,12 +277,15 @@ class _DetailSuratScreenState extends State<DetailSuratScreen> {
     return ListView.separated(
       controller: _scrollController,
       physics: const BouncingScrollPhysics(),
-      cacheExtent: 30000, // Tingkatkan cache secara signifikan (30.000 pixel) agar ayat ratusan sudah ter-render lebih awal
-      padding: const EdgeInsets.fromLTRB(20, 0, 20, 40),
-      itemCount: detail.ayat.length,
+      cacheExtent: 30000,
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 40),
+      itemCount: detail.ayat.length + 1, // Tambah 1 untuk Header
       separatorBuilder: (context, index) => const Divider(color: Colors.transparent, height: 16),
       itemBuilder: (context, index) {
-        final ayat = detail.ayat[index];
+        if (index == 0) {
+          return _buildHeader(detail);
+        }
+        final ayat = detail.ayat[index - 1];
         return Container(
           key: _ayatKeys[ayat.nomorAyat],
           child: _buildAyatCard(ayat, detail.namaLatin),
@@ -507,8 +495,6 @@ class _DetailSuratScreenState extends State<DetailSuratScreen> {
               Text('${detail.jumlahAyat} AYAT', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500)),
             ],
           ),
-          const SizedBox(height: 20),
-          _buildMurottalPlayer(detail),
           if (_lastReadAyat != null) ...[
             const SizedBox(height: 16),
             Container(
@@ -532,6 +518,283 @@ class _DetailSuratScreenState extends State<DetailSuratScreen> {
           ],
         ],
       ),
+    );
+  }
+
+  void _showMurottalSettings(SurahDetail detail) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) {
+          final currentItem = _audioPlayer.sequenceState?.currentSource?.tag as MediaItem?;
+          final isMurottalLoaded = currentItem?.extras?['isMurottal'] == true && currentItem?.id == detail.audioFull[_selectedQori];
+          final isMurottalPlaying = isMurottalLoaded && _audioPlayer.playing && _audioPlayer.processingState != ProcessingState.completed;
+
+          return Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: AppColors.sf(context),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 24),
+                  decoration: BoxDecoration(
+                    color: AppColors.muted(context).withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                Text(
+                  'Pemutar Murottal',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.text1(context),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Surah ${detail.namaLatin}',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: AppColors.muted(context),
+                  ),
+                ),
+                const SizedBox(height: 32),
+                
+                // Qori Selector
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: AppColors.bg(context),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.person, color: AppColors.green(context), size: 20),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<String>(
+                            value: _selectedQori,
+                            dropdownColor: AppColors.sf(context),
+                            icon: Icon(Icons.keyboard_arrow_down, color: AppColors.green(context)),
+                            isExpanded: true,
+                            style: TextStyle(color: AppColors.text1(context), fontWeight: FontWeight.w500),
+                            items: _qoriNames.entries.map((e) {
+                              return DropdownMenuItem<String>(
+                                value: e.key,
+                                child: Text(e.value),
+                              );
+                            }).toList(),
+                            onChanged: (val) {
+                              if (val != null) {
+                                setState(() {
+                                  _selectedQori = val;
+                                });
+                                setModalState(() {}); // Update Modal UI
+                                
+                                // Sync audio if playing
+                                if (isMurottalPlaying || isMurottalLoaded) {
+                                  _playMurottal(detail, forcePlay: true);
+                                }
+                              }
+                            },
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                
+                const SizedBox(height: 32),
+                
+                // Control Buttons
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.replay_10),
+                      onPressed: () => _audioPlayer.seek(
+                        Duration(milliseconds: (_audioPlayer.position.inMilliseconds - 10000).clamp(0, 999999999))
+                      ),
+                    ),
+                    const SizedBox(width: 24),
+                    GestureDetector(
+                      onTap: () async {
+                        await _playMurottal(detail);
+                        setModalState(() {}); // Update Modal UI
+                      },
+                      child: Container(
+                        width: 70,
+                        height: 70,
+                        decoration: BoxDecoration(
+                          color: AppColors.green(context),
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.green(context).withValues(alpha: 0.3),
+                              blurRadius: 15,
+                              offset: const Offset(0, 8),
+                            ),
+                          ],
+                        ),
+                        child: Icon(
+                          isMurottalPlaying ? Icons.pause : Icons.play_arrow,
+                          color: Colors.white,
+                          size: 36,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 24),
+                    IconButton(
+                      icon: const Icon(Icons.forward_30),
+                      onPressed: () => _audioPlayer.seek(
+                        Duration(milliseconds: (_audioPlayer.position.inMilliseconds + 30000))
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 40),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  void _showControlPanel(SurahDetail detail) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) {
+          return Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: AppColors.sf(context),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 24),
+                  decoration: BoxDecoration(
+                    color: AppColors.muted(context).withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                Text(
+                  'Pengaturan Bacaan',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.text1(context),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                
+                // Menu Items
+                _buildMenuTile(
+                  icon: Icons.bookmark,
+                  title: 'Ke Ayat Terakhir Dibaca',
+                  subtitle: _lastReadAyat != null ? 'Ayat $_lastReadAyat' : 'Belum ada penanda',
+                  color: AppColors.gold(context),
+                  onTap: _lastReadAyat != null ? () {
+                    Navigator.pop(context);
+                    _scrollToAyat(_lastReadAyat!);
+                  } : null,
+                ),
+                
+                _buildMenuTile(
+                  icon: Icons.headphones,
+                  title: 'Putar Murottal',
+                  subtitle: 'Pilih Imam & Kontrol Audio',
+                  color: AppColors.green(context),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _showMurottalSettings(detail);
+                  },
+                ),
+                
+                _buildMenuTile(
+                  icon: AppColors.isDark(context) ? Icons.wb_sunny : Icons.nightlight_round,
+                  title: 'Ganti Tema',
+                  subtitle: AppColors.isDark(context) ? 'Mode Terang' : 'Mode Gelap',
+                  color: Colors.blue,
+                  onTap: () {
+                    setModalState(() {
+                      MyQuranApp.of(context).toggleTheme();
+                    });
+                  },
+                ),
+                
+                _buildMenuTile(
+                  icon: _isMushafMode ? Icons.list_alt : Icons.menu_book,
+                  title: 'Mode Tampilan',
+                  subtitle: _isMushafMode ? 'Pindah ke Mode Tafsir' : 'Pindah ke Mode Mushaf',
+                  color: Colors.deepPurple,
+                  onTap: () {
+                    Navigator.pop(context);
+                    setState(() {
+                      _isMushafMode = !_isMushafMode;
+                    });
+                  },
+                ),
+                
+                const SizedBox(height: 32),
+                Text(
+                  'Fitur lainnya segera hadir...',
+                  style: TextStyle(color: AppColors.muted(context), fontSize: 12),
+                ),
+                const SizedBox(height: 20),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildMenuTile({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required Color color,
+    VoidCallback? onTap,
+  }) {
+    return ListTile(
+      leading: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Icon(icon, color: color),
+      ),
+      title: Text(
+        title,
+        style: TextStyle(
+          fontWeight: FontWeight.bold,
+          color: onTap == null ? AppColors.muted(context) : AppColors.text1(context),
+        ),
+      ),
+      subtitle: Text(
+        subtitle,
+        style: TextStyle(color: AppColors.muted(context), fontSize: 12),
+      ),
+      trailing: const Icon(Icons.chevron_right, size: 20),
+      onTap: onTap,
     );
   }
 
