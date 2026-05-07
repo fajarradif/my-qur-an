@@ -5,6 +5,7 @@ import '../models/surah.dart';
 import '../services/api_service.dart';
 import '../widgets/quran_number_marker.dart';
 import 'detail_surat_screen.dart'; // import detail
+import '../main.dart'; // import MyQuranApp
 
 class QuranScreen extends StatefulWidget {
   const QuranScreen({super.key});
@@ -32,6 +33,18 @@ class _QuranScreenState extends State<QuranScreen> {
         elevation: 0,
         title: const Text('AL-QURAN', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: Icon(
+              AppColors.isDark(context) ? Icons.wb_sunny : Icons.nightlight_round,
+              color: Colors.white,
+            ),
+            onPressed: () {
+              MyQuranApp.of(context).toggleTheme();
+            },
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 20),

@@ -7,6 +7,7 @@ import '../services/bookmark_service.dart';
 import '../widgets/quran_number_marker.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_background/just_audio_background.dart';
+import '../main.dart'; // import MyQuranApp
 
 class DetailSuratScreen extends StatefulWidget {
   final int nomorSurat;
@@ -200,14 +201,14 @@ class _DetailSuratScreenState extends State<DetailSuratScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.bg(context),
       appBar: AppBar(
         title: Text(_isMushafMode ? 'Mushaf Mode' : 'Tafsir & Ayat', 
-          style: const TextStyle(fontWeight: FontWeight.bold)),
+          style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.text1(context))),
         centerTitle: true,
         elevation: 0,
-        backgroundColor: AppColors.background,
-        iconTheme: const IconThemeData(color: AppColors.primaryGreen),
+        backgroundColor: AppColors.bg(context),
+        iconTheme: IconThemeData(color: AppColors.green(context)),
         actions: [
           if (_lastReadAyat != null)
             IconButton(
@@ -215,6 +216,16 @@ class _DetailSuratScreenState extends State<DetailSuratScreen> {
               tooltip: 'Ke Ayat Terakhir Dibaca',
               onPressed: () => _scrollToAyat(_lastReadAyat!),
             ),
+          IconButton(
+            icon: Icon(
+              AppColors.isDark(context) ? Icons.wb_sunny : Icons.nightlight_round,
+              color: AppColors.green(context),
+            ),
+            tooltip: 'Ganti Tema',
+            onPressed: () {
+              MyQuranApp.of(context).toggleTheme();
+            },
+          ),
           IconButton(
             icon: Icon(
               _isMushafMode ? Icons.list_alt : Icons.menu_book,
@@ -233,7 +244,7 @@ class _DetailSuratScreenState extends State<DetailSuratScreen> {
         future: futureSurahDetail,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator(color: AppColors.primaryGreen));
+            return Center(child: CircularProgressIndicator(color: AppColors.green(context)));
           } else if (snapshot.hasError) {
             return Center(
               child: Text(
@@ -319,8 +330,8 @@ class _DetailSuratScreenState extends State<DetailSuratScreen> {
               style: TextStyle(
                 fontSize: fontSize,
                 fontFamily: 'QuranFont',
-                color: AppColors.textDark,
-                backgroundColor: isCurrentBookmark ? AppColors.primaryYellow.withValues(alpha: 0.25) : null,
+                color: AppColors.text1(context),
+                backgroundColor: isCurrentBookmark ? AppColors.gold(context).withValues(alpha: 0.25) : null,
                 height: 2.2,
                 wordSpacing: 2, 
               ),
@@ -386,7 +397,7 @@ class _DetailSuratScreenState extends State<DetailSuratScreen> {
                     style: TextStyle(
                       fontSize: bismillahSize,
                       fontFamily: 'QuranFont',
-                      color: AppColors.primaryGreen,
+                      color: AppColors.green(context),
                     ),
                   ),
                 ),
@@ -407,12 +418,14 @@ class _DetailSuratScreenState extends State<DetailSuratScreen> {
   }
 
   Widget _buildMushafFrame({required Widget child, required String surahName}) {
-    const goldColor = Color(0xFFC5A358);
+    final isDark = AppColors.isDark(context);
+    final goldColor = isDark ? AppColors.darkGold : const Color(0xFFC5A358);
+    final frameColor = isDark ? AppColors.darkSurface : const Color(0xFFFDF7E7);
     
     return Container(
       margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
       decoration: BoxDecoration(
-        color: const Color(0xFFFDF7E7),
+        color: frameColor,
         border: Border.all(color: goldColor, width: 2.5),
         boxShadow: [
           BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 15, spreadRadius: 2),
@@ -435,9 +448,9 @@ class _DetailSuratScreenState extends State<DetailSuratScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('الجزء ١', style: TextStyle(color: goldColor, fontSize: 11, fontWeight: FontWeight.bold)),
-                  Text(surahName, style: const TextStyle(color: goldColor, fontSize: 16, fontWeight: FontWeight.bold, fontFamily: 'QuranFont')),
-                  const Text('١', style: TextStyle(color: goldColor, fontSize: 11, fontWeight: FontWeight.bold)),
+                  Text('الجزء ١', style: TextStyle(color: goldColor, fontSize: 11, fontWeight: FontWeight.bold)),
+                  Text(surahName, style: TextStyle(color: goldColor, fontSize: 16, fontWeight: FontWeight.bold, fontFamily: 'QuranFont')),
+                  Text('١', style: TextStyle(color: goldColor, fontSize: 11, fontWeight: FontWeight.bold)),
                 ],
               ),
             ),
@@ -465,11 +478,11 @@ class _DetailSuratScreenState extends State<DetailSuratScreen> {
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
       padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
       decoration: BoxDecoration(
-        color: AppColors.primaryGreen,
+        color: AppColors.isDark(context) ? AppColors.darkSurface : AppColors.primaryGreen,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primaryGreen.withValues(alpha: 0.3),
+            color: (AppColors.isDark(context) ? Colors.black : AppColors.primaryGreen).withValues(alpha: 0.3),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -585,11 +598,11 @@ class _DetailSuratScreenState extends State<DetailSuratScreen> {
           InkWell(
             onTap: () => _playMurottal(detail),
             child: CircleAvatar(
-              backgroundColor: AppColors.primaryYellow,
+              backgroundColor: AppColors.gold(context),
               radius: 20,
               child: Icon(
                 isMurottalPlaying ? Icons.pause : Icons.play_arrow,
-                color: AppColors.primaryGreen,
+                color: AppColors.isDark(context) ? AppColors.darkBackground : AppColors.primaryGreen,
                 size: 24,
               ),
             ),
@@ -607,10 +620,10 @@ class _DetailSuratScreenState extends State<DetailSuratScreen> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: AppColors.sf(context),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 10, offset: const Offset(0, 4)),
+          BoxShadow(color: Colors.black.withValues(alpha: AppColors.isDark(context) ? 0.2 : 0.03), blurRadius: 10, offset: const Offset(0, 4)),
         ],
       ),
       child: Column(
@@ -619,7 +632,7 @@ class _DetailSuratScreenState extends State<DetailSuratScreen> {
           Container(
             padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
             decoration: BoxDecoration(
-              color: AppColors.background,
+              color: AppColors.bg(context),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Row(
@@ -706,10 +719,10 @@ class _DetailSuratScreenState extends State<DetailSuratScreen> {
           Text(
             ayat.teksArab,
             textAlign: TextAlign.right,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 32,
               fontFamily: 'QuranFont',
-              color: AppColors.textDark,
+              color: AppColors.text1(context),
               height: 2.0,
             ),
           ),
@@ -717,9 +730,9 @@ class _DetailSuratScreenState extends State<DetailSuratScreen> {
           Text(
             ayat.teksLatin,
             textAlign: TextAlign.left,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
-              color: AppColors.primaryGreen,
+              color: AppColors.green(context),
               fontStyle: FontStyle.italic,
             ),
           ),
@@ -727,9 +740,9 @@ class _DetailSuratScreenState extends State<DetailSuratScreen> {
           Text(
             ayat.teksIndonesia,
             textAlign: TextAlign.left,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
-              color: AppColors.mutedGreen,
+              color: AppColors.text2(context),
               height: 1.5,
             ),
           ),
