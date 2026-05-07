@@ -211,31 +211,21 @@ class _HomeScreenState extends State<HomeScreen> {
       body: SafeArea(
         child: Stack(
           children: [
-            Platform.isIOS
-                ? PageView(
-                    controller: _mainPageController,
-                    physics: const BouncingScrollPhysics(),
-                    onPageChanged: (index) {
-                      setState(() {
-                        _selectedIndex = index;
-                      });
-                    },
-                    children: [
-                      _buildHomeContent(),
-                      const QuranScreen(),
-                      BookmarkScreen(key: ValueKey(_selectedIndex)),
-                      const ProfileScreen(),
-                    ],
-                  )
-                : IndexedStack(
-                    index: _selectedIndex,
-                    children: [
-                      _buildHomeContent(),
-                      const QuranScreen(),
-                      BookmarkScreen(key: ValueKey(_selectedIndex)),
-                      const ProfileScreen(),
-                    ],
-                  ),
+            PageView(
+              controller: _mainPageController,
+              physics: const BouncingScrollPhysics(),
+              onPageChanged: (index) {
+                setState(() {
+                  _selectedIndex = index;
+                });
+              },
+              children: [
+                _buildHomeContent(),
+                const QuranScreen(),
+                BookmarkScreen(key: ValueKey(_selectedIndex)),
+                const ProfileScreen(),
+              ],
+            ),
             AnimatedPositioned(
               duration: const Duration(milliseconds: 400),
               curve: Curves.easeInOut,
@@ -1135,10 +1125,10 @@ class _HomeScreenState extends State<HomeScreen> {
   // Gaya Android: Floating Solid NavBar (Simpel & Fungsional)
   Widget _buildFloatingNavBar() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: AppColors.sf(context).withValues(alpha: 0.95),
-        borderRadius: BorderRadius.circular(30),
+        color: AppColors.sf(context), // Solid (Tanpa Transparansi)
+        borderRadius: BorderRadius.circular(25),
         boxShadow: [
           BoxShadow(color: Colors.black.withValues(alpha: AppColors.isDark(context) ? 0.3 : 0.1), blurRadius: 20, offset: const Offset(0, 10)),
         ],
@@ -1279,27 +1269,46 @@ class _HomeScreenState extends State<HomeScreen> {
     final isSelected = index == _selectedIndex;
     final color = isSelected ? AppColors.gold(context) : AppColors.muted(context);
 
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: () {
-        setState(() {
-          _selectedIndex = index;
-        });
-      },
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, color: color, size: 24),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: TextStyle(
-              color: color,
-              fontSize: 10,
-              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-            ),
+    return Expanded(
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () {
+          setState(() {
+            _selectedIndex = index;
+            _mainPageController.animateToPage(
+              index,
+              duration: const Duration(milliseconds: 400),
+              curve: Curves.easeOutQuart,
+            );
+          });
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          padding: const EdgeInsets.symmetric(vertical: 6),
+          decoration: BoxDecoration(
+            color: isSelected ? AppColors.gold(context).withValues(alpha: 0.1) : Colors.transparent,
+            borderRadius: BorderRadius.circular(20),
           ),
-        ],
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              AnimatedScale(
+                scale: isSelected ? 1.1 : 1.0,
+                duration: const Duration(milliseconds: 300),
+                child: Icon(icon, color: color, size: 24),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                label,
+                style: TextStyle(
+                  color: color,
+                  fontSize: 10,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
