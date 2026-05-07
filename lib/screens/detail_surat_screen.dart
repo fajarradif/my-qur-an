@@ -892,132 +892,144 @@ class _DetailSuratScreenState extends State<DetailSuratScreen> {
     final currentItem = _audioPlayer.sequenceState?.currentSource?.tag as MediaItem?;
     final isThisAyatLoaded = currentItem?.extras?['ayatNo'] == ayat.nomorAyat && currentItem?.extras?['isMurottal'] == false;
     final isPlaying = isThisAyatLoaded && _audioPlayer.playing && _audioPlayer.processingState != ProcessingState.completed;
+    final isLastRead = _lastReadAyat == ayat.nomorAyat;
 
     return GestureDetector(
       onLongPress: () => _showBookmarkDialog(ayat, detailNamaLatin),
       behavior: HitTestBehavior.opaque,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                QuranNumberMarker(
-                  number: ayat.nomorAyat.toString(),
-                  color: AppColors.green(context),
-                  size: 36,
-                  textStyle: TextStyle(color: AppColors.green(context), fontWeight: FontWeight.bold, fontSize: 12),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text(
-                        ayat.teksArab,
-                        textAlign: TextAlign.right,
-                        style: TextStyle(
-                          fontSize: 28,
-                          fontFamily: 'QuranFont',
-                          color: AppColors.text1(context),
-                          height: 2.0,
-                          backgroundColor: _lastReadAyat == ayat.nomorAyat ? AppColors.gold(context).withValues(alpha: 0.15) : null,
+      child: Container(
+        decoration: BoxDecoration(
+          color: isLastRead ? AppColors.gold(context).withValues(alpha: 0.1) : Colors.transparent,
+          borderRadius: isLastRead ? BorderRadius.circular(12) : null,
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  QuranNumberMarker(
+                    number: ayat.nomorAyat.toString(),
+                    color: isLastRead ? AppColors.gold(context) : AppColors.green(context),
+                    size: 36,
+                    textStyle: TextStyle(color: isLastRead ? AppColors.gold(context) : AppColors.green(context), fontWeight: FontWeight.bold, fontSize: 12),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          ayat.teksArab,
+                          textAlign: TextAlign.right,
+                          style: TextStyle(
+                            fontSize: 28,
+                            fontFamily: 'QuranFont',
+                            color: AppColors.text1(context),
+                            height: 2.0,
+                          ),
                         ),
-                      ),
-                      if (_showDetails) ...[
-                        const SizedBox(height: 16),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            IconButton(
-                              icon: const Icon(Icons.share, size: 18),
-                              color: AppColors.green(context).withValues(alpha: 0.7),
-                              onPressed: () {},
-                            ),
-                            IconButton(
-                              icon: Icon(
-                                isPlaying ? Icons.pause_circle_filled : Icons.play_circle_filled,
-                                size: 24,
+                        if (_showDetails) ...[
+                          const SizedBox(height: 16),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.share, size: 18),
+                                color: AppColors.green(context).withValues(alpha: 0.7),
+                                onPressed: () {},
                               ),
-                              color: AppColors.green(context),
-                              onPressed: () {
-                                String? audioUrl = ayat.audio[_selectedQori] ?? ayat.audio.values.firstOrNull;
-                                if (audioUrl != null) {
-                                  _playAudio(ayat.nomorAyat, audioUrl);
-                                }
-                              },
-                            ),
-                            IconButton(
-                              icon: Icon(
-                                _lastReadAyat == ayat.nomorAyat ? Icons.bookmark : Icons.bookmark_outline,
-                                size: 18,
+                              IconButton(
+                                icon: Icon(
+                                  isPlaying ? Icons.pause_circle_filled : Icons.play_circle_filled,
+                                  size: 24,
+                                ),
+                                color: AppColors.green(context),
+                                onPressed: () {
+                                  String? audioUrl = ayat.audio[_selectedQori] ?? ayat.audio.values.firstOrNull;
+                                  if (audioUrl != null) {
+                                    _playAudio(ayat.nomorAyat, audioUrl);
+                                  }
+                                },
                               ),
-                              color: _lastReadAyat == ayat.nomorAyat ? AppColors.gold(context) : AppColors.muted(context),
-                              onPressed: () async {
-                                if (_lastReadAyat == ayat.nomorAyat) {
-                                  await BookmarkService.clearLastRead();
-                                  setState(() => _lastReadAyat = null);
-                                } else {
-                                  await BookmarkService.saveLastRead(
-                                    surah: widget.nomorSurat,
-                                    surahName: detailNamaLatin,
-                                    ayat: ayat.nomorAyat,
-                                  );
-                                  setState(() => _lastReadAyat = ayat.nomorAyat);
-                                }
-                              },
-                            ),
-                          ],
-                        ),
+                              IconButton(
+                                icon: Icon(
+                                  isLastRead ? Icons.bookmark : Icons.bookmark_outline,
+                                  size: 18,
+                                ),
+                                color: isLastRead ? AppColors.gold(context) : AppColors.muted(context),
+                                onPressed: () async {
+                                  if (isLastRead) {
+                                    await BookmarkService.clearLastRead();
+                                    setState(() => _lastReadAyat = null);
+                                  } else {
+                                    await BookmarkService.saveLastRead(
+                                      surah: widget.nomorSurat,
+                                      surahName: detailNamaLatin,
+                                      ayat: ayat.nomorAyat,
+                                    );
+                                    setState(() => _lastReadAyat = ayat.nomorAyat);
+                                  }
+                                },
+                              ),
+                            ],
+                          ),
+                        ],
                       ],
-                    ],
+                    ),
+                  ),
+                ],
+              ),
+              if (_showDetails) ...[
+                const SizedBox(height: 12),
+                Padding(
+                  padding: const EdgeInsets.only(left: 48),
+                  child: Text(
+                    ayat.teksLatin,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: AppColors.green(context),
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Padding(
+                  padding: const EdgeInsets.only(left: 48),
+                  child: Text(
+                    ayat.teksIndonesia,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: AppColors.text2(context),
+                      height: 1.5,
+                    ),
                   ),
                 ),
               ],
-            ),
-            if (_showDetails) ...[
-              const SizedBox(height: 12),
-              Padding(
-                padding: const EdgeInsets.only(left: 48),
-                child: Text(
-                  ayat.teksLatin,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: AppColors.green(context),
-                    fontStyle: FontStyle.italic,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8),
-              Padding(
-                padding: const EdgeInsets.only(left: 48),
-                child: Text(
-                  ayat.teksIndonesia,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: AppColors.text2(context),
-                    height: 1.5,
-                  ),
-                ),
-              ),
             ],
-          ],
+          ),
         ),
       ),
     );
   }
 
+
   void _showBookmarkDialog(Ayat ayat, String surahName) {
+    final bool isAlreadyMarked = _lastReadAyat == ayat.nomorAyat;
+    
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: AppColors.sf(context),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text('Penanda Bacaan', style: TextStyle(color: AppColors.text1(context))),
+        title: Text(isAlreadyMarked ? 'Hapus Penanda' : 'Penanda Bacaan', 
+          style: TextStyle(color: AppColors.text1(context))),
         content: Text(
-          'Jadikan ayat ${ayat.nomorAyat} sebagai penanda terakhir dibaca?',
+          isAlreadyMarked 
+            ? 'Hapus penanda terakhir dibaca pada ayat ${ayat.nomorAyat}?'
+            : 'Jadikan ayat ${ayat.nomorAyat} sebagai penanda terakhir dibaca?',
           style: TextStyle(color: AppColors.text2(context)),
         ),
         actions: [
@@ -1027,28 +1039,34 @@ class _DetailSuratScreenState extends State<DetailSuratScreen> {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.green(context),
+              backgroundColor: isAlreadyMarked ? Colors.red : AppColors.green(context),
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
             onPressed: () async {
-              await BookmarkService.saveLastRead(
-                surah: widget.nomorSurat,
-                surahName: surahName,
-                ayat: ayat.nomorAyat,
-              );
+              if (isAlreadyMarked) {
+                await BookmarkService.clearLastRead();
+                if (mounted) setState(() => _lastReadAyat = null);
+              } else {
+                await BookmarkService.saveLastRead(
+                  surah: widget.nomorSurat,
+                  surahName: surahName,
+                  ayat: ayat.nomorAyat,
+                );
+                if (mounted) setState(() => _lastReadAyat = ayat.nomorAyat);
+              }
+              
               if (mounted) {
-                setState(() => _lastReadAyat = ayat.nomorAyat);
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text('Berhasil ditandai: Ayat ${ayat.nomorAyat}'),
-                    backgroundColor: AppColors.green(context),
+                    content: Text(isAlreadyMarked ? 'Penanda dihapus' : 'Berhasil ditandai: Ayat ${ayat.nomorAyat}'),
+                    backgroundColor: isAlreadyMarked ? Colors.red : AppColors.green(context),
                   ),
                 );
               }
             },
-            child: const Text('Ya, Tandai'),
+            child: Text(isAlreadyMarked ? 'Ya, Hapus' : 'Ya, Tandai'),
           ),
         ],
       ),
