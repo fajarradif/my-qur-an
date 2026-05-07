@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'dart:ui';
 import 'package:intl/intl.dart';
 import 'package:geolocator/geolocator.dart';
 import '../services/hijri_helper.dart';
@@ -31,12 +33,14 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
+  double _navPosition = 0;
   int _currentPage = 0;
   bool _showAllFeaturesGrid = false;
   late Future<Jadwal> futureJadwal;
   Future<List<Map<String, dynamic>>>? futureNews;
   late Timer _timer;
   late PageController _pageController;
+  late PageController _mainPageController;
   late ScrollController _scrollController;
   bool _showStickyHeader = false;
   String _currentTime = "";
@@ -50,6 +54,16 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _pageController = PageController();
+    _mainPageController = PageController(initialPage: _selectedIndex);
+    
+    // Listener buat Liquid NavBar biar ngikutin swipe
+    _mainPageController.addListener(() {
+      if (mounted && Platform.isIOS) {
+        setState(() {
+          _navPosition = _mainPageController.page ?? _selectedIndex.toDouble();
+        });
+      }
+    });
     
     // Set fallback awal sebelum loading selesai
     futureJadwal = ApiService.getJadwalSholat(_defaultCityId);
@@ -197,15 +211,31 @@ class _HomeScreenState extends State<HomeScreen> {
       body: SafeArea(
         child: Stack(
           children: [
-            IndexedStack(
-              index: _selectedIndex,
-              children: [
-                _buildHomeContent(),
-                const QuranScreen(),
-                BookmarkScreen(key: ValueKey(_selectedIndex)),
-                const ProfileScreen(),
-              ],
-            ),
+            Platform.isIOS
+                ? PageView(
+                    controller: _mainPageController,
+                    physics: const BouncingScrollPhysics(),
+                    onPageChanged: (index) {
+                      setState(() {
+                        _selectedIndex = index;
+                      });
+                    },
+                    children: [
+                      _buildHomeContent(),
+                      const QuranScreen(),
+                      BookmarkScreen(key: ValueKey(_selectedIndex)),
+                      const ProfileScreen(),
+                    ],
+                  )
+                : IndexedStack(
+                    index: _selectedIndex,
+                    children: [
+                      _buildHomeContent(),
+                      const QuranScreen(),
+                      BookmarkScreen(key: ValueKey(_selectedIndex)),
+                      const ProfileScreen(),
+                    ],
+                  ),
             AnimatedPositioned(
               duration: const Duration(milliseconds: 400),
               curve: Curves.easeInOut,
@@ -218,7 +248,7 @@ class _HomeScreenState extends State<HomeScreen> {
               left: 20,
               right: 20,
               bottom: 20,
-              child: _buildFloatingNavBar(),
+              child: Platform.isIOS ? _buildLiquidGlassNavBar() : _buildFloatingNavBar(),
             ),
           ],
         ),
@@ -1120,6 +1150,128 @@ class _HomeScreenState extends State<HomeScreen> {
           _navItem(2, Icons.bookmark, 'Bookmarks'),
           _navItem(3, Icons.person, 'Profile'),
         ],
+      ),
+    );
+  }
+
+  Widget _buildLiquidGlassNavBar() {
+    double width = MediaQuery.of(context).size.width - 40;
+    double tabWidth = width / 4;
+
+    return GestureDetector(
+      onHorizontalDragUpdate: (details) {
+        if (Platform.isIOS) {
+          _mainPageController.position.moveTo(
+            _mainPageController.position.pixels - details.delta.dx,
+          );
+        }
+      },
+      child: Container(
+        height: 70,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(35),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: AppColors.isDark(context) ? 0.4 : 0.1),
+              blurRadius: 25,
+              spreadRadius: -5,
+              offset: const Offset(0, 10),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(35),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+            child: Container(
+              decoration: BoxDecoration(
+                color: AppColors.sf(context).withValues(alpha: AppColors.isDark(context) ? 0.5 : 0.4),
+                borderRadius: BorderRadius.circular(35),
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: AppColors.isDark(context) ? 0.05 : 0.2),
+                  width: 0.5,
+                ),
+              ),
+              child: Stack(
+                children: [
+                  Positioned(
+                    left: _navPosition * tabWidth + (tabWidth * 0.1),
+                    top: 10,
+                    child: Container(
+                      width: tabWidth * 0.8,
+                      height: 50,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(25),
+                        color: AppColors.gold(context).withValues(alpha: 0.2),
+                        border: Border.all(
+                          color: AppColors.gold(context).withValues(alpha: 0.5),
+                          width: 1,
+                        ),
+                      ),
+                    ),
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      _liquidNavItem(0, Icons.home_filled, 'Beranda'),
+                      _liquidNavItem(1, Icons.menu_book, 'Quran'),
+                      _liquidNavItem(2, Icons.bookmark, 'Simpan'),
+                      _liquidNavItem(3, Icons.person, 'Profil'),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+  Widget _liquidNavItem(int index, IconData icon, String label) {
+    final isSelected = index == _selectedIndex;
+    
+    return Expanded(
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () {
+          setState(() {
+            _selectedIndex = index;
+            if (Platform.isIOS) {
+              _mainPageController.animateToPage(
+                index,
+                duration: const Duration(milliseconds: 500),
+                curve: Curves.easeInOutQuart,
+              );
+            }
+          });
+        },
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            AnimatedScale(
+              scale: isSelected ? 1.2 : 1.0,
+              duration: const Duration(milliseconds: 300),
+              child: Icon(
+                icon,
+                color: isSelected ? AppColors.gold(context) : AppColors.muted(context).withValues(alpha: 0.7),
+                size: 26,
+              ),
+            ),
+            const SizedBox(height: 2),
+            AnimatedOpacity(
+              duration: const Duration(milliseconds: 300),
+              opacity: isSelected ? 1.0 : 0.0,
+              child: Text(
+                label,
+                style: TextStyle(
+                  color: AppColors.gold(context),
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
