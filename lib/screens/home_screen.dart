@@ -1132,6 +1132,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // Gaya Android: Floating Solid NavBar (Simpel & Fungsional)
   Widget _buildFloatingNavBar() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
@@ -1154,6 +1155,10 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // --- NAVIGATION BAR SECTION ---
+  // Kita bedakan tampilan antara iOS dan Android biar ada ciri khas masing-masing OS.
+  
+  // Gaya iOS: Liquid Glass Taskbar (Floating, Blur, Iridescent, Swipeable)
   Widget _buildLiquidGlassNavBar() {
     double width = MediaQuery.of(context).size.width - 40;
     double tabWidth = width / 4;
