@@ -1164,13 +1164,7 @@ class _HomeScreenState extends State<HomeScreen> {
     double tabWidth = width / 4;
 
     return GestureDetector(
-      onHorizontalDragUpdate: (details) {
-        if (Platform.isIOS) {
-          _mainPageController.position.moveTo(
-            _mainPageController.position.pixels - details.delta.dx,
-          );
-        }
-      },
+      behavior: HitTestBehavior.opaque,
       child: Container(
         height: 70,
         decoration: BoxDecoration(
