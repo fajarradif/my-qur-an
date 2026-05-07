@@ -1090,11 +1090,13 @@ class _HomeScreenState extends State<HomeScreen> {
         if (snapshot.hasError) return const SizedBox.shrink();
 
         return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
           decoration: BoxDecoration(
-            color: AppColors.deepGreen.withValues(alpha: 0.98),
+            color: AppColors.deepGreen.withValues(alpha: 0.95),
+            borderRadius: BorderRadius.circular(20),
             boxShadow: [
-              BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 10, offset: const Offset(0, 2)),
+              BoxShadow(color: Colors.black.withValues(alpha: 0.3), blurRadius: 15, offset: const Offset(0, 5)),
             ],
           ),
           child: Row(
