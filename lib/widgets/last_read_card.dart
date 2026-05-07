@@ -22,97 +22,105 @@ class LastReadCard extends StatelessWidget {
           surahNo = snapshot.data!['surah'];
         }
 
-        return Container(
-          width: double.infinity,
-          height: MediaQuery.of(context).size.width > 40 
-              ? (MediaQuery.of(context).size.width - 40) * 0.58 
-              : 0,
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [AppColors.deepForestGreen, AppColors.deepGreen],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(24),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.primaryGreen.withValues(alpha: 0.3),
-                blurRadius: 20,
-                offset: const Offset(0, 10),
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(24),
+          child: Container(
+            width: double.infinity,
+            height: MediaQuery.of(context).size.width > 40 
+                ? (MediaQuery.of(context).size.width - 40) * 0.58 
+                : 0,
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+            decoration: BoxDecoration(
+              image: const DecorationImage(
+                image: AssetImage('assets/images/islamic_pattern.png'),
+                fit: BoxFit.cover,
+                opacity: 0.4,
               ),
-            ],
-          ),
-          child: Stack(
-            children: [
-              Positioned.fill(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: const [
-                        Icon(Icons.menu_book, color: AppColors.primaryYellow, size: 18),
-                        SizedBox(width: 8),
-                        Text('Terakhir Dibaca', style: TextStyle(color: Colors.white70, fontSize: 13)),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Text(surahName, style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w600)),
-                    const SizedBox(height: 4),
-                    Text(ayatNo == 0 ? 'Mulai membaca yuk!' : 'Ayat No: $ayatNo', style: const TextStyle(color: Colors.white70, fontSize: 14)),
-                    const Spacer(),
-                    Align(
-                      alignment: Alignment.bottomRight,
-                      child: ElevatedButton(
-                        onPressed: surahNo == 0 ? null : () async {
-                          await Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => DetailSuratScreen(
-                                nomorSurat: surahNo,
-                                initialAyat: ayatNo,
+              gradient: LinearGradient(
+                colors: [AppColors.deepForestGreen, AppColors.deepGreen],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.primaryGreen.withValues(alpha: 0.3),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+            child: Stack(
+              children: [
+                Positioned.fill(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: const [
+                          Icon(Icons.menu_book, color: AppColors.primaryYellow, size: 18),
+                          SizedBox(width: 8),
+                          Text('Terakhir Dibaca', style: TextStyle(color: Colors.white70, fontSize: 13)),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Text(surahName, style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w600)),
+                      const SizedBox(height: 4),
+                      Text(ayatNo == 0 ? 'Mulai membaca yuk!' : 'Ayat No: $ayatNo', style: const TextStyle(color: Colors.white70, fontSize: 14)),
+                      const Spacer(),
+                      Align(
+                        alignment: Alignment.bottomRight,
+                        child: ElevatedButton(
+                          onPressed: surahNo == 0 ? null : () async {
+                            await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => DetailSuratScreen(
+                                  nomorSurat: surahNo,
+                                  initialAyat: ayatNo,
+                                ),
                               ),
-                            ),
-                          );
-                          if (onRefresh != null) onRefresh!();
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primaryYellow,
-                          foregroundColor: AppColors.primaryGreen,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                          elevation: 0,
-                          disabledBackgroundColor: Colors.white24,
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: const [
-                            Text('Lanjutkan', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-                            SizedBox(width: 8),
-                            Icon(Icons.arrow_forward, size: 16),
-                          ],
+                            );
+                            if (onRefresh != null) onRefresh!();
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primaryYellow,
+                            foregroundColor: AppColors.primaryGreen,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                            elevation: 0,
+                            disabledBackgroundColor: Colors.white24,
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: const [
+                              Text('Lanjutkan', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                              SizedBox(width: 8),
+                              Icon(Icons.arrow_forward, size: 16),
+                            ],
+                          ),
                         ),
                       ),
+                    ],
+                  ),
+                ),
+                Positioned(
+                  right: 0,
+                  top: 0,
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(16),
                     ),
-                  ],
+                    child: const Icon(Icons.menu_book_outlined, color: AppColors.primaryYellow, size: 32),
+                  ),
                 ),
-              ),
-            Positioned(
-              right: 0,
-              top: 0,
-              child: Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: const Icon(Icons.menu_book_outlined, color: AppColors.primaryYellow, size: 32),
-              ),
+              ],
             ),
-          ],
-        ),
+          ),
         );
-      }
+      },
     );
   }
 }

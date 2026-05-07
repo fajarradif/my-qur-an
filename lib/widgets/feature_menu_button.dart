@@ -33,7 +33,7 @@ class FeatureMenuButton extends StatelessWidget {
                 ),
               ],
             ),
-            child: Icon(icon, size: 28, color: AppColors.green(context)),
+            child: Icon(icon, size: 28, color: AppColors.isDark(context) ? AppColors.darkGold : AppColors.primaryGreen),
           ),
           const SizedBox(height: 12),
           Text(

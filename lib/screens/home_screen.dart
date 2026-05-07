@@ -262,25 +262,25 @@ class _HomeScreenState extends State<HomeScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Menu Utama', style: TextStyle(color: AppColors.green(context), fontSize: 16, fontWeight: FontWeight.bold)),
+              Text('Menu Utama', style: TextStyle(color: AppColors.isDark(context) ? Colors.white : AppColors.primaryGreen, fontSize: 16, fontWeight: FontWeight.bold)),
               GestureDetector(
                 onTap: () {
                   setState(() {
                     _showAllFeaturesGrid = !_showAllFeaturesGrid;
                   });
                 },
-                child: Text(_showAllFeaturesGrid ? 'Tutup' : 'Lihat Semua', style: TextStyle(color: AppColors.isDark(context) ? AppColors.darkPrimaryGreen : AppColors.secondaryGreen, fontSize: 12, fontWeight: FontWeight.w600)),
+                child: Text(_showAllFeaturesGrid ? 'Tutup' : 'Lihat Semua', style: TextStyle(color: AppColors.isDark(context) ? Colors.white70 : AppColors.secondaryGreen, fontSize: 12, fontWeight: FontWeight.w600)),
               ),
             ],
           ),
           const SizedBox(height: 16),
           _buildFeaturesGrid(),
           const SizedBox(height: 30),
-          Text('Inspirasi Harian', style: TextStyle(color: AppColors.green(context), fontSize: 16, fontWeight: FontWeight.bold)),
+          Text('Inspirasi Harian', style: TextStyle(color: AppColors.isDark(context) ? Colors.white : AppColors.primaryGreen, fontSize: 16, fontWeight: FontWeight.bold)),
           const SizedBox(height: 16),
           _buildInspirationCard(),
           const SizedBox(height: 30),
-          Text('Warta Islami', style: TextStyle(color: AppColors.green(context), fontSize: 16, fontWeight: FontWeight.bold)),
+          Text('Warta Islami', style: TextStyle(color: AppColors.isDark(context) ? Colors.white : AppColors.primaryGreen, fontSize: 16, fontWeight: FontWeight.bold)),
           const SizedBox(height: 16),
           _buildNewsSection(),
         ],
@@ -327,7 +327,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
             const SizedBox(height: 4),
-            Text('Assalamualaikum', style: TextStyle(color: AppColors.green(context), fontSize: 22, fontWeight: FontWeight.bold)),
+            Text('Assalamualaikum', style: TextStyle(color: AppColors.isDark(context) ? Colors.white : AppColors.primaryGreen, fontSize: 22, fontWeight: FontWeight.bold)),
           ],
         ),
         Container(
@@ -355,62 +355,72 @@ class _HomeScreenState extends State<HomeScreen> {
     final hijriMonth = HijriHelper.getMonthName(hijri['month']);
     final hijriYear = hijri['year'];
 
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [AppColors.deepGreen, AppColors.emeraldGreen],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primaryGreen.withValues(alpha: 0.3),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(24),
+      child: Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          image: const DecorationImage(
+            image: AssetImage('assets/images/islamic_pattern.png'),
+            fit: BoxFit.cover,
+            opacity: 0.4,
           ),
-        ],
-      ),
-      child: Stack(
-        children: [
-          Positioned(
-            right: -20,
-            top: -20,
-            child: Icon(
-              Icons.dark_mode,
-              color: Colors.white.withValues(alpha: 0.1),
-              size: 150,
+          gradient: LinearGradient(
+            colors: [AppColors.deepForestGreen, AppColors.deepGreen],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primaryGreen.withValues(alpha: 0.3),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
             ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Row(
+          ],
+        ),
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.calendar_month, color: AppColors.primaryYellow, size: 20),
-                  const SizedBox(width: 8),
-                  const Text('Kalender Hijriah', style: TextStyle(color: Colors.white70, fontSize: 14)),
+                  Row(
+                    children: [
+                      const Icon(Icons.calendar_month, color: AppColors.primaryYellow, size: 20),
+                      const SizedBox(width: 8),
+                      const Text('Kalender Hijriah', style: TextStyle(color: Colors.white70, fontSize: 14)),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    '$hijriDay $hijriMonth',
+                    style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold),
+                  ),
+                  Text(
+                    '$hijriYear Hijriah',
+                    style: const TextStyle(color: AppColors.primaryYellow, fontSize: 18, fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    DateFormat('EEEE, d MMMM yyyy', 'id_ID').format(DateTime.now()),
+                    style: const TextStyle(color: Colors.white54, fontSize: 12),
+                  ),
                 ],
               ),
-              const SizedBox(height: 12),
-              Text(
-                '$hijriDay $hijriMonth',
-                style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold),
+            ),
+            Positioned(
+              right: -20,
+              top: -20,
+              child: Icon(
+                Icons.dark_mode,
+                color: AppColors.gold(context).withValues(alpha: 0.15),
+                size: 150,
               ),
-              Text(
-                '$hijriYear Hijriah',
-                style: const TextStyle(color: AppColors.primaryYellow, fontSize: 18, fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                DateFormat('EEEE, d MMMM yyyy', 'id_ID').format(DateTime.now()),
-                style: const TextStyle(color: Colors.white54, fontSize: 12),
-              ),
-            ],
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -466,35 +476,43 @@ class _HomeScreenState extends State<HomeScreen> {
           countdownText = "$hours:$minutes:$seconds";
         }
 
-        return Container(
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [AppColors.deepForestGreen, AppColors.deepGreen],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(24),
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              image: const DecorationImage(
+                image: AssetImage('assets/images/islamic_pattern.png'),
+                fit: BoxFit.cover,
+                opacity: 0.4,
+              ),
+              gradient: LinearGradient(
+                colors: [AppColors.deepForestGreen, AppColors.deepGreen],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(24),
             ),
-            borderRadius: BorderRadius.circular(24),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Row(
-                children: [
-                  const Icon(Icons.timer, color: AppColors.primaryYellow, size: 20),
-                  const SizedBox(width: 8),
-                  Text('Menuju Waktu $nextPrayerName', style: const TextStyle(color: Colors.white70, fontSize: 14)),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Text(
-                countdownText,
-                style: const TextStyle(color: Colors.white, fontSize: 42, fontWeight: FontWeight.bold, letterSpacing: 2),
-              ),
-              const SizedBox(height: 4),
-              const Text('Tetap istiqomah dalam ibadah ya!', style: TextStyle(color: Colors.white54, fontSize: 12, fontStyle: FontStyle.italic)),
-            ],
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.timer, color: AppColors.primaryYellow, size: 20),
+                    const SizedBox(width: 8),
+                    Text('Menuju Waktu $nextPrayerName', style: const TextStyle(color: Colors.white70, fontSize: 14)),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  countdownText,
+                  style: const TextStyle(color: Colors.white, fontSize: 42, fontWeight: FontWeight.bold, letterSpacing: 2),
+                ),
+                const SizedBox(height: 4),
+                const Text('Tetap istiqomah dalam ibadah ya!', style: TextStyle(color: Colors.white54, fontSize: 12, fontStyle: FontStyle.italic)),
+              ],
+            ),
           ),
         );
       },
@@ -559,7 +577,7 @@ class _HomeScreenState extends State<HomeScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('Jadwal Sholat Hari Ini', style: TextStyle(color: AppColors.primaryGreen, fontWeight: FontWeight.bold, fontSize: 14)),
+                  Text('Jadwal Sholat Hari Ini', style: TextStyle(color: AppColors.isDark(context) ? AppColors.darkGold : AppColors.primaryGreen, fontWeight: FontWeight.bold, fontSize: 14)),
                   Builder(
                     builder: (context) {
                       final hijri = HijriHelper.fromGregorian(DateTime.now());
@@ -589,6 +607,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildPrayerItem(String name, String time, bool isActive) {
+    final isDark = AppColors.isDark(context);
     return Column(
       children: [
         Text(
@@ -603,16 +622,21 @@ class _HomeScreenState extends State<HomeScreen> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
           decoration: BoxDecoration(
-            color: isActive ? AppColors.primaryGreen : AppColors.iconBgGreen.withValues(alpha: 0.5),
+            color: isActive 
+              ? (isDark ? AppColors.darkPrimaryGreen : AppColors.primaryGreen) 
+              : (isDark ? AppColors.darkCard : AppColors.iconBgGreen.withValues(alpha: 0.5)),
             borderRadius: BorderRadius.circular(12),
+            border: isDark && !isActive ? Border.all(color: AppColors.darkMutedGreen.withValues(alpha: 0.3), width: 1) : null,
             boxShadow: isActive ? [
-              BoxShadow(color: AppColors.primaryGreen.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 4))
+              BoxShadow(color: AppColors.green(context).withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 4))
             ] : null,
           ),
           child: Text(
             time,
             style: TextStyle(
-              color: isActive ? Colors.white : AppColors.primaryGreen,
+              color: isActive 
+                ? Colors.white 
+                : (isDark ? AppColors.darkTextPrimary : AppColors.primaryGreen),
               fontSize: 12,
               fontWeight: FontWeight.bold,
             ),
@@ -989,7 +1013,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           news['title'],
                           maxLines: 3,
                           overflow: TextOverflow.ellipsis,
-                          style: TextStyle(color: AppColors.green(context), fontWeight: FontWeight.bold, fontSize: 15, height: 1.3),
+                          style: TextStyle(color: AppColors.isDark(context) ? Colors.white : AppColors.primaryGreen, fontWeight: FontWeight.bold, fontSize: 15, height: 1.3),
                         ),
                         const SizedBox(height: 8),
                         Text(
