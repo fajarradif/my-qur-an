@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'dart:ui';
+import 'package:flutter/rendering.dart';
 import 'package:intl/intl.dart';
 import 'package:geolocator/geolocator.dart';
 import '../services/hijri_helper.dart';
@@ -45,6 +46,7 @@ class _HomeScreenState extends State<HomeScreen> {
   late PageController _mainPageController;
   late ScrollController _scrollController;
   bool _showStickyHeader = false;
+  bool _showNavBar = true;
   String _currentTime = "";
   String _currentLocationName = "Mencari lokasi...";
   
@@ -75,10 +77,27 @@ class _HomeScreenState extends State<HomeScreen> {
     
     _scrollController = ScrollController();
     _scrollController.addListener(() {
+      // Sticky header logic
       if (_scrollController.offset > 300 && !_showStickyHeader) {
         setState(() => _showStickyHeader = true);
       } else if (_scrollController.offset <= 300 && _showStickyHeader) {
         setState(() => _showStickyHeader = false);
+      }
+
+      // Hide/Show Nav Bar logic
+      if (_scrollController.position.userScrollDirection == ScrollDirection.reverse) {
+        if (_showNavBar && _scrollController.offset > 50) {
+          setState(() => _showNavBar = false);
+        }
+      } else if (_scrollController.position.userScrollDirection == ScrollDirection.forward) {
+        if (!_showNavBar) {
+          setState(() => _showNavBar = true);
+        }
+      }
+      
+      // Always show at the top
+      if (_scrollController.offset <= 0 && !_showNavBar) {
+        setState(() => _showNavBar = true);
       }
     });
 
@@ -257,10 +276,12 @@ class _HomeScreenState extends State<HomeScreen> {
               right: 0,
               child: _buildStickyHeader(),
             ),
-            Positioned(
+            AnimatedPositioned(
+              duration: const Duration(milliseconds: 500),
+              curve: Curves.fastOutSlowIn,
               left: 20,
               right: 20,
-              bottom: 20,
+              bottom: _showNavBar ? 20 : -100,
               child: Platform.isIOS ? _buildLiquidGlassNavBar() : _buildFloatingNavBar(),
             ),
           ],
@@ -1235,7 +1256,7 @@ class _HomeScreenState extends State<HomeScreen> {
           borderRadius: BorderRadius.circular(35),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: AppColors.isDark(context) ? 0.4 : 0.1),
+              color: Colors.black.withValues(alpha: AppColors.isDark(context) ? 0.4 : 0.15),
               blurRadius: 25,
               spreadRadius: -5,
               offset: const Offset(0, 10),
@@ -1251,8 +1272,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 color: AppColors.sf(context).withValues(alpha: AppColors.isDark(context) ? 0.5 : 0.45),
                 borderRadius: BorderRadius.circular(35),
                 border: Border.all(
-                  color: Colors.white.withValues(alpha: AppColors.isDark(context) ? 0.05 : 0.2),
-                  width: 0.5,
+                  color: AppColors.isDark(context) 
+                    ? Colors.white.withValues(alpha: 0.05) 
+                    : AppColors.primaryGreen.withValues(alpha: 0.1),
+                  width: 1,
                 ),
               ),
               child: Stack(
