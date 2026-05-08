@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/colors.dart';
+import '../main.dart';
 
 class DzikirPagiPetangScreen extends StatelessWidget {
   const DzikirPagiPetangScreen({super.key});
@@ -11,10 +12,21 @@ class DzikirPagiPetangScreen extends StatelessWidget {
       child: Scaffold(
         backgroundColor: AppColors.bg(context),
         appBar: AppBar(
-          title: const Text('Zikir Pagi & Petang', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          title: Text('Zikir Pagi & Petang', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
           backgroundColor: AppColors.primaryGreen,
           iconTheme: const IconThemeData(color: Colors.white),
           elevation: 0,
+          actions: [
+            IconButton(
+              icon: Icon(
+                AppColors.isDark(context) ? Icons.wb_sunny_outlined : Icons.nightlight_round_outlined,
+              ),
+              onPressed: () {
+                MyQuranApp.of(context).toggleTheme();
+              },
+            ),
+            const SizedBox(width: 8),
+          ],
           bottom: const TabBar(
             labelColor: AppColors.primaryYellow,
             unselectedLabelColor: Colors.white70,

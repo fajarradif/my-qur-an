@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import '../theme/colors.dart';
 import '../models/doa.dart';
 import '../services/api_service.dart';
+import '../main.dart';
 
 class DoaScreen extends StatefulWidget {
   const DoaScreen({super.key});
@@ -49,6 +50,17 @@ class _DoaScreenState extends State<DoaScreen> {
         elevation: 0,
         backgroundColor: AppColors.bg(context),
         iconTheme: IconThemeData(color: AppColors.isDark(context) ? Colors.white : AppColors.primaryGreen),
+        actions: [
+          IconButton(
+            icon: Icon(
+              AppColors.isDark(context) ? Icons.wb_sunny_outlined : Icons.nightlight_round_outlined,
+            ),
+            onPressed: () {
+              MyQuranApp.of(context).toggleTheme();
+            },
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
       body: Column(
         children: [
@@ -169,6 +181,14 @@ class DoaDetailScreen extends StatelessWidget {
         elevation: 0,
         iconTheme: IconThemeData(color: AppColors.isDark(context) ? Colors.white : AppColors.primaryGreen),
         actions: [
+          IconButton(
+            icon: Icon(
+              AppColors.isDark(context) ? Icons.wb_sunny_outlined : Icons.nightlight_round_outlined,
+            ),
+            onPressed: () {
+              MyQuranApp.of(context).toggleTheme();
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.copy),
             onPressed: () {

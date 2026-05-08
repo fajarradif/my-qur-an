@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme/colors.dart';
 import '../services/hijri_helper.dart';
+import '../main.dart';
 
 class HijriCalendarScreen extends StatefulWidget {
   const HijriCalendarScreen({super.key});
@@ -54,10 +55,21 @@ class _HijriCalendarScreenState extends State<HijriCalendarScreen> {
     return Scaffold(
       backgroundColor: AppColors.bg(context),
       appBar: AppBar(
-        title: const Text('Kalender Hijriah', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        title: Text('Kalender Hijriah', style: TextStyle(color: AppColors.isDark(context) ? Colors.white : Colors.white, fontWeight: FontWeight.bold)),
         backgroundColor: AppColors.primaryGreen,
         iconTheme: const IconThemeData(color: Colors.white),
         elevation: 0,
+        actions: [
+          IconButton(
+            icon: Icon(
+              AppColors.isDark(context) ? Icons.wb_sunny_outlined : Icons.nightlight_round_outlined,
+            ),
+            onPressed: () {
+              MyQuranApp.of(context).toggleTheme();
+            },
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
       body: GestureDetector(
         onHorizontalDragEnd: (details) {

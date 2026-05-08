@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:geolocator/geolocator.dart';
 import '../services/hijri_helper.dart';
 import '../theme/colors.dart';
+import '../main.dart';
 import '../widgets/feature_menu_button.dart';
 import '../widgets/last_read_card.dart';
 import '../models/jadwal.dart';
@@ -378,20 +379,35 @@ class _HomeScreenState extends State<HomeScreen> {
             Text('Assalamualaikum', style: TextStyle(color: AppColors.isDark(context) ? Colors.white : AppColors.primaryGreen, fontSize: 22, fontWeight: FontWeight.bold)),
           ],
         ),
-        Container(
-          width: 45,
-          height: 45,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: Colors.black,
-            boxShadow: [
-              BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 10, offset: const Offset(0, 4)),
-            ],
-            image: const DecorationImage(
-              image: NetworkImage('https://i.pravatar.cc/150?img=11'),
-              fit: BoxFit.cover,
+        Row(
+          children: [
+            IconButton(
+              icon: Icon(
+                AppColors.isDark(context) ? Icons.wb_sunny_outlined : Icons.nightlight_round_outlined,
+                color: AppColors.green(context),
+                size: 24,
+              ),
+              onPressed: () {
+                MyQuranApp.of(context).toggleTheme();
+              },
             ),
-          ),
+            const SizedBox(width: 8),
+            Container(
+              width: 45,
+              height: 45,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.black,
+                boxShadow: [
+                  BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 10, offset: const Offset(0, 4)),
+                ],
+                image: const DecorationImage(
+                  image: NetworkImage('https://i.pravatar.cc/150?img=11'),
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+          ],
         ),
       ],
     );

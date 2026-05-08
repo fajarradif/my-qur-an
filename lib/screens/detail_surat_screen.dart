@@ -819,8 +819,9 @@ class _DetailSuratScreenState extends State<DetailSuratScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.15),
+        color: AppColors.sf(context),
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.green(context).withValues(alpha: 0.1)),
       ),
       child: Row(
         children: [
@@ -829,14 +830,14 @@ class _DetailSuratScreenState extends State<DetailSuratScreen> {
             child: DropdownButtonHideUnderline(
               child: DropdownButton<String>(
                 value: _selectedQori,
-                dropdownColor: AppColors.primaryGreen,
-                icon: const Icon(Icons.keyboard_arrow_down, color: Colors.white),
+                dropdownColor: AppColors.sf(context),
+                icon: Icon(Icons.keyboard_arrow_down, color: AppColors.green(context)),
                 isExpanded: true,
-                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500, fontSize: 14),
+                style: TextStyle(color: AppColors.text1(context), fontWeight: FontWeight.w500, fontSize: 14),
                 items: _qoriNames.entries.map((e) {
                   return DropdownMenuItem<String>(
                     value: e.key,
-                    child: Text(e.value, style: const TextStyle(fontSize: 13)),
+                    child: Text(e.value, style: TextStyle(fontSize: 13, color: AppColors.text1(context))),
                   );
                 }).toList(),
                 onChanged: (val) {

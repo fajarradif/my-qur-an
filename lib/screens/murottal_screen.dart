@@ -6,6 +6,7 @@ import '../models/surah.dart';
 import '../services/api_service.dart';
 import '../widgets/quran_number_marker.dart';
 import '../models/surah_detail.dart';
+import '../main.dart';
 
 class MurottalScreen extends StatefulWidget {
   const MurottalScreen({super.key});
@@ -114,13 +115,25 @@ class _MurottalScreenState extends State<MurottalScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.bg(context),
       appBar: AppBar(
-        title: const Text('Murottal Al-Quran', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text('Murottal Al-Quran', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.text1(context))),
         centerTitle: true,
         elevation: 0,
-        backgroundColor: AppColors.background,
-        iconTheme: const IconThemeData(color: AppColors.primaryGreen),
+        backgroundColor: AppColors.bg(context),
+        iconTheme: IconThemeData(color: AppColors.green(context)),
+        actions: [
+          IconButton(
+            icon: Icon(
+              AppColors.isDark(context) ? Icons.wb_sunny_outlined : Icons.nightlight_round_outlined,
+              color: AppColors.green(context),
+            ),
+            onPressed: () {
+              MyQuranApp.of(context).toggleTheme();
+            },
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
       body: Column(
         children: [
@@ -131,11 +144,11 @@ class _MurottalScreenState extends State<MurottalScreen> {
               future: futureSurahList,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator(color: AppColors.primaryGreen));
+                  return Center(child: CircularProgressIndicator(color: AppColors.green(context)));
                 } else if (snapshot.hasError) {
-                  return Center(child: Text('Error: ${snapshot.error}'));
+                  return Center(child: Text('Error: ${snapshot.error}', style: TextStyle(color: AppColors.text1(context))));
                 } else if (!snapshot.hasData) {
-                  return const Center(child: Text('Tidak ada data surat.'));
+                  return Center(child: Text('Tidak ada data surat.', style: TextStyle(color: AppColors.text1(context))));
                 }
 
                 if (_allSurahs.isEmpty) {
@@ -165,16 +178,16 @@ class _MurottalScreenState extends State<MurottalScreen> {
       margin: const EdgeInsets.all(20),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       decoration: BoxDecoration(
-        color: AppColors.primaryGreen,
+        color: AppColors.green(context),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
-          BoxShadow(color: AppColors.primaryGreen.withValues(alpha: 0.3), blurRadius: 10, offset: const Offset(0, 4)),
+          BoxShadow(color: AppColors.green(context).withValues(alpha: 0.3), blurRadius: 10, offset: const Offset(0, 4)),
         ],
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: _selectedQori,
-          dropdownColor: AppColors.primaryGreen,
+          dropdownColor: AppColors.isDark(context) ? AppColors.darkSurface : AppColors.primaryGreen,
           icon: const Icon(Icons.keyboard_arrow_down, color: Colors.white),
           isExpanded: true,
           style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
@@ -212,9 +225,9 @@ class _MurottalScreenState extends State<MurottalScreen> {
         controller: _searchController,
         decoration: InputDecoration(
           hintText: 'Cari nama surat...',
-          prefixIcon: const Icon(Icons.search, color: AppColors.primaryGreen),
+          prefixIcon: Icon(Icons.search, color: AppColors.green(context)),
           filled: true,
-          fillColor: AppColors.surface,
+          fillColor: AppColors.sf(context),
           contentPadding: const EdgeInsets.symmetric(vertical: 12),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
@@ -242,12 +255,12 @@ class _MurottalScreenState extends State<MurottalScreen> {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: AppColors.sf(context),
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
-            BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 10, offset: const Offset(0, 4)),
+            BoxShadow(color: Colors.black.withValues(alpha: AppColors.isDark(context) ? 0.2 : 0.03), blurRadius: 10, offset: const Offset(0, 4)),
           ],
-          border: isThisSurahLoaded ? Border.all(color: AppColors.primaryGreen.withValues(alpha: 0.3), width: 1) : null,
+          border: isThisSurahLoaded ? Border.all(color: AppColors.green(context).withValues(alpha: 0.3), width: 1) : null,
         ),
         child: Row(
           children: [
@@ -262,25 +275,25 @@ class _MurottalScreenState extends State<MurottalScreen> {
                 children: [
                   Text(
                     surah.namaLatin,
-                    style: const TextStyle(color: AppColors.primaryGreen, fontSize: 16, fontWeight: FontWeight.bold),
+                    style: TextStyle(color: AppColors.text1(context), fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                   Text(
                     '${surah.jumlahAyat} Ayat',
-                    style: const TextStyle(color: AppColors.mutedGreen, fontSize: 12),
+                    style: TextStyle(color: AppColors.text2(context), fontSize: 12),
                   ),
                 ],
               ),
             ),
             Text(
               surah.nama,
-              style: const TextStyle(color: AppColors.primaryGreen, fontSize: 20, fontFamily: 'QuranFont'),
+              style: TextStyle(color: AppColors.green(context), fontSize: 20, fontFamily: 'QuranFont'),
             ),
             const SizedBox(width: 16),
             isBuffering 
-              ? const SizedBox(width: 32, height: 32, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primaryGreen))
+              ? SizedBox(width: 32, height: 32, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.green(context)))
               : Icon(
                   isPlaying ? Icons.pause_circle_filled : Icons.play_circle_filled,
-                  color: AppColors.primaryGreen,
+                  color: AppColors.green(context),
                   size: 32,
                 ),
           ],
