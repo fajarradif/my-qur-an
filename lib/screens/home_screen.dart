@@ -630,10 +630,19 @@ class _HomeScreenState extends State<HomeScreen> {
           width: double.infinity,
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: AppColors.sf(context),
+            gradient: LinearGradient(
+              colors: [AppColors.deepForestGreen, AppColors.deepGreen],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
             borderRadius: BorderRadius.circular(24),
+            image: const DecorationImage(
+              image: AssetImage('assets/images/islamic_pattern.png'),
+              fit: BoxFit.cover,
+              opacity: 0.4,
+            ),
             boxShadow: [
-              BoxShadow(color: Colors.black.withValues(alpha: AppColors.isDark(context) ? 0.2 : 0.04), blurRadius: 15, offset: const Offset(0, 5)),
+              BoxShadow(color: AppColors.primaryGreen.withValues(alpha: 0.3), blurRadius: 15, offset: const Offset(0, 5)),
             ],
           ),
           child: Column(
@@ -641,13 +650,13 @@ class _HomeScreenState extends State<HomeScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('Jadwal Sholat Hari Ini', style: TextStyle(color: AppColors.isDark(context) ? AppColors.darkGold : AppColors.primaryGreen, fontWeight: FontWeight.bold, fontSize: 14)),
+                  Text('Jadwal Sholat Hari Ini', style: const TextStyle(color: AppColors.primaryYellow, fontWeight: FontWeight.bold, fontSize: 14)),
                   Builder(
                     builder: (context) {
                       final hijri = HijriHelper.fromGregorian(DateTime.now());
                       return Text(
                         '${hijri['day']} ${HijriHelper.getMonthName(hijri['month'])} ${hijri['year']} H',
-                        style: const TextStyle(color: AppColors.mutedGreen, fontSize: 10, fontWeight: FontWeight.w600),
+                        style: const TextStyle(color: Colors.white70, fontSize: 10, fontWeight: FontWeight.w600),
                       );
                     }
                   ),
@@ -671,13 +680,12 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildPrayerItem(String name, String time, bool isActive) {
-    final isDark = AppColors.isDark(context);
     return Column(
       children: [
         Text(
           name,
           style: TextStyle(
-            color: isActive ? AppColors.gold(context) : AppColors.muted(context),
+            color: isActive ? AppColors.primaryYellow : Colors.white70,
             fontSize: 11,
             fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
           ),
@@ -687,20 +695,21 @@ class _HomeScreenState extends State<HomeScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
           decoration: BoxDecoration(
             color: isActive 
-              ? (isDark ? AppColors.darkPrimaryGreen : AppColors.primaryGreen) 
-              : (isDark ? AppColors.darkCard : AppColors.iconBgGreen.withValues(alpha: 0.5)),
+              ? AppColors.primaryYellow 
+              : Colors.white.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(12),
-            border: isDark && !isActive ? Border.all(color: AppColors.darkMutedGreen.withValues(alpha: 0.3), width: 1) : null,
+            border: Border.all(
+              color: Colors.white.withValues(alpha: isActive ? 0.3 : 0.1), 
+              width: 1
+            ),
             boxShadow: isActive ? [
-              BoxShadow(color: AppColors.green(context).withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 4))
+              BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 4, offset: const Offset(0, 2))
             ] : null,
           ),
           child: Text(
             time,
             style: TextStyle(
-              color: isActive 
-                ? Colors.white 
-                : (isDark ? AppColors.darkTextPrimary : AppColors.primaryGreen),
+              color: isActive ? AppColors.deepForestGreen : Colors.white,
               fontSize: 12,
               fontWeight: FontWeight.bold,
             ),
@@ -987,10 +996,19 @@ class _HomeScreenState extends State<HomeScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: AppColors.sf(context),
+        gradient: LinearGradient(
+          colors: [AppColors.deepForestGreen, AppColors.deepGreen],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
         borderRadius: BorderRadius.circular(24),
+        image: const DecorationImage(
+          image: AssetImage('assets/images/islamic_pattern.png'),
+          fit: BoxFit.cover,
+          opacity: 0.4,
+        ),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: AppColors.isDark(context) ? 0.2 : 0.04), blurRadius: 15, offset: const Offset(0, 5)),
+          BoxShadow(color: AppColors.primaryGreen.withValues(alpha: 0.3), blurRadius: 15, offset: const Offset(0, 5)),
         ],
       ),
       child: Column(
@@ -998,8 +1016,8 @@ class _HomeScreenState extends State<HomeScreen> {
           Text(
             inspiration['arabic']!,
             textAlign: TextAlign.center,
-            style: TextStyle(
-              color: AppColors.gold(context),
+            style: const TextStyle(
+              color: AppColors.primaryYellow,
               fontSize: 28,
               fontFamily: 'QuranFont',
               height: 1.5,
@@ -1009,8 +1027,8 @@ class _HomeScreenState extends State<HomeScreen> {
           Text(
             inspiration['translation']!,
             textAlign: TextAlign.center,
-            style: TextStyle(
-              color: AppColors.muted(context),
+            style: const TextStyle(
+              color: Colors.white,
               fontSize: 13,
               fontStyle: FontStyle.italic,
               height: 1.5,
@@ -1020,12 +1038,12 @@ class _HomeScreenState extends State<HomeScreen> {
           Align(
             alignment: Alignment.center,
             child: Container(
-               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-               decoration: BoxDecoration(
-                 color: AppColors.gold(context).withValues(alpha: 0.2),
-                 borderRadius: BorderRadius.circular(8),
-               ),
-               child: Text(inspiration['source']!, style: TextStyle(color: AppColors.gold(context), fontSize: 10, fontWeight: FontWeight.bold)),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(inspiration['source']!, style: const TextStyle(color: AppColors.primaryYellow, fontSize: 10, fontWeight: FontWeight.bold)),
             ),
           )
         ],
@@ -1144,6 +1162,11 @@ class _HomeScreenState extends State<HomeScreen> {
           decoration: BoxDecoration(
             color: AppColors.deepGreen.withValues(alpha: 0.95),
             borderRadius: BorderRadius.circular(20),
+            image: const DecorationImage(
+              image: AssetImage('assets/images/islamic_pattern.png'),
+              fit: BoxFit.cover,
+              opacity: 0.2,
+            ),
             boxShadow: [
               BoxShadow(color: Colors.black.withValues(alpha: 0.3), blurRadius: 15, offset: const Offset(0, 5)),
             ],
@@ -1222,10 +1245,10 @@ class _HomeScreenState extends State<HomeScreen> {
         child: ClipRRect(
           borderRadius: BorderRadius.circular(35),
           child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+            filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
             child: Container(
               decoration: BoxDecoration(
-                color: AppColors.sf(context).withValues(alpha: AppColors.isDark(context) ? 0.5 : 0.4),
+                color: AppColors.sf(context).withValues(alpha: AppColors.isDark(context) ? 0.5 : 0.45),
                 borderRadius: BorderRadius.circular(35),
                 border: Border.all(
                   color: Colors.white.withValues(alpha: AppColors.isDark(context) ? 0.05 : 0.2),
@@ -1293,7 +1316,9 @@ class _HomeScreenState extends State<HomeScreen> {
               duration: const Duration(milliseconds: 300),
               child: Icon(
                 icon,
-                color: isSelected ? AppColors.gold(context) : AppColors.muted(context).withValues(alpha: 0.7),
+                color: isSelected 
+                  ? AppColors.gold(context) 
+                  : (AppColors.isDark(context) ? Colors.white54 : AppColors.primaryGreen.withValues(alpha: 0.7)),
                 size: 26,
               ),
             ),
@@ -1318,7 +1343,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _navItem(int index, IconData icon, String label) {
     final isSelected = index == _selectedIndex;
-    final color = isSelected ? AppColors.gold(context) : AppColors.muted(context);
+    final color = isSelected 
+        ? AppColors.gold(context) 
+        : (AppColors.isDark(context) ? Colors.white54 : AppColors.primaryGreen.withValues(alpha: 0.7));
 
     return Expanded(
       child: GestureDetector(
@@ -1352,7 +1379,9 @@ class _HomeScreenState extends State<HomeScreen> {
               Text(
                 label,
                 style: TextStyle(
-                  color: color,
+                  color: isSelected 
+                    ? (AppColors.isDark(context) ? AppColors.gold(context) : AppColors.primaryGreen) 
+                    : (AppColors.isDark(context) ? Colors.white54 : AppColors.darkGold),
                   fontSize: 10,
                   fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                 ),

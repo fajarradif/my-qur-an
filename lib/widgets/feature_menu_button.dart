@@ -25,9 +25,10 @@ class FeatureMenuButton extends StatelessWidget {
             decoration: BoxDecoration(
               color: AppColors.sf(context),
               borderRadius: BorderRadius.circular(20),
+              border: AppColors.isDark(context) ? null : Border.all(color: AppColors.primaryGreen.withValues(alpha: 0.1), width: 1),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: AppColors.isDark(context) ? 0.2 : 0.04),
+                  color: Colors.black.withValues(alpha: AppColors.isDark(context) ? 0.2 : 0.1),
                   blurRadius: 15,
                   offset: const Offset(0, 5),
                 ),
