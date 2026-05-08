@@ -85,6 +85,7 @@ class ThemeInherited extends InheritedWidget {
 
   @override
   bool updateShouldNotify(ThemeInherited oldWidget) {
-    return themeProvider.isDarkMode != oldWidget.themeProvider.isDarkMode;
+    // Selalu rebuild kalau ada pemberitahuan dari provider
+    return true;
   }
 }

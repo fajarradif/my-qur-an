@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../theme/colors.dart';
+import '../main.dart';
 
 class TasbihScreen extends StatefulWidget {
   const TasbihScreen({super.key});
@@ -123,13 +124,26 @@ class _TasbihScreenState extends State<TasbihScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.bg(context),
       appBar: AppBar(
-        title: const Text('Tasbih Digital', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text('Tasbih Digital', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.text1(context))),
         centerTitle: true,
         elevation: 0,
-        backgroundColor: AppColors.background,
-        iconTheme: const IconThemeData(color: AppColors.primaryGreen),
+        backgroundColor: AppColors.bg(context),
+        iconTheme: IconThemeData(color: AppColors.green(context)),
+        actions: [
+          IconButton(
+            icon: Icon(
+              AppColors.isDark(context) ? Icons.wb_sunny_outlined : Icons.nightlight_round_outlined,
+              color: AppColors.green(context),
+            ),
+            onPressed: () {
+              // Trigger theme toggle
+              MyQuranApp.of(context).toggleTheme();
+            },
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(vertical: 20),
@@ -143,17 +157,17 @@ class _TasbihScreenState extends State<TasbihScreen> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 decoration: BoxDecoration(
-                  color: AppColors.primaryGreen.withValues(alpha: 0.1),
+                  color: AppColors.green(context).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.flag, color: AppColors.primaryGreen, size: 16),
+                    Icon(Icons.flag, color: AppColors.green(context), size: 16),
                     const SizedBox(width: 8),
                     Text(
                       'Target: $_target',
-                      style: const TextStyle(color: AppColors.primaryGreen, fontWeight: FontWeight.bold),
+                      style: TextStyle(color: AppColors.green(context), fontWeight: FontWeight.bold),
                     ),
                   ],
                 ),
@@ -164,10 +178,10 @@ class _TasbihScreenState extends State<TasbihScreen> {
             // Counter Display
             Text(
               '$_counter',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 90,
                 fontWeight: FontWeight.bold,
-                color: AppColors.primaryGreen,
+                color: AppColors.green(context),
               ),
             ),
             
@@ -177,32 +191,32 @@ class _TasbihScreenState extends State<TasbihScreen> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
                 decoration: BoxDecoration(
-                  color: AppColors.surface,
+                  color: AppColors.sf(context),
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.05),
+                      color: Colors.black.withValues(alpha: AppColors.isDark(context) ? 0.3 : 0.05),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),
                   ],
-                  border: Border.all(color: AppColors.primaryGreen.withValues(alpha: 0.1), width: 1),
+                  border: Border.all(color: AppColors.green(context).withValues(alpha: 0.1), width: 1),
                 ),
                 child: TextField(
                   controller: _dhikrController,
                   textAlign: TextAlign.center,
                   onChanged: _saveDhikr,
                   maxLines: 1,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 18,
-                    color: AppColors.primaryGreen,
+                    color: AppColors.green(context),
                     fontWeight: FontWeight.bold,
                   ),
                   decoration: InputDecoration(
                     hintText: 'Masukkan doa/dzikir...',
-                    hintStyle: TextStyle(color: Colors.grey.withValues(alpha: 0.5), fontSize: 14),
+                    hintStyle: TextStyle(color: AppColors.text2(context).withValues(alpha: 0.5), fontSize: 14),
                     border: InputBorder.none,
-                    prefixIcon: const Icon(Icons.edit_note, color: AppColors.primaryGreen, size: 18),
+                    prefixIcon: Icon(Icons.edit_note, color: AppColors.green(context), size: 18),
                     suffixIcon: IconButton(
                       icon: const Icon(Icons.clear, color: Colors.grey, size: 16),
                       onPressed: () {
@@ -225,16 +239,16 @@ class _TasbihScreenState extends State<TasbihScreen> {
                 height: 200,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: AppColors.surface,
+                  color: AppColors.sf(context),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.primaryGreen.withValues(alpha: 0.15),
+                      color: AppColors.green(context).withValues(alpha: 0.15),
                       blurRadius: 30,
                       spreadRadius: 5,
                       offset: const Offset(0, 10),
                     ),
                   ],
-                  border: Border.all(color: AppColors.primaryYellow.withValues(alpha: 0.3), width: 4),
+                  border: Border.all(color: AppColors.gold(context).withValues(alpha: 0.3), width: 4),
                 ),
                 child: Center(
                   child: Container(
@@ -298,11 +312,11 @@ class _TasbihScreenState extends State<TasbihScreen> {
       children: [
         IconButton(
           onPressed: onTap,
-          icon: Icon(icon, color: AppColors.primaryGreen, size: 30),
+          icon: Icon(icon, color: AppColors.green(context), size: 30),
         ),
         Text(
           label,
-          style: const TextStyle(color: AppColors.mutedGreen, fontSize: 12),
+          style: TextStyle(color: AppColors.text2(context).withValues(alpha: 0.7), fontSize: 12),
         ),
       ],
     );
