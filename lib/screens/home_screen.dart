@@ -83,22 +83,6 @@ class _HomeScreenState extends State<HomeScreen> {
       } else if (_scrollController.offset <= 300 && _showStickyHeader) {
         setState(() => _showStickyHeader = false);
       }
-
-      // Hide/Show Nav Bar logic
-      if (_scrollController.position.userScrollDirection == ScrollDirection.reverse) {
-        if (_showNavBar && _scrollController.offset > 50) {
-          setState(() => _showNavBar = false);
-        }
-      } else if (_scrollController.position.userScrollDirection == ScrollDirection.forward) {
-        if (!_showNavBar) {
-          setState(() => _showNavBar = true);
-        }
-      }
-      
-      // Always show at the top
-      if (_scrollController.offset <= 0 && !_showNavBar) {
-        setState(() => _showNavBar = true);
-      }
     });
 
     // Update jam setiap detik
@@ -253,20 +237,40 @@ class _HomeScreenState extends State<HomeScreen> {
       body: SafeArea(
         child: Stack(
           children: [
-            PageView(
-              controller: _mainPageController,
-              physics: const BouncingScrollPhysics(),
-              onPageChanged: (index) {
-                setState(() {
-                  _selectedIndex = index;
-                });
+            NotificationListener<ScrollNotification>(
+              onNotification: (notification) {
+                if (notification is ScrollUpdateNotification) {
+                  // Hanya tanggapi scroll vertikal (ke atas/bawah), bukan geser halaman (kiri/kanan)
+                  if (notification.metrics.axis == Axis.vertical) {
+                    if (notification.scrollDelta! > 2 && _showNavBar && notification.metrics.pixels > 50) {
+                      setState(() => _showNavBar = false);
+                    } else if (notification.scrollDelta! < -2 && !_showNavBar) {
+                      setState(() => _showNavBar = true);
+                    }
+                  }
+                }
+                // Jika sudah mentok di atas, pastikan muncul
+                if (notification.metrics.pixels <= 0 && !_showNavBar) {
+                  setState(() => _showNavBar = true);
+                }
+                return false;
               },
-              children: [
-                _buildHomeContent(),
-                const QuranScreen(),
-                BookmarkScreen(key: ValueKey(_selectedIndex)),
-                const ProfileScreen(),
-              ],
+              child: PageView(
+                controller: _mainPageController,
+                physics: const BouncingScrollPhysics(),
+                onPageChanged: (index) {
+                  setState(() {
+                    _selectedIndex = index;
+                    _showNavBar = true; // Paksa muncul tiap pindah halaman
+                  });
+                },
+                children: [
+                  _buildHomeContent(),
+                  const QuranScreen(),
+                  BookmarkScreen(key: ValueKey(_selectedIndex)),
+                  const ProfileScreen(),
+                ],
+              ),
             ),
             AnimatedPositioned(
               duration: const Duration(milliseconds: 400),
