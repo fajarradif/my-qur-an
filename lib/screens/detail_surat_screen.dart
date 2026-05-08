@@ -744,7 +744,7 @@ class _DetailSuratScreenState extends State<DetailSuratScreen> {
                   icon: AppColors.isDark(context) ? Icons.wb_sunny : Icons.nightlight_round,
                   title: 'Ganti Tema',
                   subtitle: AppColors.isDark(context) ? 'Mode Terang' : 'Mode Gelap',
-                  color: Colors.blue,
+                  color: AppColors.isDark(context) ? AppColors.primaryYellow : AppColors.green(context),
                   onTap: () {
                     setModalState(() {
                       MyQuranApp.of(context).toggleTheme();

@@ -62,7 +62,8 @@ class _HijriCalendarScreenState extends State<HijriCalendarScreen> {
         actions: [
           IconButton(
             icon: Icon(
-              AppColors.isDark(context) ? Icons.wb_sunny_outlined : Icons.nightlight_round_outlined,
+              AppColors.isDark(context) ? Icons.light_mode : Icons.dark_mode,
+              color: AppColors.isDark(context) ? AppColors.primaryYellow : Colors.white,
             ),
             onPressed: () {
               MyQuranApp.of(context).toggleTheme();

@@ -82,8 +82,8 @@ class _KiblatScreenState extends State<KiblatScreen> {
         actions: [
           IconButton(
             icon: Icon(
-              AppColors.isDark(context) ? Icons.wb_sunny_outlined : Icons.nightlight_round_outlined,
-              color: AppColors.green(context),
+              AppColors.isDark(context) ? Icons.light_mode : Icons.dark_mode,
+              color: AppColors.isDark(context) ? AppColors.primaryYellow : AppColors.green(context),
             ),
             onPressed: () {
               MyQuranApp.of(context).toggleTheme();
@@ -189,7 +189,7 @@ class _KiblatScreenState extends State<KiblatScreen> {
                 style: TextStyle(
                   fontSize: 64,
                   fontWeight: FontWeight.bold,
-                  color: isAligned ? Colors.orangeAccent : AppColors.green(context),
+                  color: isAligned ? Colors.orangeAccent : (AppColors.isDark(context) ? AppColors.primaryYellow : AppColors.green(context)),
                 ),
               ),
               Text(
@@ -225,7 +225,7 @@ class _KiblatScreenState extends State<KiblatScreen> {
                 ),
                 child: Text(
                   "Arahkan HP sejajar dengan lantai",
-                  style: TextStyle(color: AppColors.green(context), fontWeight: FontWeight.bold),
+                  style: TextStyle(color: AppColors.isDark(context) ? AppColors.primaryYellow : AppColors.green(context), fontWeight: FontWeight.bold),
                 ),
               ),
             ],
@@ -247,9 +247,9 @@ class _KiblatScreenState extends State<KiblatScreen> {
         alignment: Alignment.center,
         children: [
           const Positioned(top: 10, child: Text('N', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red))),
-          Positioned(bottom: 10, child: Text('S', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.green(context)))),
-          Positioned(left: 10, child: Text('W', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.green(context)))),
-          Positioned(right: 10, child: Text('E', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.green(context)))),
+          Positioned(bottom: 10, child: Text('S', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.isDark(context) ? AppColors.primaryYellow : AppColors.green(context)))),
+          Positioned(left: 10, child: Text('W', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.isDark(context) ? AppColors.primaryYellow : AppColors.green(context)))),
+          Positioned(right: 10, child: Text('E', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.isDark(context) ? AppColors.primaryYellow : AppColors.green(context)))),
           
           for (int i = 0; i < 72; i++)
             Transform.rotate(
@@ -259,7 +259,7 @@ class _KiblatScreenState extends State<KiblatScreen> {
                 child: Container(
                   width: i % 2 == 0 ? 2 : 1,
                   height: i % 18 == 0 ? 15 : 8,
-                  color: AppColors.green(context).withValues(alpha: 0.3),
+                  color: (AppColors.isDark(context) ? AppColors.primaryYellow : AppColors.green(context)).withValues(alpha: 0.3),
                 ),
               ),
             ),
@@ -296,7 +296,7 @@ class _KiblatScreenState extends State<KiblatScreen> {
               ],
             ),
           ),
-          Icon(Icons.mosque, color: AppColors.green(context), size: 30),
+          Icon(Icons.mosque, color: AppColors.isDark(context) ? AppColors.primaryYellow : AppColors.green(context), size: 30),
         ],
       ),
     );

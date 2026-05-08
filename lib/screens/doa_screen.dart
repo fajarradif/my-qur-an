@@ -53,7 +53,8 @@ class _DoaScreenState extends State<DoaScreen> {
         actions: [
           IconButton(
             icon: Icon(
-              AppColors.isDark(context) ? Icons.wb_sunny_outlined : Icons.nightlight_round_outlined,
+              AppColors.isDark(context) ? Icons.light_mode : Icons.dark_mode,
+              color: AppColors.isDark(context) ? AppColors.primaryYellow : AppColors.green(context),
             ),
             onPressed: () {
               MyQuranApp.of(context).toggleTheme();
@@ -183,7 +184,8 @@ class DoaDetailScreen extends StatelessWidget {
         actions: [
           IconButton(
             icon: Icon(
-              AppColors.isDark(context) ? Icons.wb_sunny_outlined : Icons.nightlight_round_outlined,
+              AppColors.isDark(context) ? Icons.light_mode : Icons.dark_mode,
+              color: AppColors.isDark(context) ? AppColors.primaryYellow : AppColors.green(context),
             ),
             onPressed: () {
               MyQuranApp.of(context).toggleTheme();

@@ -134,8 +134,8 @@ class _TasbihScreenState extends State<TasbihScreen> {
         actions: [
           IconButton(
             icon: Icon(
-              AppColors.isDark(context) ? Icons.wb_sunny_outlined : Icons.nightlight_round_outlined,
-              color: AppColors.green(context),
+              AppColors.isDark(context) ? Icons.light_mode : Icons.dark_mode,
+              color: AppColors.isDark(context) ? AppColors.primaryYellow : AppColors.green(context),
             ),
             onPressed: () {
               // Trigger theme toggle
@@ -163,11 +163,11 @@ class _TasbihScreenState extends State<TasbihScreen> {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.flag, color: AppColors.green(context), size: 16),
+                    Icon(Icons.flag, color: AppColors.isDark(context) ? AppColors.primaryYellow : AppColors.green(context), size: 16),
                     const SizedBox(width: 8),
                     Text(
                       'Target: $_target',
-                      style: TextStyle(color: AppColors.green(context), fontWeight: FontWeight.bold),
+                      style: TextStyle(color: AppColors.isDark(context) ? AppColors.primaryYellow : AppColors.green(context), fontWeight: FontWeight.bold),
                     ),
                   ],
                 ),
@@ -181,7 +181,7 @@ class _TasbihScreenState extends State<TasbihScreen> {
               style: TextStyle(
                 fontSize: 90,
                 fontWeight: FontWeight.bold,
-                color: AppColors.green(context),
+                color: AppColors.isDark(context) ? AppColors.primaryYellow : AppColors.green(context),
               ),
             ),
             
@@ -209,14 +209,14 @@ class _TasbihScreenState extends State<TasbihScreen> {
                   maxLines: 1,
                   style: TextStyle(
                     fontSize: 18,
-                    color: AppColors.green(context),
+                    color: AppColors.isDark(context) ? AppColors.primaryYellow : AppColors.green(context),
                     fontWeight: FontWeight.bold,
                   ),
                   decoration: InputDecoration(
                     hintText: 'Masukkan doa/dzikir...',
                     hintStyle: TextStyle(color: AppColors.text2(context).withValues(alpha: 0.5), fontSize: 14),
                     border: InputBorder.none,
-                    prefixIcon: Icon(Icons.edit_note, color: AppColors.green(context), size: 18),
+                    prefixIcon: Icon(Icons.edit_note, color: AppColors.isDark(context) ? AppColors.primaryYellow : AppColors.green(context), size: 18),
                     suffixIcon: IconButton(
                       icon: const Icon(Icons.clear, color: Colors.grey, size: 16),
                       onPressed: () {
@@ -308,15 +308,16 @@ class _TasbihScreenState extends State<TasbihScreen> {
 
 
   Widget _actionButton({required IconData icon, required String label, required VoidCallback onTap}) {
+    final Color activeColor = AppColors.isDark(context) ? AppColors.primaryYellow : AppColors.green(context);
     return Column(
       children: [
         IconButton(
           onPressed: onTap,
-          icon: Icon(icon, color: AppColors.green(context), size: 30),
+          icon: Icon(icon, color: activeColor, size: 30),
         ),
         Text(
           label,
-          style: TextStyle(color: AppColors.text2(context).withValues(alpha: 0.7), fontSize: 12),
+          style: TextStyle(color: activeColor.withValues(alpha: 0.7), fontSize: 12),
         ),
       ],
     );

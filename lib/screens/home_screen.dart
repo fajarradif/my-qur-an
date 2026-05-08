@@ -383,8 +383,8 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             IconButton(
               icon: Icon(
-                AppColors.isDark(context) ? Icons.wb_sunny_outlined : Icons.nightlight_round_outlined,
-                color: AppColors.green(context),
+                AppColors.isDark(context) ? Icons.light_mode : Icons.dark_mode,
+                color: AppColors.isDark(context) ? AppColors.primaryYellow : AppColors.green(context),
                 size: 24,
               ),
               onPressed: () {
