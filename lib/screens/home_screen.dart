@@ -1406,9 +1406,7 @@ class _HomeScreenState extends State<HomeScreen> {
               Text(
                 label,
                 style: TextStyle(
-                  color: isSelected 
-                    ? (AppColors.isDark(context) ? AppColors.gold(context) : AppColors.primaryGreen) 
-                    : (AppColors.isDark(context) ? Colors.white54 : AppColors.darkGold),
+                  color: color,
                   fontSize: 10,
                   fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                 ),
