@@ -242,17 +242,29 @@ class _HomeScreenState extends State<HomeScreen> {
                 if (notification is ScrollUpdateNotification) {
                   // Hanya tanggapi scroll vertikal (ke atas/bawah), bukan geser halaman (kiri/kanan)
                   if (notification.metrics.axis == Axis.vertical) {
+                    // Deteksi scroll ke bawah (sembunyi)
                     if (notification.scrollDelta! > 2 && _showNavBar && notification.metrics.pixels > 50) {
                       setState(() => _showNavBar = false);
-                    } else if (notification.scrollDelta! < -2 && !_showNavBar) {
-                      setState(() => _showNavBar = true);
+                    } 
+                    // Deteksi scroll ke atas (muncul)
+                    else if (notification.scrollDelta! < -2 && !_showNavBar) {
+                      // Jangan muncul kalau lagi membal di ujung bawah (overscroll)
+                      if (notification.metrics.pixels < notification.metrics.maxScrollExtent - 20) {
+                        setState(() => _showNavBar = true);
+                      }
                     }
                   }
                 }
-                // Jika sudah mentok di atas, pastikan muncul
+                
+                // Jika sudah mentok di paling ATAS, pastikan muncul
                 if (notification.metrics.pixels <= 0 && !_showNavBar) {
                   setState(() => _showNavBar = true);
                 }
+
+                // Jika mentok di paling BAWAH, tetep sembunyi (kecuali lagi di-scroll ke atas)
+                // Kita tidak perlu setState(false) di sini karena logika scrollDelta di atas sudah cukup,
+                // tapi kita pastikan tidak ada paksaan muncul di area bawah.
+                
                 return false;
               },
               child: PageView(
