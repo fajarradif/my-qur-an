@@ -3,6 +3,8 @@ import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../services/api_service.dart';
 import '../theme/colors.dart';
+import '../main.dart';
+import 'detail_berita_screen.dart';
 
 class NewsScreen extends StatefulWidget {
   const NewsScreen({super.key});
@@ -13,15 +15,30 @@ class NewsScreen extends StatefulWidget {
 
 class _NewsScreenState extends State<NewsScreen> {
   Future<List<Map<String, dynamic>>>? futureNews;
-  String _selectedType = 'Utama'; // Utama, Keislaman
-  String _selectedCategory = 'Terkini'; // Terkini, Nasional, Internasional, Daerah, Risalah
+  String _selectedType = 'Utama';
+  String _selectedCategory = 'Terkini';
+  final ScrollController _scrollController = ScrollController();
 
   final List<String> _categories = ['Terkini', 'Islami', 'Nasional', 'Internasional', 'Daerah'];
 
   @override
   void initState() {
     super.initState();
-    futureNews = ApiService.getNews(category: 'terbaru');
+    futureNews = ApiService.getNews(category: 'terkini');
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _scrollToList() {
+    _scrollController.animateTo(
+      _scrollController.position.maxScrollExtent,
+      duration: const Duration(milliseconds: 600),
+      curve: Curves.easeInOut,
+    );
   }
 
   Future<void> _launchUrl(String url) async {
@@ -40,6 +57,7 @@ class _NewsScreenState extends State<NewsScreen> {
     return Scaffold(
       backgroundColor: AppColors.bg(context),
       body: CustomScrollView(
+        controller: _scrollController,
         physics: const BouncingScrollPhysics(),
         slivers: [
           // Elegant Header
@@ -63,12 +81,119 @@ class _NewsScreenState extends State<NewsScreen> {
             ),
             actions: [
               IconButton(
-                icon: Icon(Icons.search, color: AppColors.green(context)),
-                onPressed: () {},
+                icon: Icon(Icons.search, color: AppColors.isDark(context) ? Colors.white70 : AppColors.green(context)),
+                onPressed: () {
+                  showModalBottomSheet(
+                    context: context,
+                    backgroundColor: Colors.transparent,
+                    isScrollControlled: true,
+                    builder: (_) => Container(
+                      padding: const EdgeInsets.fromLTRB(24, 20, 24, 40),
+                      decoration: BoxDecoration(
+                        color: AppColors.bg(context),
+                        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Center(
+                            child: Container(
+                              width: 40, height: 4,
+                              decoration: BoxDecoration(
+                                color: AppColors.muted(context).withOpacity(0.4),
+                                borderRadius: BorderRadius.circular(2),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          Text('Cari Kategori Berita',
+                            style: TextStyle(color: AppColors.text1(context), fontSize: 18, fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: AppColors.gold(context).withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(color: AppColors.gold(context).withOpacity(0.3)),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(Icons.info_outline, size: 14, color: AppColors.gold(context)),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    'Pencarian hanya tersedia berdasarkan kategori: Terkini, Islami, Nasional, Internasional, dan Daerah.',
+                                    style: TextStyle(color: AppColors.gold(context), fontSize: 12, height: 1.4),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          ..._categories.map((cat) {
+                            final isActive = cat == _selectedCategory;
+                            return GestureDetector(
+                              onTap: () {
+                                Navigator.pop(context);
+                                setState(() {
+                                  _selectedCategory = cat;
+                                  futureNews = null;
+                                });
+                                setState(() {
+                                  futureNews = ApiService.getNews(category: cat);
+                                });
+                              },
+                              child: Container(
+                                margin: const EdgeInsets.only(bottom: 10),
+                                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+                                decoration: BoxDecoration(
+                                  color: isActive
+                                      ? AppColors.gold(context).withOpacity(0.15)
+                                      : AppColors.bg(context),
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(
+                                    color: isActive
+                                        ? AppColors.gold(context)
+                                        : AppColors.muted(context).withOpacity(0.2),
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      isActive ? Icons.check_circle : Icons.circle_outlined,
+                                      size: 18,
+                                      color: isActive ? AppColors.gold(context) : AppColors.muted(context),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Text(
+                                      cat,
+                                      style: TextStyle(
+                                        color: isActive ? AppColors.gold(context) : AppColors.text1(context),
+                                        fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+                                        fontSize: 15,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          }),
+                        ],
+                      ),
+                    ),
+                  );
+                },
               ),
               IconButton(
-                icon: Icon(Icons.bookmark_border, color: AppColors.green(context)),
-                onPressed: () {},
+                icon: Icon(
+                  AppColors.isDark(context) ? Icons.wb_sunny_rounded : Icons.nightlight_round,
+                  color: AppColors.isDark(context) ? AppColors.primaryYellow : AppColors.green(context),
+                ),
+                onPressed: () {
+                  MyQuranApp.of(context).toggleTheme();
+                },
               ),
               const SizedBox(width: 8),
             ],
@@ -94,9 +219,12 @@ class _NewsScreenState extends State<NewsScreen> {
                         'Sorotan Utama',
                         style: TextStyle(color: AppColors.text1(context), fontSize: 18, fontWeight: FontWeight.bold),
                       ),
-                      Text(
-                        'Lihat Semua',
-                        style: TextStyle(color: AppColors.gold(context), fontSize: 12, fontWeight: FontWeight.w500),
+                      GestureDetector(
+                        onTap: _scrollToList,
+                        child: Text(
+                          'Lihat Semua',
+                          style: TextStyle(color: AppColors.gold(context), fontSize: 12, fontWeight: FontWeight.w500),
+                        ),
                       ),
                     ],
                   ),
@@ -212,7 +340,14 @@ class _NewsScreenState extends State<NewsScreen> {
         final news = snapshot.data![0];
         
         return GestureDetector(
-          onTap: () => _launchUrl(news['link']),
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => DetailBeritaScreen(
+                news: {...news, 'category': _selectedCategory},
+              ),
+            ),
+          ),
           child: Container(
             margin: const EdgeInsets.symmetric(horizontal: 20),
             height: 220,
@@ -310,7 +445,14 @@ class _NewsScreenState extends State<NewsScreen> {
         ],
       ),
       child: InkWell(
-        onTap: () => _launchUrl(news['link']),
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => DetailBeritaScreen(
+              news: {...news, 'category': _selectedCategory},
+            ),
+          ),
+        ),
         borderRadius: BorderRadius.circular(20),
         child: Padding(
           padding: const EdgeInsets.all(12),
