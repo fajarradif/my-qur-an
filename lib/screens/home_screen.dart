@@ -518,7 +518,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   children: [
                     Icon(Icons.location_on, size: 14, color: AppColors.gold(context)),
                     const SizedBox(width: 4),
-                    Expanded(
+                    Flexible(
+                      fit: FlexFit.loose,
                       child: Text(
                         _currentLocationName, 
                         style: TextStyle(color: AppColors.muted(context), fontSize: 12),
