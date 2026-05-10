@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme/colors.dart';
 import '../models/ayat.dart';
+import '../models/surah.dart';
 import '../models/surah_detail.dart';
 import '../services/api_service.dart';
 import '../services/app_settings.dart';
@@ -8,7 +9,7 @@ import '../services/bookmark_service.dart';
 import '../widgets/quran_number_marker.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_background/just_audio_background.dart';
-import '../main.dart'; // import MyQuranApp
+import '../main.dart'; 
 
 class DetailSuratScreen extends StatefulWidget {
   final int nomorSurat;
@@ -21,11 +22,16 @@ class DetailSuratScreen extends StatefulWidget {
 }
 
 class _DetailSuratScreenState extends State<DetailSuratScreen> {
+  late int _currentNomor;
   late Future<SurahDetail> futureSurahDetail;
+  late Future<List<Surah>> futureSurahList;
   bool _isMushafMode = false;
-  bool _showDetails = false; // Default: Minimalis (Sembunyiin info tambahan)
+  bool _showLatin = true;
+  bool _showTranslation = true;
   int? _lastReadAyat;
-  String _selectedQori = '05'; // Default Misyari Rasyid
+  int? _pendingScrollAyat;
+  
+  String _selectedQori = '05'; 
   final Map<String, String> _qoriNames = {
     '01': 'Abdullah Al-Juhany',
     '02': 'Abdul Muhsin Al-Qasim',
@@ -35,22 +41,69 @@ class _DetailSuratScreenState extends State<DetailSuratScreen> {
   };
   final AudioPlayer _audioPlayer = AudioPlayer();
   final ScrollController _scrollController = ScrollController();
+  final ScrollController _surahBarController = ScrollController();
   final Map<int, GlobalKey> _ayatKeys = {};
 
   @override
   void initState() {
     super.initState();
-    futureSurahDetail = ApiService.getDetailSurat(widget.nomorSurat);
+    _currentNomor = widget.nomorSurat;
+    _pendingScrollAyat = widget.initialAyat;
+    _loadSurahData();
+    futureSurahList = ApiService.getSuratList();
     _loadLastRead();
     
     _audioPlayer.playerStateStream.listen((state) {
       if (mounted) setState(() {});
     });
 
-    // Rebuild otomatis saat font size berubah dari Pengaturan
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) MyQuranApp.settingsOf(context).addListener(_onSettingsChanged);
+      _scrollToActiveSurah();
     });
+  }
+
+  void _loadSurahData() {
+    futureSurahDetail = ApiService.getDetailSurat(_currentNomor).then((detail) {
+      if (_pendingScrollAyat != null) {
+        // Beri waktu sekejap buat ListView inisialisasi
+        Future.delayed(const Duration(milliseconds: 500), () {
+          if (mounted) {
+            _scrollToAyat(_pendingScrollAyat!);
+            _pendingScrollAyat = null;
+          }
+        });
+      }
+      return detail;
+    });
+  }
+
+  void _changeSurah(int nomor, {int? targetAyat}) {
+    if (nomor == _currentNomor) {
+      if (targetAyat != null) _scrollToAyat(targetAyat);
+      return;
+    }
+    setState(() {
+      _currentNomor = nomor;
+      _pendingScrollAyat = targetAyat;
+      _loadSurahData();
+      _ayatKeys.clear();
+      _lastReadAyat = null; 
+    });
+    _loadLastRead();
+    _scrollToActiveSurah();
+    _scrollController.animateTo(0, duration: const Duration(milliseconds: 300), curve: Curves.easeIn);
+  }
+
+  void _scrollToActiveSurah() {
+    double target = (_currentNomor - 1) * 90.0 - (MediaQuery.of(context).size.width / 2) + 45;
+    if (_surahBarController.hasClients) {
+      _surahBarController.animateTo(
+        target.clamp(0.0, _surahBarController.position.maxScrollExtent),
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.easeInOut,
+      );
+    }
   }
 
   void _onSettingsChanged() {
@@ -59,151 +112,22 @@ class _DetailSuratScreenState extends State<DetailSuratScreen> {
 
   @override
   void dispose() {
-    // Hapus listener sebelum dispose
     try { MyQuranApp.settingsOf(context).removeListener(_onSettingsChanged); } catch (_) {}
     _audioPlayer.dispose();
     _scrollController.dispose();
+    _surahBarController.dispose();
     super.dispose();
   }
 
   Future<void> _loadLastRead() async {
     final lastRead = await BookmarkService.getLastRead();
-    if (mounted && lastRead['surah'] == widget.nomorSurat) {
+    if (mounted) {
       setState(() {
-        _lastReadAyat = lastRead['ayat'];
-      });
-    }
-  }
-
-  Future<void> _playAudio(int ayatNo, String audioUrl) async {
-    try {
-      final currentMediaItem = _audioPlayer.sequenceState?.currentSource?.tag as MediaItem?;
-      // Jika klik ayat yang sama DAN Syekh yang sama dengan yang sedang di-load
-      final isCurrentlyLoaded = currentMediaItem?.extras?['ayatNo'] == ayatNo && 
-                                currentMediaItem?.extras?['isMurottal'] == false &&
-                                currentMediaItem?.extras?['qoriId'] == _selectedQori;
-
-      if (isCurrentlyLoaded) {
-        if (_audioPlayer.playing) {
-          await _audioPlayer.pause();
+        if (lastRead['surah'] == _currentNomor) {
+          _lastReadAyat = lastRead['ayat'];
         } else {
-          if (_audioPlayer.processingState == ProcessingState.completed) {
-            await _audioPlayer.seek(Duration.zero);
-          }
-          await _audioPlayer.play();
+          _lastReadAyat = null;
         }
-        return;
-      }
-
-      // Jika klik ayat baru atau Syekh baru
-      await _audioPlayer.stop();
-      await _audioPlayer.setAudioSource(AudioSource.uri(
-        Uri.parse(audioUrl),
-        tag: MediaItem(
-          id: audioUrl,
-          album: "My Quran",
-          title: "Ayat $ayatNo",
-          artist: _qoriNames[_selectedQori] ?? "Unknown",
-          artUri: Uri.parse('https://images.unsplash.com/photo-1584286595398-a59f21d313f5?q=80&w=1000&auto=format&fit=crop'),
-          extras: {'ayatNo': ayatNo, 'isMurottal': false, 'qoriId': _selectedQori},
-        ),
-      ));
-      await _audioPlayer.play();
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal memutar audio: $e'), backgroundColor: Colors.red),
-        );
-      }
-    }
-  }
-
-  Future<void> _playMurottal(SurahDetail detail, {bool forcePlay = false}) async {
-    try {
-      final audioUrl = detail.audioFull[_selectedQori];
-      if (audioUrl == null) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Audio Murottal tidak tersedia')),
-          );
-        }
-        return;
-      }
-
-      final currentMediaItem = _audioPlayer.sequenceState?.currentSource?.tag as MediaItem?;
-      final isCurrentlyLoaded = currentMediaItem?.extras?['isMurottal'] == true && 
-                                currentMediaItem?.extras?['qoriId'] == _selectedQori &&
-                                currentMediaItem?.id == audioUrl;
-
-      // Jika sedang diputar dan bukan force play, maka pause/resume
-      if (isCurrentlyLoaded && !forcePlay) {
-        if (_audioPlayer.playing) {
-          await _audioPlayer.pause();
-        } else {
-          if (_audioPlayer.processingState == ProcessingState.completed) {
-            await _audioPlayer.seek(Duration.zero);
-          }
-          await _audioPlayer.play();
-        }
-        return;
-      }
-
-      // Jika klik Play tapi ganti qori/belum diload
-      await _audioPlayer.stop();
-      await _audioPlayer.setAudioSource(AudioSource.uri(
-        Uri.parse(audioUrl),
-        tag: MediaItem(
-          id: audioUrl,
-          album: "My Quran Murottal",
-          title: "Surah ${detail.namaLatin}",
-          artist: _qoriNames[_selectedQori] ?? "Unknown",
-          artUri: Uri.parse('https://images.unsplash.com/photo-1584286595398-a59f21d313f5?q=80&w=1000&auto=format&fit=crop'),
-          extras: {'isMurottal': true, 'qoriId': _selectedQori},
-        ),
-      ));
-      await _audioPlayer.play();
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal memutar murottal: $e'), backgroundColor: Colors.red),
-        );
-      }
-    }
-  }
-
-  void _scrollToAyat(int ayatNumber, {int retryCount = 0}) {
-    if (!mounted) return;
-
-    final key = _ayatKeys[ayatNumber];
-
-    // Jika widget sudah ter-render (karena masuk dalam cacheExtent), scroll dengan sangat smooth
-    if (key != null && key.currentContext != null) {
-      Scrollable.ensureVisible(
-        key.currentContext!,
-        alignment: 0.0,
-        duration: const Duration(milliseconds: 1000),
-        curve: Curves.fastOutSlowIn,
-      );
-    } else if (retryCount < 5) {
-      // Jika belum ada, lakukan animasi cepat ke area estimasi
-      if (!_scrollController.hasClients || _scrollController.position.maxScrollExtent == 0) {
-        Future.delayed(const Duration(milliseconds: 100), () => _scrollToAyat(ayatNumber, retryCount: retryCount + 1));
-        return;
-      }
-
-      // Rata-rata tinggi ayat di surat panjang sekitar 550-600px (Arab + Latin + Terjemah)
-      double estimation = (ayatNumber - 1) * 580.0;
-      double maxScroll = _scrollController.position.maxScrollExtent;
-      double target = estimation.clamp(0.0, maxScroll);
-      
-      // Animasi cepat (1.2 detik) ke area target
-      _scrollController.animateTo(
-        target,
-        duration: const Duration(milliseconds: 1200),
-        curve: Curves.easeInOutCubic,
-      ).then((_) {
-        // Setelah sampai, panggil lagi untuk mendapatkan posisi presisi via ensureVisible
-        _scrollToAyat(ayatNumber, retryCount: retryCount + 1);
       });
     }
   }
@@ -213,217 +137,255 @@ class _DetailSuratScreenState extends State<DetailSuratScreen> {
     return Scaffold(
       backgroundColor: AppColors.bg(context),
       appBar: AppBar(
+        backgroundColor: AppColors.isDark(context) ? AppColors.darkSurface : AppColors.primaryGreen,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Navigator.pop(context),
+        ),
         title: FutureBuilder<SurahDetail>(
           future: futureSurahDetail,
           builder: (context, snapshot) {
-            if (!snapshot.hasData) return const SizedBox.shrink();
-            return Text(
-              snapshot.data!.namaLatin,
-              style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.text1(context), fontSize: 18),
-            );
+            if (snapshot.hasData) {
+              return Column(
+                children: [
+                  Text(snapshot.data!.namaLatin, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
+                  Text(snapshot.data!.arti, style: const TextStyle(color: Colors.white70, fontSize: 12)),
+                ],
+              );
+            }
+            return const Text('Memuat...', style: TextStyle(color: Colors.white));
           },
         ),
-        centerTitle: true,
-        elevation: 0,
-        backgroundColor: AppColors.bg(context),
-        iconTheme: IconThemeData(color: AppColors.green(context)),
         actions: [
           IconButton(
-            icon: Icon(
-              _showDetails ? Icons.visibility : Icons.visibility_off,
-              color: AppColors.green(context),
-            ),
-            tooltip: _showDetails ? 'Mode Minimalis' : 'Tampilkan Detail',
-            onPressed: () {
-              setState(() {
-                _showDetails = !_showDetails;
-              });
-            },
+            icon: Icon(_isMushafMode ? Icons.list_alt : Icons.menu_book, color: Colors.white),
+            onPressed: () => setState(() => _isMushafMode = !_isMushafMode),
           ),
-          FutureBuilder<SurahDetail>(
-            future: futureSurahDetail,
-            builder: (context, snapshot) {
-              if (!snapshot.hasData) return const SizedBox.shrink();
-              return IconButton(
-                icon: Icon(Icons.tune, color: AppColors.green(context)),
-                tooltip: 'Pengaturan',
-                onPressed: () => _showControlPanel(snapshot.data!),
-              );
-            },
+          IconButton(
+            icon: const Icon(Icons.settings_outlined, color: Colors.white),
+            onPressed: () => _showSurahSettings(),
           ),
           const SizedBox(width: 8),
         ],
       ),
-      body: FutureBuilder<SurahDetail>(
-        future: futureSurahDetail,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator(color: AppColors.green(context)));
-          } else if (snapshot.hasError) {
-            return Center(
-              child: Text(
-                'Terjadi Kesalahan:\n${snapshot.error}',
-                textAlign: TextAlign.center,
-                style: const TextStyle(color: Colors.red),
-              ),
-            );
-          } else if (!snapshot.hasData) {
-            return const Center(child: Text('Data ayat tidak ditemukan.'));
-          }
-
-          final detail = snapshot.data!;
-          
-          // Inisialisasi keys hanya sekali saat data pertama kali tersedia
-          if (_ayatKeys.isEmpty) {
-            for (var a in detail.ayat) {
-              _ayatKeys[a.nomorAyat] = GlobalKey();
-            }
-            
-            // Jika ada initialAyat, trigger scroll
-            if (widget.initialAyat != null && widget.initialAyat! > 0) {
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                _scrollToAyat(widget.initialAyat!);
-              });
-            }
-          }
-
-          return _isMushafMode 
-            ? _buildMushafView(detail) 
-            : _buildTafsirView(detail);
-        },
+      body: Column(
+        children: [
+          _buildSurahSelectorBar(),
+          Expanded(
+            child: FutureBuilder<SurahDetail>(
+              future: futureSurahDetail,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator(color: AppColors.primaryGreen));
+                }
+                if (snapshot.hasError) {
+                  return Center(child: Text('Gagal memuat data: ${snapshot.error}'));
+                }
+                final detail = snapshot.data!;
+                return _isMushafMode ? _buildMushafView(detail) : _buildListView(detail);
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildTafsirView(SurahDetail detail) {
-    return ListView.separated(
-      controller: _scrollController,
-      physics: const BouncingScrollPhysics(),
-      cacheExtent: 30000,
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 40),
-      itemCount: detail.ayat.length + 1, // Tambah 1 untuk Header
-      separatorBuilder: (context, index) => Divider(color: AppColors.muted(context).withValues(alpha: 0.1), height: 1, thickness: 0.5),
-      itemBuilder: (context, index) {
-        if (index == 0) {
-          return _buildHeader(detail);
-        }
-        final ayat = detail.ayat[index - 1];
+  Widget _buildSurahSelectorBar() {
+    return FutureBuilder<List<Surah>>(
+      future: futureSurahList,
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) return const SizedBox(height: 55);
+        final surahs = snapshot.data!;
         return Container(
-          key: _ayatKeys[ayat.nomorAyat],
-          child: _buildAyatCard(ayat, detail.namaLatin),
+          height: 55,
+          color: AppColors.isDark(context) ? AppColors.darkSurface : AppColors.primaryGreen,
+          child: ListView.builder(
+            controller: _surahBarController,
+            scrollDirection: Axis.horizontal,
+            itemCount: surahs.length,
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            itemBuilder: (context, index) {
+              final s = surahs[index];
+              final isActive = s.nomor == _currentNomor;
+              return GestureDetector(
+                onTap: () => _changeSurah(s.nomor),
+                child: Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: isActive ? Colors.white.withOpacity(0.2) : Colors.transparent,
+                    borderRadius: BorderRadius.circular(20),
+                    border: isActive ? Border.all(color: Colors.white38) : null,
+                  ),
+                  child: Center(
+                    child: Text(
+                      s.namaLatin,
+                      style: TextStyle(
+                        color: isActive ? Colors.white : Colors.white60,
+                        fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
         );
       },
     );
   }
 
-  Widget _buildMushafView(SurahDetail detail) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        // Ukuran font responsif berdasarkan lebar layar
-        final double fontSize = constraints.maxWidth < 400 ? 22 : 26;
-        final double bismillahSize = constraints.maxWidth < 400 ? 24 : 30;
+  Widget _buildListView(SurahDetail detail) {
+    return ListView.builder(
+      controller: _scrollController,
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
+      itemCount: detail.ayat.length + 1, 
+      itemBuilder: (context, index) {
+        if (index == 0) return _buildHeader(detail);
         
-        List<InlineSpan> spans = [];
+        final ayat = detail.ayat[index - 1];
+        _ayatKeys[ayat.nomorAyat] = GlobalKey();
 
-        for (var a in detail.ayat) {
-          final bool isCurrentBookmark = _lastReadAyat == a.nomorAyat;
-          
-          // Tambahkan anchor key di awal ayat agar scrolling tepat ke awal teks
-          spans.add(
-            WidgetSpan(child: SizedBox.shrink(key: _ayatKeys[a.nomorAyat])),
-          );
-
-          // Tambahkan teks ayat
-          spans.add(
-            TextSpan(
-              text: '${a.teksArab} ',
-              style: TextStyle(
-                fontSize: fontSize,
-                fontFamily: 'QuranFont',
-                color: AppColors.text1(context),
-                backgroundColor: isCurrentBookmark ? AppColors.gold(context).withValues(alpha: 0.25) : null,
-                height: 2.2,
-                wordSpacing: 2, 
-              ),
-            ),
-          );
-          
-          // Tambahkan penanda ayat (inline) yang bisa diklik
-          spans.add(
-            WidgetSpan(
-              alignment: PlaceholderAlignment.middle,
-              child: GestureDetector(
-                onTap: () async {
-                  if (_lastReadAyat == a.nomorAyat) {
-                    await BookmarkService.clearLastRead();
-                    if (mounted) {
-                      setState(() => _lastReadAyat = null);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Penanda dihapus'), duration: Duration(seconds: 1)),
-                      );
-                    }
-                  } else {
-                    await BookmarkService.saveLastRead(
-                      surah: widget.nomorSurat,
-                      surahName: detail.namaLatin,
-                      ayat: a.nomorAyat,
-                    );
-                    if (mounted) {
-                      setState(() => _lastReadAyat = a.nomorAyat);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Penanda dipindahkan ke ayat ${a.nomorAyat}'), duration: const Duration(seconds: 2)),
-                      );
-                    }
-                  }
-                },
-                child: QuranNumberMarker(
-                  number: a.nomorAyat.toString(),
-                  size: fontSize * 1.2, 
-                  isInline: true,
-                  color: isCurrentBookmark ? const Color(0xFF800000) : const Color(0xFFC5A358), // Merah Maroon jika bookmark
-                ),
-              ),
-            ),
-          );
-          
-          // Beri spasi setelah marker
-          spans.add(const TextSpan(text: ' '));
-        }
-
-        return _buildMushafFrame(
-          surahName: detail.nama,
-          child: ListView( // Gunakan ListView agar area scroll lebih stabil
-            controller: _scrollController,
-            physics: const BouncingScrollPhysics(),
-            padding: EdgeInsets.zero,
-            children: [
-              // Bismillah dipisah agar tidak merusak rata kanan-kiri body utama
-              if (detail.nomor != 9 && detail.nomor != 1)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 24.0, top: 8),
-                  child: Text(
-                    'بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيْمِ',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: bismillahSize,
-                      fontFamily: 'QuranFont',
-                      color: AppColors.green(context),
-                    ),
-                  ),
-                ),
-              
-              // Body Ayat dengan RichText Justified
-              Text.rich(
-                TextSpan(children: spans),
-                textAlign: TextAlign.justify,
-                textDirection: TextDirection.rtl,
-                softWrap: true,
-              ),
-              const SizedBox(height: 40), // Ruang di bawah halaman
-            ],
-          ),
+        return Column(
+          key: _ayatKeys[ayat.nomorAyat],
+          children: [
+            if (index == 1 && detail.nomor != 1 && detail.nomor != 9)
+              _buildBismillah(),
+            _buildAyatItem(ayat, detail),
+            const Divider(height: 1, thickness: 0.5),
+          ],
         );
       },
+    );
+  }
+
+  Widget _buildBismillah() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 24),
+      child: Center(
+        child: Text(
+          'بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيْمِ',
+          style: TextStyle(
+            color: AppColors.isDark(context) ? Colors.white : AppColors.primaryGreen,
+            fontSize: 28,
+            fontFamily: 'QuranFont',
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAyatItem(Ayat ayat, SurahDetail surah) {
+    final isPlaying = _audioPlayer.playing && 
+                    _audioPlayer.sequenceState?.currentSource?.tag is MediaItem &&
+                    (_audioPlayer.sequenceState!.currentSource!.tag as MediaItem).extras?['ayatNo'] == ayat.nomorAyat;
+    
+    final isBookmarked = _lastReadAyat == ayat.nomorAyat;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              QuranNumberMarker(
+                number: ayat.nomorAyat.toString(),
+                size: 32,
+              ),
+              const Spacer(),
+              IconButton(
+                icon: const Icon(Icons.share_outlined, color: AppColors.primaryGreen, size: 18),
+                onPressed: () {}, 
+              ),
+              IconButton(
+                icon: Icon(isPlaying ? Icons.pause_circle_filled : Icons.play_circle_outline, color: AppColors.primaryGreen, size: 22),
+                onPressed: () => _playAudio(ayat.nomorAyat, ayat.audio[_selectedQori]!),
+              ),
+              IconButton(
+                icon: Icon(isBookmarked ? Icons.bookmark : Icons.bookmark_border, color: isBookmarked ? AppColors.primaryYellow : AppColors.primaryGreen, size: 20),
+                onPressed: () => _saveLastRead(ayat.nomorAyat, surah),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            ayat.teksArab,
+            textAlign: TextAlign.right,
+            textDirection: TextDirection.rtl,
+            style: TextStyle(
+              color: AppColors.text1(context),
+              fontSize: 28,
+              fontFamily: 'QuranFont',
+              height: 1.8,
+            ),
+          ),
+          if (_showLatin) ...[
+            const SizedBox(height: 12),
+            Text(
+              ayat.teksLatin,
+              style: TextStyle(
+                color: AppColors.primaryGreen,
+                fontSize: 14,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ],
+          if (_showTranslation) ...[
+            const SizedBox(height: 8),
+            Text(
+              ayat.teksIndonesia,
+              style: TextStyle(
+                color: AppColors.text2(context),
+                fontSize: 14,
+                height: 1.5,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMushafView(SurahDetail detail) {
+    List<InlineSpan> spans = [];
+    
+    for (var ayat in detail.ayat) {
+      spans.add(TextSpan(
+        text: ayat.teksArab,
+        style: TextStyle(
+          color: AppColors.isDark(context) ? Colors.white.withOpacity(0.9) : Colors.black87,
+          fontSize: 28,
+          fontFamily: 'QuranFont',
+          height: 1.8,
+        ),
+      ));
+      spans.add(WidgetSpan(
+        alignment: PlaceholderAlignment.middle,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8.0),
+          child: QuranNumberMarker(number: ayat.nomorAyat.toString(), size: 28),
+        ),
+      ));
+    }
+
+    return _buildMushafFrame(
+      surahName: detail.nama,
+      child: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          if (detail.nomor != 1 && detail.nomor != 9)
+             _buildBismillah(),
+          Text.rich(
+            TextSpan(children: spans),
+            textAlign: TextAlign.justify,
+            textDirection: TextDirection.rtl,
+          ),
+        ],
+      ),
     );
   }
 
@@ -433,654 +395,237 @@ class _DetailSuratScreenState extends State<DetailSuratScreen> {
     final frameColor = isDark ? AppColors.darkSurface : const Color(0xFFFDF7E7);
     
     return Container(
-      margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+      margin: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: frameColor,
         border: Border.all(color: goldColor, width: 2.5),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 15, spreadRadius: 2),
+          BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 15, spreadRadius: 2),
         ],
       ),
-      child: Container(
-        margin: const EdgeInsets.all(3),
-        decoration: BoxDecoration(
-          border: Border.all(color: goldColor.withValues(alpha: 0.4), width: 1),
-        ),
-        child: Column(
-          children: [
-            // Header Mushaf
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                color: goldColor.withValues(alpha: 0.05),
-                border: Border(bottom: BorderSide(color: goldColor.withValues(alpha: 0.3))),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text('الجزء ١', style: TextStyle(color: goldColor, fontSize: 11, fontWeight: FontWeight.bold)),
-                  Text(surahName, style: TextStyle(color: goldColor, fontSize: 16, fontWeight: FontWeight.bold, fontFamily: 'QuranFont')),
-                  Text('١', style: TextStyle(color: goldColor, fontSize: 11, fontWeight: FontWeight.bold)),
-                ],
-              ),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: goldColor.withOpacity(0.05),
+              border: Border(bottom: BorderSide(color: goldColor.withOpacity(0.3))),
             ),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: child,
-              ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text('الجزء ١', style: TextStyle(color: Color(0xFFC5A358), fontSize: 11, fontWeight: FontWeight.bold)),
+                Text(surahName, style: TextStyle(color: goldColor, fontSize: 16, fontWeight: FontWeight.bold, fontFamily: 'QuranFont')),
+                const Text('١', style: TextStyle(color: Color(0xFFC5A358), fontSize: 11, fontWeight: FontWeight.bold)),
+              ],
             ),
-            // Footer Mushaf
-            Container(
-              height: 12,
-              decoration: BoxDecoration(
-                border: Border(top: BorderSide(color: goldColor.withValues(alpha: 0.1))),
-              ),
-            ),
-          ],
-        ),
+          ),
+          Expanded(child: child),
+        ],
       ),
     );
   }
 
   Widget _buildHeader(SurahDetail detail) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
+      margin: const EdgeInsets.symmetric(vertical: 16),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: AppColors.isDark(context) ? AppColors.darkSurface : AppColors.primaryGreen,
+        color: AppColors.primaryGreen,
         borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: (AppColors.isDark(context) ? Colors.black : AppColors.primaryGreen).withValues(alpha: 0.3),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
+        image: const DecorationImage(
+          image: AssetImage('assets/images/islamic_pattern.png'),
+          fit: BoxFit.cover,
+          opacity: 0.1,
+        ),
       ),
       child: Column(
         children: [
-          Text(detail.namaLatin, style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 4),
-          Text(detail.arti, style: const TextStyle(color: Colors.white70, fontSize: 16)),
-          const SizedBox(height: 16),
-          const Divider(color: Colors.white24, thickness: 1),
-          const SizedBox(height: 16),
           Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(detail.tempatTurun, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500)),
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 8.0),
-                child: Icon(Icons.circle, size: 6, color: Colors.white54),
-              ),
-              Text('${detail.jumlahAyat} AYAT', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500)),
+              Text(detail.tempatTurun.toUpperCase(), style: const TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold)),
+              Text('${detail.jumlahAyat} AYAT', style: const TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold)),
             ],
           ),
-          if (_lastReadAyat != null) ...[
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.bookmark, color: AppColors.primaryYellow, size: 14),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Terakhir dibaca: Ayat $_lastReadAyat',
-                    style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
-                  ),
-                ],
-              ),
-            ),
-          ],
+          const SizedBox(height: 12),
+          Text(detail.nama, style: const TextStyle(color: Colors.white, fontSize: 24, fontFamily: 'QuranFont')),
+          const SizedBox(height: 8),
+          const Divider(color: Colors.white24),
+          const SizedBox(height: 8),
+          Text(detail.arti, style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 14)),
         ],
       ),
     );
   }
 
-  void _showMurottalSettings(SurahDetail detail) {
+  void _showSurahSettings() {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       builder: (context) => StatefulBuilder(
         builder: (context, setModalState) {
-          final currentItem = _audioPlayer.sequenceState?.currentSource?.tag as MediaItem?;
-          final isMurottalLoaded = currentItem?.extras?['isMurottal'] == true && currentItem?.id == detail.audioFull[_selectedQori];
-          final isMurottalPlaying = isMurottalLoaded && _audioPlayer.playing && _audioPlayer.processingState != ProcessingState.completed;
-
+          final isDark = AppColors.isDark(context);
           return Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
               color: AppColors.sf(context),
               borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
             ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 40,
-                  height: 4,
-                  margin: const EdgeInsets.only(bottom: 24),
-                  decoration: BoxDecoration(
-                    color: AppColors.muted(context).withValues(alpha: 0.3),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-                Text(
-                  'Pemutar Murottal',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.text1(context),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Surah ${detail.namaLatin}',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: AppColors.muted(context),
-                  ),
-                ),
-                const SizedBox(height: 32),
-                
-                // Qori Selector
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: AppColors.bg(context),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Row(
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey.withOpacity(0.3), borderRadius: BorderRadius.circular(2))),
+                  const SizedBox(height: 24),
+                  
+                  Row(
                     children: [
-                      Icon(Icons.person, color: AppColors.green(context), size: 20),
+                      Expanded(
+                        child: _buildSettingsTile(
+                          icon: isDark ? Icons.light_mode : Icons.dark_mode,
+                          label: isDark ? 'Mode Terang' : 'Mode Gelap',
+                          onTap: () {
+                            MyQuranApp.of(context).toggleTheme();
+                            setModalState(() {});
+                          },
+                        ),
+                      ),
                       const SizedBox(width: 12),
                       Expanded(
-                        child: DropdownButtonHideUnderline(
-                          child: DropdownButton<String>(
-                            value: _selectedQori,
-                            dropdownColor: AppColors.sf(context),
-                            icon: Icon(Icons.keyboard_arrow_down, color: AppColors.green(context)),
-                            isExpanded: true,
-                            style: TextStyle(color: AppColors.text1(context), fontWeight: FontWeight.w500),
-                            items: _qoriNames.entries.map((e) {
-                              return DropdownMenuItem<String>(
-                                value: e.key,
-                                child: Text(e.value),
-                              );
-                            }).toList(),
-                            onChanged: (val) {
-                              if (val != null) {
-                                setState(() {
-                                  _selectedQori = val;
-                                });
-                                setModalState(() {}); // Update Modal UI
-                                
-                                // Sync audio if playing
-                                if (isMurottalPlaying || isMurottalLoaded) {
-                                  _playMurottal(detail, forcePlay: true);
-                                }
-                              }
-                            },
-                          ),
+                        child: _buildSettingsTile(
+                          icon: Icons.bookmark,
+                          label: 'Ke Penanda',
+                          onTap: () async {
+                            Navigator.pop(context);
+                            final lastRead = await BookmarkService.getLastRead();
+                            if (lastRead['surah'] != 0) {
+                              _changeSurah(lastRead['surah'], targetAyat: lastRead['ayat']);
+                            }
+                          },
                         ),
                       ),
                     ],
                   ),
-                ),
-                
-                const SizedBox(height: 32),
-                
-                // Control Buttons
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.replay_10),
-                      onPressed: () => _audioPlayer.seek(
-                        Duration(milliseconds: (_audioPlayer.position.inMilliseconds - 10000).clamp(0, 999999999))
-                      ),
-                    ),
-                    const SizedBox(width: 24),
-                    GestureDetector(
-                      onTap: () async {
-                        await _playMurottal(detail);
-                        setModalState(() {}); // Update Modal UI
-                      },
-                      child: Container(
-                        width: 70,
-                        height: 70,
-                        decoration: BoxDecoration(
-                          color: AppColors.green(context),
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppColors.green(context).withValues(alpha: 0.3),
-                              blurRadius: 15,
-                              offset: const Offset(0, 8),
-                            ),
-                          ],
-                        ),
-                        child: Icon(
-                          isMurottalPlaying ? Icons.pause : Icons.play_arrow,
-                          color: Colors.white,
-                          size: 36,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 24),
-                    IconButton(
-                      icon: const Icon(Icons.forward_30),
-                      onPressed: () => _audioPlayer.seek(
-                        Duration(milliseconds: (_audioPlayer.position.inMilliseconds + 30000))
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 40),
-              ],
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  void _showControlPanel(SurahDetail detail) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setModalState) {
-          return Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: AppColors.sf(context),
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 40,
-                  height: 4,
-                  margin: const EdgeInsets.only(bottom: 24),
-                  decoration: BoxDecoration(
-                    color: AppColors.muted(context).withValues(alpha: 0.3),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-                Text(
-                  'Pengaturan Bacaan',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.text1(context),
-                  ),
-                ),
-                const SizedBox(height: 24),
-                
-                // Menu Items
-                _buildMenuTile(
-                  icon: Icons.bookmark,
-                  title: 'Ke Ayat Terakhir Dibaca',
-                  subtitle: _lastReadAyat != null ? 'Ayat $_lastReadAyat' : 'Belum ada penanda',
-                  color: AppColors.gold(context),
-                  onTap: _lastReadAyat != null ? () {
-                    Navigator.pop(context);
-                    _scrollToAyat(_lastReadAyat!);
-                  } : null,
-                ),
-                
-                _buildMenuTile(
-                  icon: Icons.headphones,
-                  title: 'Putar Murottal',
-                  subtitle: 'Pilih Imam & Kontrol Audio',
-                  color: AppColors.green(context),
-                  onTap: () {
-                    Navigator.pop(context);
-                    _showMurottalSettings(detail);
-                  },
-                ),
-                
-                _buildMenuTile(
-                  icon: AppColors.isDark(context) ? Icons.wb_sunny : Icons.nightlight_round,
-                  title: 'Ganti Tema',
-                  subtitle: AppColors.isDark(context) ? 'Mode Terang' : 'Mode Gelap',
-                  color: AppColors.isDark(context) ? AppColors.primaryYellow : AppColors.green(context),
-                  onTap: () {
-                    setModalState(() {
-                      MyQuranApp.of(context).toggleTheme();
-                    });
-                  },
-                ),
-                
-                _buildMenuTile(
-                  icon: _isMushafMode ? Icons.list_alt : Icons.menu_book,
-                  title: 'Mode Tampilan',
-                  subtitle: _isMushafMode ? 'Pindah ke Mode Tafsir' : 'Pindah ke Mode Mushaf',
-                  color: Colors.deepPurple,
-                  onTap: () {
-                    Navigator.pop(context);
-                    setState(() {
-                      _isMushafMode = !_isMushafMode;
-                    });
-                  },
-                ),
-                
-                const SizedBox(height: 32),
-                Text(
-                  'Fitur lainnya segera hadir...',
-                  style: TextStyle(color: AppColors.muted(context), fontSize: 12),
-                ),
-                const SizedBox(height: 20),
-              ],
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildMenuTile({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required Color color,
-    VoidCallback? onTap,
-  }) {
-    return ListTile(
-      leading: Container(
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Icon(icon, color: color),
-      ),
-      title: Text(
-        title,
-        style: TextStyle(
-          fontWeight: FontWeight.bold,
-          color: onTap == null ? AppColors.muted(context) : AppColors.text1(context),
-        ),
-      ),
-      subtitle: Text(
-        subtitle,
-        style: TextStyle(color: AppColors.muted(context), fontSize: 12),
-      ),
-      trailing: const Icon(Icons.chevron_right, size: 20),
-      onTap: onTap,
-    );
-  }
-
-  Widget _buildMurottalPlayer(SurahDetail detail) {
-    final currentItem = _audioPlayer.sequenceState?.currentSource?.tag as MediaItem?;
-    final isMurottalLoaded = currentItem?.extras?['isMurottal'] == true && currentItem?.id == detail.audioFull[_selectedQori];
-    final isMurottalPlaying = isMurottalLoaded && _audioPlayer.playing && _audioPlayer.processingState != ProcessingState.completed;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: AppColors.sf(context),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.green(context).withValues(alpha: 0.1)),
-      ),
-      child: Row(
-        children: [
-          // Dropdown Imam
-          Expanded(
-            child: DropdownButtonHideUnderline(
-              child: DropdownButton<String>(
-                value: _selectedQori,
-                dropdownColor: AppColors.sf(context),
-                icon: Icon(Icons.keyboard_arrow_down, color: AppColors.green(context)),
-                isExpanded: true,
-                style: TextStyle(color: AppColors.text1(context), fontWeight: FontWeight.w500, fontSize: 14),
-                items: _qoriNames.entries.map((e) {
-                  return DropdownMenuItem<String>(
-                    value: e.key,
-                    child: Text(e.value, style: TextStyle(fontSize: 13, color: AppColors.text1(context))),
-                  );
-                }).toList(),
-                onChanged: (val) {
-                  if (val != null) {
-                    setState(() {
-                      _selectedQori = val;
-                    });
-
-                    // Jika ada audio yang lagi jalan (baik murottal atau ayat)
-                    // Kita otomatis pindahkan ke Syekh yang baru di posisi yang sama
-                    if (isMurottalPlaying || isMurottalLoaded) {
-                       _playMurottal(detail, forcePlay: true);
-                    } else {
-                      // Cek apakah ada ayat tunggal yang lagi jalan
-                      final currentItem = _audioPlayer.sequenceState?.currentSource?.tag as MediaItem?;
-                      if (currentItem != null && currentItem.extras?['ayatNo'] != null) {
-                        int ayatNo = currentItem.extras!['ayatNo'];
-                        // Cari data ayatnya untuk ambil URL audio Syekh yang baru
-                        try {
-                          final ayat = detail.ayat.firstWhere((a) => a.nomorAyat == ayatNo);
-                          String? audioUrl = ayat.audio[_selectedQori] ?? ayat.audio.values.firstOrNull;
-                          if (audioUrl != null) {
-                            _playAudio(ayatNo, audioUrl);
-                          }
-                        } catch (_) {}
-                      }
-                    }
-                  }
-                },
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          // Play/Pause Button
-          InkWell(
-            onTap: () => _playMurottal(detail),
-            child: CircleAvatar(
-              backgroundColor: AppColors.gold(context),
-              radius: 20,
-              child: Icon(
-                isMurottalPlaying ? Icons.pause : Icons.play_arrow,
-                color: AppColors.isDark(context) ? AppColors.darkBackground : AppColors.primaryGreen,
-                size: 24,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAyatCard(Ayat ayat, String detailNamaLatin) {
-    final currentItem = _audioPlayer.sequenceState?.currentSource?.tag as MediaItem?;
-    final isThisAyatLoaded = currentItem?.extras?['ayatNo'] == ayat.nomorAyat && currentItem?.extras?['isMurottal'] == false;
-    final isPlaying = isThisAyatLoaded && _audioPlayer.playing && _audioPlayer.processingState != ProcessingState.completed;
-    final isLastRead = _lastReadAyat == ayat.nomorAyat;
-
-    return GestureDetector(
-      onLongPress: () => _showBookmarkDialog(ayat, detailNamaLatin),
-      behavior: HitTestBehavior.opaque,
-      child: Container(
-        decoration: BoxDecoration(
-          color: isLastRead ? AppColors.gold(context).withValues(alpha: 0.1) : Colors.transparent,
-          borderRadius: isLastRead ? BorderRadius.circular(12) : null,
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  QuranNumberMarker(
-                    number: ayat.nomorAyat.toString(),
-                    color: isLastRead ? AppColors.gold(context) : AppColors.green(context),
-                    size: 36,
-                    textStyle: TextStyle(color: isLastRead ? AppColors.gold(context) : AppColors.green(context), fontWeight: FontWeight.bold, fontSize: 12),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
-                          ayat.teksArab,
-                          textAlign: TextAlign.right,
-                          style: TextStyle(
-                            fontSize: 28,
-                            fontFamily: 'QuranFont',
-                            color: AppColors.text1(context),
-                            height: 2.0,
-                          ),
-                        ),
-                        if (_showDetails) ...[
-                          const SizedBox(height: 16),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: [
-                              IconButton(
-                                icon: const Icon(Icons.share, size: 18),
-                                color: AppColors.green(context).withValues(alpha: 0.7),
-                                onPressed: () {},
-                              ),
-                              IconButton(
-                                icon: Icon(
-                                  isPlaying ? Icons.pause_circle_filled : Icons.play_circle_filled,
-                                  size: 24,
-                                ),
-                                color: AppColors.green(context),
-                                onPressed: () {
-                                  String? audioUrl = ayat.audio[_selectedQori] ?? ayat.audio.values.firstOrNull;
-                                  if (audioUrl != null) {
-                                    _playAudio(ayat.nomorAyat, audioUrl);
-                                  }
-                                },
-                              ),
-                              IconButton(
-                                icon: Icon(
-                                  isLastRead ? Icons.bookmark : Icons.bookmark_outline,
-                                  size: 18,
-                                ),
-                                color: isLastRead ? AppColors.gold(context) : AppColors.muted(context),
-                                onPressed: () async {
-                                  if (isLastRead) {
-                                    await BookmarkService.clearLastRead();
-                                    setState(() => _lastReadAyat = null);
-                                  } else {
-                                    await BookmarkService.saveLastRead(
-                                      surah: widget.nomorSurat,
-                                      surahName: detailNamaLatin,
-                                      ayat: ayat.nomorAyat,
-                                    );
-                                    setState(() => _lastReadAyat = ayat.nomorAyat);
-                                  }
-                                },
-                              ),
-                            ],
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
+                  const SizedBox(height: 24),
+                  
+                  _buildToggleRow('Tampilkan Latin', _showLatin, (v) {
+                    setState(() => _showLatin = v);
+                    setModalState(() {});
+                  }),
+                  _buildToggleRow('Tampilkan Terjemahan', _showTranslation, (v) {
+                    setState(() => _showTranslation = v);
+                    setModalState(() {});
+                  }),
+                  
+                  const Divider(height: 32),
+                  
+                  Text('Pilih Imam', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.text1(context))),
+                  const SizedBox(height: 12),
+                  ..._qoriNames.entries.map((e) => ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(e.value, style: TextStyle(color: AppColors.text1(context), fontSize: 14)),
+                    trailing: _selectedQori == e.key ? const Icon(Icons.check_circle, color: AppColors.primaryGreen) : null,
+                    onTap: () {
+                      setState(() => _selectedQori = e.key);
+                      setModalState(() {});
+                    },
+                  )).toList(),
                 ],
               ),
-              if (_showDetails) ...[
-                const SizedBox(height: 12),
-                Padding(
-                  padding: const EdgeInsets.only(left: 48),
-                  child: Text(
-                    ayat.teksLatin,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: AppColors.green(context),
-                      fontStyle: FontStyle.italic,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Padding(
-                  padding: const EdgeInsets.only(left: 48),
-                  child: Text(
-                    ayat.teksIndonesia,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: AppColors.text2(context),
-                      height: 1.5,
-                    ),
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-
-  void _showBookmarkDialog(Ayat ayat, String surahName) {
-    final bool isAlreadyMarked = _lastReadAyat == ayat.nomorAyat;
-    
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppColors.sf(context),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text(isAlreadyMarked ? 'Hapus Penanda' : 'Penanda Bacaan', 
-          style: TextStyle(color: AppColors.text1(context))),
-        content: Text(
-          isAlreadyMarked 
-            ? 'Hapus penanda terakhir dibaca pada ayat ${ayat.nomorAyat}?'
-            : 'Jadikan ayat ${ayat.nomorAyat} sebagai penanda terakhir dibaca?',
-          style: TextStyle(color: AppColors.text2(context)),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Batal', style: TextStyle(color: AppColors.muted(context))),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: isAlreadyMarked ? Colors.red : AppColors.green(context),
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
-            onPressed: () async {
-              if (isAlreadyMarked) {
-                await BookmarkService.clearLastRead();
-                if (mounted) setState(() => _lastReadAyat = null);
-              } else {
-                await BookmarkService.saveLastRead(
-                  surah: widget.nomorSurat,
-                  surahName: surahName,
-                  ayat: ayat.nomorAyat,
-                );
-                if (mounted) setState(() => _lastReadAyat = ayat.nomorAyat);
-              }
-              
-              if (mounted) {
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(isAlreadyMarked ? 'Penanda dihapus' : 'Berhasil ditandai: Ayat ${ayat.nomorAyat}'),
-                    backgroundColor: isAlreadyMarked ? Colors.red : AppColors.green(context),
-                  ),
-                );
-              }
-            },
-            child: Text(isAlreadyMarked ? 'Ya, Hapus' : 'Ya, Tandai'),
-          ),
-        ],
+          );
+        },
       ),
     );
   }
 
+  Widget _buildSettingsTile({required IconData icon, required String label, required VoidCallback onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          color: AppColors.bg(context),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.primaryGreen.withOpacity(0.1)),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, color: AppColors.primaryGreen),
+            const SizedBox(height: 4),
+            Text(label, style: TextStyle(color: AppColors.text1(context), fontSize: 11, fontWeight: FontWeight.w500)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildToggleRow(String label, bool value, Function(bool) onChanged) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(label, style: TextStyle(color: AppColors.text1(context))),
+        Switch(
+          value: value,
+          activeColor: AppColors.primaryGreen,
+          onChanged: onChanged,
+        ),
+      ],
+    );
+  }
+
+  void _scrollToAyat(int ayatNumber) {
+    if (!mounted) return;
+    
+    final key = _ayatKeys[ayatNumber];
+    if (key != null && key.currentContext != null) {
+      // Ayat sudah ketemu, scroll presisi
+      Scrollable.ensureVisible(key.currentContext!, duration: const Duration(seconds: 1), curve: Curves.easeInOut, alignment: 0.1);
+    } else {
+      // Ayat BELUM ketemu (mungkin karena lazy loading).
+      // Kita LOMPAT dulu ke area estimasi biar ayatnya di-render sama Flutter
+      double estimation = (ayatNumber - 1) * 350.0; // Estimasi tinggi rata-rata ayat
+      double maxScroll = _scrollController.position.maxScrollExtent;
+      
+      _scrollController.animateTo(
+        estimation.clamp(0.0, maxScroll),
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.fastOutSlowIn,
+      ).then((_) {
+        // Setelah lompat, kita cari lagi key-nya (retry)
+        Future.delayed(const Duration(milliseconds: 300), () {
+          final retryKey = _ayatKeys[ayatNumber];
+          if (retryKey != null && retryKey.currentContext != null) {
+             Scrollable.ensureVisible(retryKey.currentContext!, duration: const Duration(milliseconds: 500), curve: Curves.easeInOut, alignment: 0.1);
+          }
+        });
+      });
+    }
+  }
+
+  Future<void> _playAudio(int ayatNo, String audioUrl) async {
+    try {
+      await _audioPlayer.stop();
+      await _audioPlayer.setAudioSource(AudioSource.uri(
+        Uri.parse(audioUrl),
+        tag: MediaItem(
+          id: audioUrl,
+          album: "My Quran",
+          title: "Ayat $ayatNo",
+          artist: _qoriNames[_selectedQori] ?? "Unknown",
+          extras: {'ayatNo': ayatNo},
+        ),
+      ));
+      await _audioPlayer.play();
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Gagal: $e')));
+    }
+  }
+
+  void _saveLastRead(int ayatNo, SurahDetail surah) async {
+    await BookmarkService.saveLastRead(surah: surah.nomor, ayat: ayatNo, surahName: surah.namaLatin);
+    _loadLastRead(); 
+    if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Tersimpan di Terakhir Baca')));
+  }
 }
