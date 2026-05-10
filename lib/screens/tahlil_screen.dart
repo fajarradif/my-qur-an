@@ -300,26 +300,6 @@ class _TahlilScreenState extends State<TahlilScreen> {
                     ? AppColors.primaryYellow 
                     : (AppColors.isDark(context) ? AppColors.gold(context) : AppColors.primaryGreen),
                 ),
-                Row(
-                  children: [
-                    IconButton(
-                      icon: Icon(isPlaying ? Icons.stop_circle : Icons.play_circle_fill, color: AppColors.gold(context)),
-                      onPressed: () => _playAudio(int.parse(nomor), 'https://cdn.islamic.network/quran/audio/128/ar.alafasy/${36 * 1000 + int.parse(nomor)}.mp3'),
-                    ),
-                    IconButton(
-                      icon: Icon(isCurrentBookmark ? Icons.bookmark : Icons.bookmark_border, color: AppColors.gold(context)),
-                      onPressed: () async {
-                        if (isCurrentBookmark) {
-                          await BookmarkService.clearLastRead();
-                          setState(() => _lastReadAyat = null);
-                        } else {
-                          await BookmarkService.saveLastRead(surah: 36, surahName: 'Yasin', ayat: int.parse(nomor));
-                          setState(() => _lastReadAyat = int.parse(nomor));
-                        }
-                      },
-                    ),
-                  ],
-                ),
               ],
             ),
           ),
@@ -374,24 +354,13 @@ class _TahlilScreenState extends State<TahlilScreen> {
       spans.add(
         WidgetSpan(
           alignment: PlaceholderAlignment.middle,
-          child: GestureDetector(
-            onTap: () async {
-              if (_lastReadAyat == a.nomorAyat) {
-                await BookmarkService.clearLastRead();
-                setState(() => _lastReadAyat = null);
-              } else {
-                await BookmarkService.saveLastRead(surah: 36, surahName: 'Yasin', ayat: a.nomorAyat);
-                setState(() => _lastReadAyat = a.nomorAyat);
-              }
-            },
-            child: QuranNumberMarker(
-              number: a.nomorAyat.toString(),
-              size: 28,
-              isInline: true,
-              color: isCurrentBookmark 
-                ? AppColors.primaryYellow 
-                : (AppColors.isDark(context) ? AppColors.gold(context) : AppColors.primaryGreen),
-            ),
+          child: QuranNumberMarker(
+            number: a.nomorAyat.toString(),
+            size: 28,
+            isInline: true,
+            color: isCurrentBookmark 
+              ? AppColors.primaryYellow 
+              : (AppColors.isDark(context) ? AppColors.gold(context) : AppColors.primaryGreen),
           ),
         ),
       );

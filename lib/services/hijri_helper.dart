@@ -61,4 +61,19 @@ class HijriHelper {
 
     return allHolidays[month] ?? {};
   }
+
+  static String getPasaran(DateTime date) {
+    // Referensi: 1 Januari 2024 adalah Senin Pahing
+    final referenceDate = DateTime(2024, 1, 1);
+    final diff = date.difference(referenceDate).inDays;
+    
+    // Siklus 5 harian: Pahing, Pon, Wage, Kliwon, Legi
+    const pasaranList = ['Pahing', 'Pon', 'Wage', 'Kliwon', 'Legi'];
+    
+    // Handle diff negatif jika perlu, tapi untuk aplikasi ini cukup dari 2024 ke atas
+    int index = diff % 5;
+    if (index < 0) index += 5;
+    
+    return pasaranList[index];
+  }
 }
