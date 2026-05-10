@@ -4,7 +4,8 @@ import '../services/hijri_helper.dart';
 import '../main.dart';
 
 class HijriCalendarScreen extends StatefulWidget {
-  const HijriCalendarScreen({super.key});
+  final bool swipeEnabled;
+  const HijriCalendarScreen({super.key, this.swipeEnabled = false});
 
   @override
   State<HijriCalendarScreen> createState() => _HijriCalendarScreenState();
@@ -73,16 +74,15 @@ class _HijriCalendarScreenState extends State<HijriCalendarScreen> {
         ],
       ),
       body: GestureDetector(
-        onHorizontalDragEnd: (details) {
-          // Jika usap ke kiri (velocity negatif), ke bulan berikutnya
-          if (details.primaryVelocity! < 0) {
-            _nextMonth();
-          } 
-          // Jika usap ke kanan (velocity positif), ke bulan sebelumnya
-          else if (details.primaryVelocity! > 0) {
-            _prevMonth();
-          }
-        },
+        onHorizontalDragEnd: widget.swipeEnabled
+            ? (details) {
+                if (details.primaryVelocity! < 0) {
+                  _nextMonth();
+                } else if (details.primaryVelocity! > 0) {
+                  _prevMonth();
+                }
+              }
+            : null,
         child: Column(
           children: [
             _buildHeader(),

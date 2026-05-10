@@ -861,7 +861,7 @@ class _HomeScreenState extends State<HomeScreen> {
         icon: Icons.event_note,
         label: 'Kalender',
         onTap: () {
-          Navigator.push(context, MaterialPageRoute(builder: (context) => const HijriCalendarScreen()));
+          Navigator.push(context, MaterialPageRoute(builder: (context) => const HijriCalendarScreen(swipeEnabled: true)));
         },
       ),
       FeatureMenuButton(

@@ -21,10 +21,10 @@ class ProfileScreen extends StatelessWidget {
               const SizedBox(height: 40),
               _buildDarkModeToggle(context, isDark),
               const SizedBox(height: 16),
-              _buildProfileMenu(Icons.settings, 'Pengaturan', isDark),
-              _buildProfileMenu(Icons.history, 'Riwayat Bacaan', isDark),
-              _buildProfileMenu(Icons.help_outline, 'Pusat Bantuan', isDark),
-              _buildProfileMenu(Icons.info_outline, 'Tentang Aplikasi', isDark),
+              _buildProfileMenu(Icons.settings, 'Pengaturan', isDark, onTap: null),
+              _buildProfileMenu(Icons.history, 'Riwayat Bacaan', isDark, onTap: null),
+              _buildProfileMenu(Icons.help_outline, 'Pusat Bantuan', isDark, onTap: null),
+              _buildProfileMenu(Icons.info_outline, 'Tentang Aplikasi', isDark, onTap: () => _showAboutDialog(context, isDark)),
               const SizedBox(height: 40),
               _buildLogoutButton(isDark),
             ],
@@ -166,34 +166,124 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildProfileMenu(IconData icon, String title, bool isDark) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03), 
-            blurRadius: 10,
-          ),
-        ],
+  void _showAboutDialog(BuildContext context, bool isDark) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: isDark ? AppColors.darkSurface : AppColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        contentPadding: const EdgeInsets.all(28),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 80, height: 80,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: LinearGradient(
+                  colors: [AppColors.primaryGreen, AppColors.darkPrimaryGreen],
+                  begin: Alignment.topLeft, end: Alignment.bottomRight,
+                ),
+              ),
+              child: const Center(
+                child: Text('م', style: TextStyle(color: Colors.white, fontSize: 40, fontFamily: 'Scheherazade')),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text('MyQuran',
+              style: TextStyle(
+                color: isDark ? AppColors.darkTextPrimary : AppColors.primaryGreen,
+                fontSize: 22, fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text('Versi 1.0.0',
+              style: TextStyle(
+                color: isDark ? AppColors.darkTextSecondary : AppColors.mutedGreen,
+                fontSize: 13,
+              ),
+            ),
+            const SizedBox(height: 20),
+            Divider(color: (isDark ? AppColors.darkMutedGreen : AppColors.mutedGreen).withOpacity(0.3)),
+            const SizedBox(height: 16),
+            _aboutRow(Icons.person, 'Pembuat', 'Radifullah', isDark),
+            const SizedBox(height: 10),
+            _aboutRow(Icons.code, 'Framework', 'Flutter & Dart', isDark),
+            const SizedBox(height: 10),
+            _aboutRow(Icons.school, 'Tujuan', 'Proyek UAS Mobile', isDark),
+            const SizedBox(height: 10),
+            _aboutRow(Icons.favorite, 'Dibuat dengan', 'Bismillah ❤️', isDark),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () => Navigator.pop(context),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primaryGreen,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                child: const Text('Tutup', style: TextStyle(fontWeight: FontWeight.bold)),
+              ),
+            ),
+          ],
+        ),
       ),
-      child: Row(
-        children: [
-          Icon(icon, color: isDark ? AppColors.darkPrimaryGreen : AppColors.primaryGreen),
-          const SizedBox(width: 16),
-          Text(
-            title, 
+    );
+  }
+
+  Widget _aboutRow(IconData icon, String label, String value, bool isDark) {
+    return Row(
+      children: [
+        Icon(icon, size: 18, color: AppColors.primaryGreen),
+        const SizedBox(width: 10),
+        Text('$label: ', style: TextStyle(color: isDark ? AppColors.darkTextSecondary : AppColors.mutedGreen, fontSize: 13)),
+        Expanded(
+          child: Text(value,
             style: TextStyle(
-              color: isDark ? AppColors.darkTextPrimary : AppColors.primaryGreen, 
-              fontWeight: FontWeight.w500,
+              color: isDark ? AppColors.darkTextPrimary : AppColors.primaryGreen,
+              fontWeight: FontWeight.w600, fontSize: 13,
             ),
           ),
-          const Spacer(),
-          Icon(Icons.arrow_forward_ios, size: 16, color: isDark ? AppColors.darkMutedGreen : AppColors.mutedGreen),
-        ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildProfileMenu(IconData icon, String title, bool isDark, {VoidCallback? onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.darkSurface : AppColors.surface,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
+              blurRadius: 10,
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: onTap != null
+                ? (isDark ? AppColors.darkGold : AppColors.primaryYellow)
+                : (isDark ? AppColors.darkPrimaryGreen : AppColors.primaryGreen)),
+            const SizedBox(width: 16),
+            Text(
+              title,
+              style: TextStyle(
+                color: isDark ? AppColors.darkTextPrimary : AppColors.primaryGreen,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const Spacer(),
+            Icon(Icons.arrow_forward_ios, size: 16, color: isDark ? AppColors.darkMutedGreen : AppColors.mutedGreen),
+          ],
+        ),
       ),
     );
   }
