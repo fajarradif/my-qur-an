@@ -181,7 +181,7 @@ class _JuzTab extends StatelessWidget {
           data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
           child: ExpansionTile(
             key: PageStorageKey(juzNumber),
-            leading: QuranNumberMarker(number: juzNumber.toString(), color: AppColors.primaryGreen),
+            leading: QuranNumberMarker(number: juzNumber.toString(), color: AppColors.gold(context)),
             title: Text('Juz $juzNumber', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.green(context))),
             subtitle: Text('${contents.length} Surat', style: TextStyle(color: AppColors.muted(context), fontSize: 12)),
             iconColor: AppColors.gold(context),
@@ -192,6 +192,7 @@ class _JuzTab extends StatelessWidget {
 
               return ListTile(
                 contentPadding: EdgeInsets.zero,
+                leading: QuranNumberMarker(number: surat['no'].toString(), size: 30, color: AppColors.gold(context)),
                 title: Text(surat['nama'], style: TextStyle(color: AppColors.text1(context), fontSize: 14, fontWeight: FontWeight.w500)),
                 subtitle: Text('Ayat ${surat['range']}', style: TextStyle(color: AppColors.muted(context), fontSize: 11)),
                 trailing: Icon(Icons.arrow_forward_ios, size: 12, color: AppColors.muted(context).withOpacity(0.5)),
