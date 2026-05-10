@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'; 
 import '../theme/colors.dart';
@@ -27,10 +28,11 @@ class _DetailSuratScreenState extends State<DetailSuratScreen> {
   late Future<SurahDetail> futureSurahDetail;
   late Future<List<Surah>> futureSurahList;
   bool _isMushafMode = false;
-  bool _showLatin = true;
-  bool _showTranslation = true;
+  bool _showLatin = false; 
+  bool _showTranslation = false; 
   int? _lastReadAyat;
   int? _pendingScrollAyat;
+  bool _isAutoScrolling = false; // Flag biar nggak "mental"
   
   String _selectedQori = '05'; 
   final Map<String, String> _qoriNames = {
@@ -67,9 +69,9 @@ class _DetailSuratScreenState extends State<DetailSuratScreen> {
   void _loadSurahData() {
     futureSurahDetail = ApiService.getDetailSurat(_currentNomor).then((detail) {
       if (_pendingScrollAyat != null) {
-        Future.delayed(const Duration(milliseconds: 500), () {
+        Future.delayed(const Duration(milliseconds: 1000), () {
           if (mounted) {
-            _scrollToAyat(_pendingScrollAyat!);
+            _scrollToAyat(_pendingScrollAyat!, detail.ayat.length);
             _pendingScrollAyat = null;
           }
         });
@@ -80,7 +82,9 @@ class _DetailSuratScreenState extends State<DetailSuratScreen> {
 
   void _changeSurah(int nomor, {int? targetAyat}) {
     if (nomor == _currentNomor) {
-      if (targetAyat != null) _scrollToAyat(targetAyat);
+      if (targetAyat != null) {
+        futureSurahDetail.then((d) => _scrollToAyat(targetAyat, d.ayat.length));
+      }
       return;
     }
     setState(() {
@@ -139,7 +143,7 @@ class _DetailSuratScreenState extends State<DetailSuratScreen> {
       appBar: AppBar(
         backgroundColor: AppColors.isDark(context) ? AppColors.darkSurface : AppColors.primaryGreen,
         elevation: 0,
-        centerTitle: false, // Digeser ke kiri
+        centerTitle: false,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),
@@ -149,7 +153,7 @@ class _DetailSuratScreenState extends State<DetailSuratScreen> {
           builder: (context, snapshot) {
             if (snapshot.hasData) {
               return Column(
-                crossAxisAlignment: CrossAxisAlignment.start, // Rata kiri
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(snapshot.data!.namaLatin, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
                   Text(snapshot.data!.arti, style: const TextStyle(color: Colors.white70, fontSize: 12)),
@@ -162,7 +166,10 @@ class _DetailSuratScreenState extends State<DetailSuratScreen> {
         actions: [
           IconButton(
             icon: Icon(_isMushafMode ? Icons.list_alt : Icons.menu_book, color: Colors.white),
-            onPressed: () => setState(() => _isMushafMode = !_isMushafMode),
+            onPressed: () => setState(() {
+              _isMushafMode = !_isMushafMode;
+              _ayatKeys.clear(); // Reset keys pas pindah mode
+            }),
           ),
           IconButton(
             icon: const Icon(Icons.settings_outlined, color: Colors.white),
@@ -175,18 +182,21 @@ class _DetailSuratScreenState extends State<DetailSuratScreen> {
         children: [
           _buildSurahSelectorBar(),
           Expanded(
-            child: FutureBuilder<SurahDetail>(
-              future: futureSurahDetail,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator(color: AppColors.primaryGreen));
-                }
-                if (snapshot.hasError) {
-                  return Center(child: Text('Gagal memuat data: ${snapshot.error}'));
-                }
-                final detail = snapshot.data!;
-                return _isMushafMode ? _buildMushafView(detail) : _buildListView(detail);
-              },
+            child: Listener(
+              onPointerDown: (_) => _isAutoScrolling = false, // Stop auto-scroll kalo disentuh
+              child: FutureBuilder<SurahDetail>(
+                future: futureSurahDetail,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator(color: AppColors.primaryGreen));
+                  }
+                  if (snapshot.hasError) {
+                    return Center(child: Text('Gagal memuat data: ${snapshot.error}'));
+                  }
+                  final detail = snapshot.data!;
+                  return _isMushafMode ? _buildMushafView(detail) : _buildListView(detail);
+                },
+              ),
             ),
           ),
         ],
@@ -290,103 +300,131 @@ class _DetailSuratScreenState extends State<DetailSuratScreen> {
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            children: [
-              QuranNumberMarker(
-                number: ayat.nomorAyat.toString(),
-                size: 32,
+      child: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: isBookmarked ? Colors.green.withOpacity(0.1) : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                QuranNumberMarker(
+                  number: ayat.nomorAyat.toString(),
+                  size: 32,
+                ),
+                const Spacer(),
+                IconButton(
+                  icon: const Icon(Icons.copy_rounded, color: AppColors.primaryGreen, size: 18),
+                  onPressed: () => _copyAyat(ayat, surah), 
+                ),
+                IconButton(
+                  icon: Icon(isPlaying ? Icons.pause_circle_filled : Icons.play_circle_outline, color: AppColors.primaryGreen, size: 22),
+                  onPressed: () => _playAudio(ayat.nomorAyat, ayat.audio[_selectedQori]!),
+                ),
+                IconButton(
+                  icon: Icon(isBookmarked ? Icons.bookmark : Icons.bookmark_border, color: isBookmarked ? AppColors.primaryYellow : AppColors.primaryGreen, size: 20),
+                  onPressed: () => _showBookmarkConfirmation(ayat, surah),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Text(
+              ayat.teksArab,
+              textAlign: TextAlign.right,
+              textDirection: TextDirection.rtl,
+              style: TextStyle(
+                color: AppColors.text1(context),
+                fontSize: 28,
+                fontFamily: 'QuranFont',
+                height: 1.8,
               ),
-              const Spacer(),
-              IconButton(
-                icon: const Icon(Icons.copy_rounded, color: AppColors.primaryGreen, size: 18),
-                onPressed: () => _copyAyat(ayat, surah), 
-              ),
-              IconButton(
-                icon: Icon(isPlaying ? Icons.pause_circle_filled : Icons.play_circle_outline, color: AppColors.primaryGreen, size: 22),
-                onPressed: () => _playAudio(ayat.nomorAyat, ayat.audio[_selectedQori]!),
-              ),
-              IconButton(
-                icon: Icon(isBookmarked ? Icons.bookmark : Icons.bookmark_border, color: isBookmarked ? AppColors.primaryYellow : AppColors.primaryGreen, size: 20),
-                onPressed: () => _saveLastRead(ayat.nomorAyat, surah),
+            ),
+            if (_showLatin) ...[
+              const SizedBox(height: 12),
+              Text(
+                ayat.teksLatin,
+                style: TextStyle(
+                  color: AppColors.primaryGreen,
+                  fontSize: 14,
+                  fontStyle: FontStyle.italic,
+                ),
               ),
             ],
-          ),
-          const SizedBox(height: 16),
-          Text(
-            ayat.teksArab,
-            textAlign: TextAlign.right,
-            textDirection: TextDirection.rtl,
-            style: TextStyle(
-              color: AppColors.text1(context),
-              fontSize: 28,
-              fontFamily: 'QuranFont',
-              height: 1.8,
-            ),
-          ),
-          if (_showLatin) ...[
-            const SizedBox(height: 12),
-            Text(
-              ayat.teksLatin,
-              style: TextStyle(
-                color: AppColors.primaryGreen,
-                fontSize: 14,
-                fontStyle: FontStyle.italic,
+            if (_showTranslation) ...[
+              const SizedBox(height: 8),
+              Text(
+                ayat.teksIndonesia,
+                style: TextStyle(
+                  color: AppColors.text2(context),
+                  fontSize: 14,
+                  height: 1.5,
+                ),
               ),
-            ),
+            ],
           ],
-          if (_showTranslation) ...[
-            const SizedBox(height: 8),
-            Text(
-              ayat.teksIndonesia,
-              style: TextStyle(
-                color: AppColors.text2(context),
-                fontSize: 14,
-                height: 1.5,
-              ),
-            ),
-          ],
-        ],
+        ),
       ),
     );
   }
 
   Widget _buildMushafView(SurahDetail detail) {
-    List<InlineSpan> spans = [];
-    
-    for (var ayat in detail.ayat) {
-      spans.add(TextSpan(
-        text: ayat.teksArab,
-        style: TextStyle(
-          color: AppColors.isDark(context) ? Colors.white.withOpacity(0.9) : Colors.black87,
-          fontSize: 28,
-          fontFamily: 'QuranFont',
-          height: 1.8,
-        ),
-      ));
-      spans.add(WidgetSpan(
-        alignment: PlaceholderAlignment.middle,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8.0),
-          child: QuranNumberMarker(number: ayat.nomorAyat.toString(), size: 28),
-        ),
-      ));
-    }
-
     return _buildMushafFrame(
       surahName: detail.nama,
       child: ListView(
+        controller: _scrollController,
         padding: const EdgeInsets.all(16),
         children: [
           if (detail.nomor != 1 && detail.nomor != 9)
              _buildBismillah(),
-          Text.rich(
-            TextSpan(children: spans),
-            textAlign: TextAlign.justify,
+          
+          // Gunakan Wrap biar ayat bisa ngalir tapi tetep punya Key masing-masing
+          Directionality(
             textDirection: TextDirection.rtl,
+            child: Wrap(
+              alignment: WrapAlignment.start,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 0,
+              runSpacing: 10,
+              children: detail.ayat.map((ayat) {
+                final isBookmarked = _lastReadAyat == ayat.nomorAyat;
+                _ayatKeys[ayat.nomorAyat] = GlobalKey();
+                
+                return InkWell(
+                  key: _ayatKeys[ayat.nomorAyat],
+                  onTap: () => _showBookmarkConfirmation(ayat, detail),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 2),
+                    child: Text.rich(
+                      TextSpan(
+                        children: [
+                          TextSpan(
+                            text: ayat.teksArab,
+                            style: TextStyle(
+                              color: AppColors.isDark(context) ? Colors.white.withOpacity(0.9) : Colors.black87,
+                              fontSize: 28,
+                              fontFamily: 'QuranFont',
+                              backgroundColor: isBookmarked ? Colors.green.withOpacity(0.3) : Colors.transparent,
+                            ),
+                          ),
+                          WidgetSpan(
+                            alignment: PlaceholderAlignment.middle,
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                              child: QuranNumberMarker(number: ayat.nomorAyat.toString(), size: 28),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
           ),
+          const SizedBox(height: 100),
         ],
       ),
     );
@@ -591,29 +629,62 @@ class _DetailSuratScreenState extends State<DetailSuratScreen> {
     );
   }
 
-  void _scrollToAyat(int ayatNumber) {
+  void _scrollToAyat(int ayatNumber, int totalAyat, {int retry = 0}) {
     if (!mounted) return;
     
+    // Set auto-scroll aktif
+    _isAutoScrolling = true;
+
     final key = _ayatKeys[ayatNumber];
     if (key != null && key.currentContext != null) {
       Scrollable.ensureVisible(key.currentContext!, duration: const Duration(seconds: 1), curve: Curves.easeInOut, alignment: 0.1);
+      _isAutoScrolling = false; // Berhenti kalau sudah sampai
     } else {
-      double estimation = (ayatNumber - 1) * 350.0; 
+      if (!_isAutoScrolling) return; // Stop kalau intervensi user
+
+      double percentage = (ayatNumber - 1) / totalAyat;
       double maxScroll = _scrollController.position.maxScrollExtent;
+      double jumpTarget = percentage * maxScroll;
       
       _scrollController.animateTo(
-        estimation.clamp(0.0, maxScroll),
-        duration: const Duration(milliseconds: 500),
-        curve: Curves.fastOutSlowIn,
+        (jumpTarget - 100).clamp(0.0, maxScroll),
+        duration: const Duration(milliseconds: 600),
+        curve: Curves.easeOutQuart,
       ).then((_) {
-        Future.delayed(const Duration(milliseconds: 300), () {
-          final retryKey = _ayatKeys[ayatNumber];
-          if (retryKey != null && retryKey.currentContext != null) {
-             Scrollable.ensureVisible(retryKey.currentContext!, duration: const Duration(milliseconds: 500), curve: Curves.easeInOut, alignment: 0.1);
-          }
-        });
+        if (retry < 15 && _isAutoScrolling) {
+          Future.delayed(const Duration(milliseconds: 300), () => _scrollToAyat(ayatNumber, totalAyat, retry: retry + 1));
+        }
       });
     }
+  }
+
+  void _showBookmarkConfirmation(Ayat ayat, dynamic surah) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.sf(context),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text('Tandai Ayat', style: TextStyle(color: AppColors.text1(context))),
+        content: Text('Apakah ini ayat yang ingin Anda tandai?', style: TextStyle(color: AppColors.text2(context))),
+        actions: [
+          TextButton(
+            child: const Text('Batal', style: TextStyle(color: Colors.grey)),
+            onPressed: () => Navigator.pop(context),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primaryGreen,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            child: const Text('Ya', style: TextStyle(color: Colors.white)),
+            onPressed: () {
+              Navigator.pop(context);
+              _saveLastRead(ayat.nomorAyat, surah is SurahDetail ? surah : surah);
+            },
+          ),
+        ],
+      ),
+    );
   }
 
   void _copyAyat(Ayat ayat, SurahDetail surah) {
@@ -665,9 +736,12 @@ class _DetailSuratScreenState extends State<DetailSuratScreen> {
     }
   }
 
-  void _saveLastRead(int ayatNo, SurahDetail surah) async {
-    await BookmarkService.saveLastRead(surah: surah.nomor, ayat: ayatNo, surahName: surah.namaLatin);
+  void _saveLastRead(dynamic ayatNo, dynamic surahDetail) async {
+    final sNomor = surahDetail is SurahDetail ? surahDetail.nomor : _currentNomor;
+    final sNama = surahDetail is SurahDetail ? surahDetail.namaLatin : '';
+    
+    await BookmarkService.saveLastRead(surah: sNomor, ayat: ayatNo as int, surahName: sNama);
     _loadLastRead(); 
-    if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Tersalin di Terakhir Baca')));
+    if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Ayat berhasil ditandai')));
   }
 }
