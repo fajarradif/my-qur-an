@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../theme/colors.dart';
 import '../main.dart';
@@ -12,9 +14,12 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
+  final ImagePicker _picker = ImagePicker();
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final settings = MyQuranApp.settingsOf(context);
     
     return Scaffold(
       backgroundColor: isDark ? AppColors.darkBackground : AppColors.background,
@@ -24,13 +29,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
           child: Column(
             children: [
               const SizedBox(height: 20),
-              _buildProfileHeader(isDark),
+              _buildProfileHeader(isDark, settings),
               const SizedBox(height: 40),
               _buildDarkModeToggle(context, isDark),
               const SizedBox(height: 16),
-              _buildProfileMenu(Icons.settings, MyQuranApp.settingsOf(context).t('Pengaturan', 'Settings'), isDark, onTap: () => _showSettingsDialog(context, isDark)),
-              _buildProfileMenu(Icons.help_outline, MyQuranApp.settingsOf(context).t('Pusat Bantuan', 'Help Center'), isDark, onTap: () => _showHelpDialog(context, isDark)),
-              _buildProfileMenu(Icons.info_outline, MyQuranApp.settingsOf(context).t('Tentang Aplikasi', 'About Application'), isDark, onTap: () => _showAboutDialog(context, isDark)),
+              _buildProfileMenu(Icons.settings, settings.t('Pengaturan', 'Settings'), isDark, onTap: () => _showSettingsDialog(context, isDark)),
+              _buildProfileMenu(Icons.help_outline, settings.t('Pusat Bantuan', 'Help Center'), isDark, onTap: () => _showHelpDialog(context, isDark)),
+              _buildProfileMenu(Icons.info_outline, settings.t('Tentang Aplikasi', 'About Application'), isDark, onTap: () => _showAboutDialog(context, isDark)),
               const SizedBox(height: 40),
               _buildLogoutButton(isDark),
             ],
@@ -40,51 +45,77 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildProfileHeader(bool isDark) {
+  Widget _buildProfileHeader(bool isDark, AppSettings settings) {
     return Column(
       children: [
         Stack(
           children: [
-            Container(
-              width: 120,
-              height: 120,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: isDark ? AppColors.darkGold : AppColors.primaryYellow, 
-                  width: 4,
+            GestureDetector(
+              onTap: _pickImage,
+              child: Container(
+                width: 120,
+                height: 120,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: isDark ? AppColors.darkSurface : Colors.grey.shade200,
+                  border: Border.all(
+                    color: isDark ? AppColors.darkGold : AppColors.primaryYellow, 
+                    width: 4,
+                  ),
+                  image: settings.userPhotoPath != null 
+                    ? DecorationImage(
+                        image: FileImage(File(settings.userPhotoPath!)),
+                        fit: BoxFit.cover,
+                      )
+                    : const DecorationImage(
+                        image: NetworkImage('https://i.pravatar.cc/150?img=11'),
+                        fit: BoxFit.cover,
+                      ),
                 ),
-                image: const DecorationImage(
-                  image: NetworkImage('https://i.pravatar.cc/150?img=11'),
-                  fit: BoxFit.cover,
-                ),
+                child: settings.userPhotoPath == null 
+                  ? Icon(Icons.person, size: 60, color: isDark ? Colors.white24 : Colors.grey.shade400)
+                  : null,
               ),
             ),
             Positioned(
               bottom: 0,
               right: 0,
-              child: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: isDark ? AppColors.darkPrimaryGreen : AppColors.primaryGreen, 
-                  shape: BoxShape.circle,
+              child: GestureDetector(
+                onTap: _pickImage,
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: isDark ? AppColors.darkPrimaryGreen : AppColors.primaryGreen, 
+                    shape: BoxShape.circle,
+                    boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 4)],
+                  ),
+                  child: const Icon(Icons.camera_alt, color: Colors.white, size: 20),
                 ),
-                child: const Icon(Icons.edit, color: Colors.white, size: 20),
               ),
             ),
           ],
         ),
         const SizedBox(height: 16),
-        Text(
-          'MyQuran User',
-          style: TextStyle(
-            color: isDark ? AppColors.darkTextPrimary : AppColors.primaryGreen, 
-            fontSize: 24, 
-            fontWeight: FontWeight.bold,
-          ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              settings.userName,
+              style: TextStyle(
+                color: isDark ? AppColors.darkTextPrimary : AppColors.primaryGreen, 
+                fontSize: 22, 
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(width: 8),
+            GestureDetector(
+              onTap: () => _showEditProfileDialog(settings, isDark),
+              child: Icon(Icons.edit, size: 18, color: isDark ? AppColors.darkGold : AppColors.primaryYellow),
+            ),
+          ],
         ),
         Text(
-          'user@myquran.com',
+          settings.userEmail,
           style: TextStyle(
             color: isDark ? AppColors.darkTextSecondary : AppColors.mutedGreen, 
             fontSize: 14,
@@ -94,42 +125,95 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  Future<void> _pickImage() async {
+    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+    if (image != null && mounted) {
+      final settings = MyQuranApp.settingsOf(context);
+      await settings.updateProfile(
+        name: settings.userName,
+        email: settings.userEmail,
+        photoPath: image.path,
+      );
+    }
+  }
+
+  void _showEditProfileDialog(AppSettings settings, bool isDark) {
+    final nameController = TextEditingController(text: settings.userName);
+    final emailController = TextEditingController(text: settings.userEmail);
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: isDark ? AppColors.darkSurface : Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text(settings.t('Edit Profil', 'Edit Profile'), 
+          style: TextStyle(color: isDark ? Colors.white : AppColors.primaryGreen, fontWeight: FontWeight.bold)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: nameController,
+              decoration: InputDecoration(
+                labelText: settings.t('Nama', 'Name'),
+                labelStyle: TextStyle(color: isDark ? Colors.white70 : AppColors.mutedGreen),
+                enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: isDark ? Colors.white24 : Colors.grey)),
+                focusedBorder: const UnderlineInputBorder(borderSide: BorderSide(color: AppColors.primaryGreen)),
+              ),
+              style: TextStyle(color: isDark ? Colors.white : Colors.black),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: emailController,
+              decoration: InputDecoration(
+                labelText: 'Email',
+                labelStyle: TextStyle(color: isDark ? Colors.white70 : AppColors.mutedGreen),
+                enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: isDark ? Colors.white24 : Colors.grey)),
+                focusedBorder: const UnderlineInputBorder(borderSide: BorderSide(color: AppColors.primaryGreen)),
+              ),
+              style: TextStyle(color: isDark ? Colors.white : Colors.black),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Batal', style: TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primaryGreen),
+            onPressed: () async {
+              await settings.updateProfile(
+                name: nameController.text,
+                email: emailController.text,
+              );
+              if (context.mounted) Navigator.pop(context);
+            },
+            child: const Text('Simpan', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildDarkModeToggle(BuildContext context, bool isDark) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        gradient: isDark 
-          ? LinearGradient(
-              colors: [AppColors.darkSurface, AppColors.darkCard],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            )
-          : null,
-        color: isDark ? null : AppColors.surface,
+        color: isDark ? AppColors.darkSurface : AppColors.surface,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03), 
+            color: Colors.black.withOpacity(isDark ? 0.2 : 0.03), 
             blurRadius: 10,
           ),
         ],
       ),
       child: Row(
         children: [
-          AnimatedSwitcher(
-            duration: const Duration(milliseconds: 400),
-            transitionBuilder: (child, animation) {
-              return RotationTransition(
-                turns: animation,
-                child: ScaleTransition(scale: animation, child: child),
-              );
-            },
-            child: Icon(
-              isDark ? Icons.nightlight_round : Icons.wb_sunny,
-              key: ValueKey(isDark),
-              color: isDark ? AppColors.darkGold : AppColors.primaryYellow,
-              size: 28,
-            ),
+          Icon(
+            isDark ? Icons.nightlight_round : Icons.wb_sunny,
+            color: isDark ? AppColors.darkGold : AppColors.primaryYellow,
+            size: 28,
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -145,9 +229,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
                 Text(
-                  isDark 
-                    ? MyQuranApp.settingsOf(context).t('Aktif — Hemat baterai', 'Active — Battery saver') 
-                    : MyQuranApp.settingsOf(context).t('Nonaktif', 'Inactive'),
+                  isDark ? 'Aktif' : 'Nonaktif',
                   style: TextStyle(
                     color: isDark ? AppColors.darkTextSecondary : AppColors.mutedGreen,
                     fontSize: 12,
@@ -159,14 +241,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Switch.adaptive(
             value: isDark,
             activeColor: AppColors.darkGold,
-            activeTrackColor: AppColors.darkPrimaryGreen,
-            inactiveThumbColor: AppColors.mutedGreen,
-            inactiveTrackColor: AppColors.iconBgGreen,
             onChanged: (value) {
-              // Delay supaya animasi switch selesai dulu, baru ganti tema
-              Future.delayed(const Duration(milliseconds: 150), () {
-                MyQuranApp.of(context).toggleTheme();
-              });
+              MyQuranApp.of(context).toggleTheme();
             },
           ),
         ],
@@ -207,193 +283,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 const SizedBox(height: 24),
 
-                // Language Section
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: isDark ? AppColors.darkBackground : AppColors.background,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(Icons.language, color: AppColors.primaryGreen, size: 20),
-                          const SizedBox(width: 10),
-                          Text(settings.t('Bahasa Aplikasi', 'App Language'),
-                            style: TextStyle(color: isDark ? AppColors.darkTextPrimary : AppColors.primaryGreen, fontWeight: FontWeight.w600, fontSize: 14),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 14),
-                      Row(
-                        children: [
-                          // Card Indonesia
-                          Expanded(
-                            child: GestureDetector(
-                              onTap: () {
-                                setModalState(() {});
-                                settings.setLanguage('id');
-                              },
-                              child: AnimatedContainer(
-                                duration: const Duration(milliseconds: 200),
-                                padding: const EdgeInsets.symmetric(vertical: 14),
-                                decoration: BoxDecoration(
-                                  color: settings.language == 'id'
-                                      ? AppColors.primaryGreen
-                                      : (isDark ? AppColors.darkSurface : Colors.white),
-                                  borderRadius: BorderRadius.circular(14),
-                                  border: Border.all(
-                                    color: settings.language == 'id' ? AppColors.primaryGreen : Colors.grey.withOpacity(0.3),
-                                    width: 2,
-                                  ),
-                                  boxShadow: settings.language == 'id' ? [
-                                    BoxShadow(color: AppColors.primaryGreen.withOpacity(0.3), blurRadius: 10, offset: const Offset(0, 4)),
-                                  ] : [],
-                                ),
-                                child: Column(
-                                  children: [
-                                    const Text('🇮🇩', style: TextStyle(fontSize: 28)),
-                                    const SizedBox(height: 6),
-                                    Text(settings.t('Indonesia', 'Indonesian'),
-                                      style: TextStyle(
-                                        color: settings.language == 'id' ? Colors.white : (isDark ? Colors.white70 : Colors.black87),
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 14,
-                                      ),
-                                    ),
-                                    if (settings.language == 'id')
-                                      const Icon(Icons.check_circle, color: Colors.white, size: 20),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          // Card English
-                          Expanded(
-                            child: GestureDetector(
-                              onTap: () {
-                                setModalState(() {});
-                                settings.setLanguage('en');
-                              },
-                              child: AnimatedContainer(
-                                duration: const Duration(milliseconds: 200),
-                                padding: const EdgeInsets.symmetric(vertical: 14),
-                                decoration: BoxDecoration(
-                                  color: settings.language == 'en'
-                                      ? AppColors.primaryGreen
-                                      : (isDark ? AppColors.darkSurface : Colors.white),
-                                  borderRadius: BorderRadius.circular(14),
-                                  border: Border.all(
-                                    color: settings.language == 'en' ? AppColors.primaryGreen : Colors.grey.withOpacity(0.3),
-                                    width: 2,
-                                  ),
-                                  boxShadow: settings.language == 'en' ? [
-                                    BoxShadow(color: AppColors.primaryGreen.withOpacity(0.3), blurRadius: 10, offset: const Offset(0, 4)),
-                                  ] : [],
-                                ),
-                                child: Column(
-                                  children: [
-                                    const Text('🇬🇧', style: TextStyle(fontSize: 28)),
-                                    const SizedBox(height: 6),
-                                    Text(settings.t('Inggris', 'English'),
-                                      style: TextStyle(
-                                        color: settings.language == 'en' ? Colors.white : (isDark ? AppColors.darkTextPrimary : AppColors.primaryGreen),
-                                        fontWeight: FontWeight.bold, fontSize: 13,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
+                _buildLanguageSelector(settings, isDark, setModalState),
 
                 const SizedBox(height: 16),
 
-                // Notifikasi Sholat Section
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  decoration: BoxDecoration(
-                    color: isDark ? AppColors.darkBackground : AppColors.background,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.notifications_active, color: AppColors.primaryYellow, size: 22),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(settings.language == 'en' ? 'Prayer Time Notification' : 'Notifikasi Waktu Sholat',
-                              style: TextStyle(color: isDark ? AppColors.darkTextPrimary : AppColors.primaryGreen, fontWeight: FontWeight.w600, fontSize: 14),
-                            ),
-                            Text(
-                              settings.prayerNotifEnabled
-                                ? (settings.language == 'en' ? 'Active — notifies when prayer time starts' : 'Aktif — muncul saat waktu sholat tiba')
-                                : (settings.language == 'en' ? 'Inactive' : 'Nonaktif'),
-                              style: TextStyle(color: isDark ? AppColors.darkTextSecondary : AppColors.mutedGreen, fontSize: 11),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Switch.adaptive(
-                        value: settings.prayerNotifEnabled,
-                        activeColor: AppColors.primaryYellow,
-                        activeTrackColor: AppColors.primaryGreen,
-                        onChanged: (val) {
-                          setModalState(() {});
-                          settings.setPrayerNotifEnabled(val);
-                        },
-                      ),
-                    ],
-                  ),
-                ),
+                _buildNotifToggle(settings, isDark, setModalState),
 
                 const SizedBox(height: 20),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Row(
-                            children: [
-                              const Icon(Icons.check_circle, color: Colors.white, size: 18),
-                              const SizedBox(width: 10),
-                              Text(
-                                settings.language == 'en' ? 'Settings saved successfully!' : 'Pengaturan berhasil disimpan!',
-                                style: const TextStyle(fontWeight: FontWeight.w500),
-                              ),
-                            ],
-                          ),
-                          backgroundColor: AppColors.primaryGreen,
-                          behavior: SnackBarBehavior.floating,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          duration: const Duration(seconds: 2),
-                        ),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primaryGreen,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 13),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
-                    child: Text(
-                      settings.language == 'en' ? 'Save & Close' : 'Simpan & Tutup',
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ),
+                _buildSaveButton(context, settings),
               ],
             ),
           );
@@ -402,17 +299,112 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Future<void> _launchWhatsApp(BuildContext context) async {
-    const phone = '6283863684320'; // 083... -> 6283...
-    const message = 'Halo Radifullah, saya pengguna aplikasi MyQuran. Saya ingin menyampaikan:';
-    final url = Uri.parse('https://wa.me/$phone?text=${Uri.encodeComponent(message)}');
-    if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Tidak dapat membuka WhatsApp.')),
-        );
-      }
-    }
+  Widget _buildLanguageSelector(AppSettings settings, bool isDark, StateSetter setModalState) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkBackground : AppColors.background,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.language, color: AppColors.primaryGreen, size: 20),
+              const SizedBox(width: 10),
+              Text(settings.t('Bahasa Aplikasi', 'App Language'),
+                style: TextStyle(color: isDark ? AppColors.darkTextPrimary : AppColors.primaryGreen, fontWeight: FontWeight.w600, fontSize: 14),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              _languageCard(settings, 'id', '🇮🇩', 'Indonesia', isDark, setModalState),
+              const SizedBox(width: 16),
+              _languageCard(settings, 'en', '🇬🇧', 'Inggris', isDark, setModalState),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _languageCard(AppSettings settings, String code, String flag, String name, bool isDark, StateSetter setModalState) {
+    final isActive = settings.language == code;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
+          settings.setLanguage(code);
+          setModalState(() {});
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          decoration: BoxDecoration(
+            color: isActive ? AppColors.primaryGreen : (isDark ? AppColors.darkSurface : Colors.white),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: isActive ? AppColors.primaryGreen : Colors.grey.withOpacity(0.3), width: 2),
+          ),
+          child: Column(
+            children: [
+              Text(flag, style: const TextStyle(fontSize: 28)),
+              const SizedBox(height: 6),
+              Text(name,
+                style: TextStyle(
+                  color: isActive ? Colors.white : (isDark ? Colors.white70 : Colors.black87),
+                  fontWeight: FontWeight.bold, fontSize: 14,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNotifToggle(AppSettings settings, bool isDark, StateSetter setModalState) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkBackground : AppColors.background,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.notifications_active, color: AppColors.primaryYellow, size: 22),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(settings.t('Notifikasi Waktu Sholat', 'Prayer Notification'),
+              style: TextStyle(color: isDark ? AppColors.darkTextPrimary : AppColors.primaryGreen, fontWeight: FontWeight.w600, fontSize: 14),
+            ),
+          ),
+          Switch.adaptive(
+            value: settings.prayerNotifEnabled,
+            activeColor: AppColors.primaryYellow,
+            onChanged: (val) {
+              settings.setPrayerNotifEnabled(val);
+              setModalState(() {});
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSaveButton(BuildContext context, AppSettings settings) {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton(
+        onPressed: () => Navigator.pop(context),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.primaryGreen,
+          padding: const EdgeInsets.symmetric(vertical: 13),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+        child: Text(settings.t('Simpan & Tutup', 'Save & Close'), style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+      ),
+    );
   }
 
   void _showHelpDialog(BuildContext context, bool isDark) {
@@ -421,195 +413,42 @@ class _ProfileScreenState extends State<ProfileScreen> {
       builder: (_) => AlertDialog(
         backgroundColor: isDark ? AppColors.darkSurface : AppColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        contentPadding: const EdgeInsets.all(28),
         content: Column(
           mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Center(
-              child: Container(
-                width: 70, height: 70,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: const Color(0xFF25D366).withOpacity(0.15),
-                ),
-                child: const Center(
-                  child: Icon(Icons.support_agent_rounded, size: 36, color: Color(0xFF25D366)),
-                ),
-              ),
-            ),
+            const Icon(Icons.support_agent, size: 60, color: Color(0xFF25D366)),
             const SizedBox(height: 16),
-            Center(
-              child: Text(MyQuranApp.settingsOf(context).t('Pusat Bantuan', 'Help Center'),
-                style: TextStyle(
-                  color: isDark ? AppColors.darkTextPrimary : AppColors.primaryGreen,
-                  fontSize: 20, fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
-            Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: const Color(0xFF25D366).withOpacity(0.08),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: const Color(0xFF25D366).withOpacity(0.3)),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(MyQuranApp.settingsOf(context).t('Punya pertanyaan, saran, atau menemukan bug?', 'Have questions, suggestions, or found a bug?'),
-                    style: TextStyle(
-                      color: isDark ? AppColors.darkTextPrimary : AppColors.primaryGreen,
-                      fontWeight: FontWeight.w600, fontSize: 14,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    MyQuranApp.settingsOf(context).t(
-                      'Hubungi developer langsung via WhatsApp. Kami siap membantu kamu!',
-                      'Contact the developer directly via WhatsApp. We are ready to help you!'
-                    ),
-                    style: TextStyle(
-                      color: isDark ? AppColors.darkTextSecondary : AppColors.mutedGreen,
-                      fontSize: 13, height: 1.5,
-                    ),
-                  ),
-                ],
-              ),
-            ),
+            Text('Pusat Bantuan', style: TextStyle(color: isDark ? Colors.white : AppColors.primaryGreen, fontSize: 20, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
-            Row(
-              children: [
-                const Icon(Icons.person, size: 16, color: Color(0xFF25D366)),
-                const SizedBox(width: 8),
-                Text('Developer: ', style: TextStyle(color: isDark ? AppColors.darkTextSecondary : AppColors.mutedGreen, fontSize: 13)),
-                Text('Radifullah', style: TextStyle(color: isDark ? AppColors.darkTextPrimary : AppColors.primaryGreen, fontWeight: FontWeight.bold, fontSize: 13)),
-              ],
-            ),
+            const Text('Hubungi kami via WhatsApp:', textAlign: TextAlign.center),
             const SizedBox(height: 8),
-            Row(
-              children: [
-                const Icon(Icons.phone, size: 16, color: Color(0xFF25D366)),
-                const SizedBox(width: 8),
-                Text('WhatsApp: ', style: TextStyle(color: isDark ? AppColors.darkTextSecondary : AppColors.mutedGreen, fontSize: 13)),
-                Text('0838-6368-4320', style: TextStyle(color: isDark ? AppColors.darkTextPrimary : AppColors.primaryGreen, fontWeight: FontWeight.bold, fontSize: 13)),
-              ],
-            ),
+            const Text('0838-6368-4320', style: TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  Navigator.pop(context);
-                  _launchWhatsApp(context);
-                },
-                icon: const Icon(Icons.chat, size: 18),
-                label: Text(MyQuranApp.settingsOf(context).t('Buka WhatsApp', 'Open WhatsApp'), style: const TextStyle(fontWeight: FontWeight.bold)),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF25D366),
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-              ),
-            ),
-            const SizedBox(height: 8),
-            SizedBox(
-              width: double.infinity,
-              child: TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text(MyQuranApp.settingsOf(context).t('Tutup', 'Close'), style: TextStyle(color: isDark ? AppColors.darkMutedGreen : AppColors.mutedGreen)),
-              ),
+            ElevatedButton(
+              onPressed: () => _launchWhatsApp(context),
+              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF25D366)),
+              child: const Text('Buka WhatsApp', style: TextStyle(color: Colors.white)),
             ),
           ],
         ),
       ),
     );
+  }
+
+  Future<void> _launchWhatsApp(BuildContext context) async {
+    final url = Uri.parse('https://wa.me/6283863684320');
+    if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
+      if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Gagal membuka WhatsApp')));
+    }
   }
 
   void _showAboutDialog(BuildContext context, bool isDark) {
-    showDialog(
+    showAboutDialog(
       context: context,
-      builder: (_) => AlertDialog(
-        backgroundColor: isDark ? AppColors.darkSurface : AppColors.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        contentPadding: const EdgeInsets.all(28),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 80, height: 80,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: LinearGradient(
-                  colors: [AppColors.primaryGreen, AppColors.darkPrimaryGreen],
-                  begin: Alignment.topLeft, end: Alignment.bottomRight,
-                ),
-              ),
-              child: const Center(
-                child: Text('م', style: TextStyle(color: Colors.white, fontSize: 40, fontFamily: 'Scheherazade')),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text('MyQuran',
-              style: TextStyle(
-                color: isDark ? AppColors.darkTextPrimary : AppColors.primaryGreen,
-                fontSize: 22, fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(MyQuranApp.settingsOf(context).t('Versi 1.0.0', 'Version 1.0.0'),
-              style: TextStyle(
-                color: isDark ? AppColors.darkTextSecondary : AppColors.mutedGreen,
-                fontSize: 13,
-              ),
-            ),
-            const SizedBox(height: 20),
-            Divider(color: (isDark ? AppColors.darkMutedGreen : AppColors.mutedGreen).withOpacity(0.3)),
-            const SizedBox(height: 16),
-            _aboutRow(Icons.person, MyQuranApp.settingsOf(context).t('Pembuat', 'Creator'), 'Radifullah', isDark),
-            const SizedBox(height: 10),
-            _aboutRow(Icons.code, 'Framework', 'Flutter & Dart', isDark),
-            const SizedBox(height: 10),
-            _aboutRow(Icons.school, MyQuranApp.settingsOf(context).t('Tujuan', 'Purpose'), MyQuranApp.settingsOf(context).t('Proyek UAS Mobile', 'Mobile Course Project'), isDark),
-            const SizedBox(height: 10),
-            _aboutRow(Icons.favorite, MyQuranApp.settingsOf(context).t('Dibuat dengan', 'Made with'), 'Bismillah ❤️', isDark),
-            const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () => Navigator.pop(context),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primaryGreen,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-                child: Text(MyQuranApp.settingsOf(context).t('Tutup', 'Close'), style: const TextStyle(fontWeight: FontWeight.bold)),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _aboutRow(IconData icon, String label, String value, bool isDark) {
-    return Row(
-      children: [
-        Icon(icon, size: 18, color: AppColors.primaryGreen),
-        const SizedBox(width: 10),
-        Text('$label: ', style: TextStyle(color: isDark ? AppColors.darkTextSecondary : AppColors.mutedGreen, fontSize: 13)),
-        Expanded(
-          child: Text(value,
-            style: TextStyle(
-              color: isDark ? AppColors.darkTextPrimary : AppColors.primaryGreen,
-              fontWeight: FontWeight.w600, fontSize: 13,
-            ),
-          ),
-        ),
-      ],
+      applicationName: 'MyQuran',
+      applicationVersion: '1.0.0',
+      applicationIcon: const Icon(Icons.mosque, color: AppColors.primaryGreen),
+      children: [const Text('Aplikasi Al-Quran Digital Premium.')],
     );
   }
 
@@ -622,28 +461,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
         decoration: BoxDecoration(
           color: isDark ? AppColors.darkSurface : AppColors.surface,
           borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
-              blurRadius: 10,
-            ),
-          ],
+          boxShadow: [BoxShadow(color: Colors.black.withOpacity(isDark ? 0.2 : 0.03), blurRadius: 10)],
         ),
         child: Row(
           children: [
-            Icon(icon, color: onTap != null
-                ? (isDark ? AppColors.darkGold : AppColors.primaryYellow)
-                : (isDark ? AppColors.darkPrimaryGreen : AppColors.primaryGreen)),
+            Icon(icon, color: isDark ? AppColors.darkGold : AppColors.primaryGreen),
             const SizedBox(width: 16),
-            Text(
-              title,
-              style: TextStyle(
-                color: isDark ? AppColors.darkTextPrimary : AppColors.primaryGreen,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
+            Text(title, style: TextStyle(color: isDark ? AppColors.darkTextPrimary : AppColors.primaryGreen, fontWeight: FontWeight.w500)),
             const Spacer(),
-            Icon(Icons.arrow_forward_ios, size: 16, color: isDark ? AppColors.darkMutedGreen : AppColors.mutedGreen),
+            const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
           ],
         ),
       ),
@@ -656,13 +482,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: ElevatedButton(
         onPressed: () {},
         style: ElevatedButton.styleFrom(
-          backgroundColor: isDark ? Colors.red.shade900.withValues(alpha: 0.3) : Colors.red.shade50,
-          foregroundColor: isDark ? Colors.red.shade300 : Colors.red,
-          elevation: 0,
+          backgroundColor: Colors.red.shade50,
+          foregroundColor: Colors.red,
           padding: const EdgeInsets.symmetric(vertical: 16),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         ),
-        child: Text(MyQuranApp.settingsOf(context).t('Keluar', 'Logout'), style: const TextStyle(fontWeight: FontWeight.bold)),
+        child: const Text('Keluar', style: TextStyle(fontWeight: FontWeight.bold)),
       ),
     );
   }
