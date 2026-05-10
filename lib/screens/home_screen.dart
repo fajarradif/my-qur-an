@@ -24,7 +24,7 @@ import 'murottal_screen.dart';
 import 'doa_screen.dart';
 import 'hijri_calendar_screen.dart';
 import 'dzikir_pagi_petang_screen.dart';
-import '../models/news.dart';
+import 'news_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -279,7 +279,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 children: [
                   _buildHomeContent(),
                   const QuranScreen(),
-                  BookmarkScreen(key: ValueKey(_selectedIndex)),
+                  const NewsScreen(),
+                  const HijriCalendarScreen(),
                   const ProfileScreen(),
                 ],
               ),
@@ -396,25 +397,33 @@ class _HomeScreenState extends State<HomeScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            GestureDetector(
-              onTap: _showLocationPicker,
-              child: Row(
-                children: [
-                  Icon(Icons.location_on, size: 14, color: AppColors.gold(context)),
-                  const SizedBox(width: 4),
-                  Text(_currentLocationName, style: TextStyle(color: AppColors.muted(context), fontSize: 12)),
-                  Icon(Icons.arrow_drop_down, size: 16, color: AppColors.muted(context)),
-                  const SizedBox(width: 8),
-                  Text(_currentTime, style: TextStyle(color: AppColors.gold(context), fontSize: 12, fontWeight: FontWeight.bold)),
-                ],
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              GestureDetector(
+                onTap: _showLocationPicker,
+                child: Row(
+                  children: [
+                    Icon(Icons.location_on, size: 14, color: AppColors.gold(context)),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        _currentLocationName, 
+                        style: TextStyle(color: AppColors.muted(context), fontSize: 12),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    Icon(Icons.arrow_drop_down, size: 16, color: AppColors.muted(context)),
+                    const SizedBox(width: 8),
+                    Text(_currentTime, style: TextStyle(color: AppColors.gold(context), fontSize: 12, fontWeight: FontWeight.bold)),
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(height: 4),
-            Text('Assalamualaikum', style: TextStyle(color: AppColors.isDark(context) ? Colors.white : AppColors.primaryGreen, fontSize: 22, fontWeight: FontWeight.bold)),
-          ],
+              const SizedBox(height: 4),
+              Text('Assalamualaikum', style: TextStyle(color: AppColors.isDark(context) ? Colors.white : AppColors.primaryGreen, fontSize: 22, fontWeight: FontWeight.bold)),
+            ],
+          ),
         ),
         Row(
           children: [
@@ -1247,10 +1256,11 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          _navItem(0, Icons.home_filled, 'Home'),
+          _navItem(0, Icons.home_filled, 'Beranda'),
           _navItem(1, Icons.menu_book, 'Al-Quran'),
-          _navItem(2, Icons.bookmark, 'Bookmarks'),
-          _navItem(3, Icons.person, 'Profile'),
+          _navItem(2, Icons.article, 'Artikel'),
+          _navItem(3, Icons.calendar_month, 'Kalender'),
+          _navItem(4, Icons.settings, 'Pengaturan'),
         ],
       ),
     );
@@ -1262,7 +1272,7 @@ class _HomeScreenState extends State<HomeScreen> {
   // Gaya iOS: Liquid Glass Taskbar (Floating, Blur, Iridescent, Swipeable)
   Widget _buildLiquidGlassNavBar() {
     double width = MediaQuery.of(context).size.width - 40;
-    double tabWidth = width / 4;
+    double tabWidth = width / 5;
 
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
@@ -1317,8 +1327,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     children: [
                       _liquidNavItem(0, Icons.home_filled, 'Beranda'),
                       _liquidNavItem(1, Icons.menu_book, 'Quran'),
-                      _liquidNavItem(2, Icons.bookmark, 'Simpan'),
-                      _liquidNavItem(3, Icons.person, 'Profil'),
+                      _liquidNavItem(2, Icons.article, 'Artikel'),
+                      _liquidNavItem(3, Icons.calendar_month, 'Kalender'),
+                      _liquidNavItem(4, Icons.settings, 'Pengaturan'),
                     ],
                   ),
                 ],
@@ -1394,8 +1405,8 @@ class _HomeScreenState extends State<HomeScreen> {
             _selectedIndex = index;
             _mainPageController.animateToPage(
               index,
-              duration: const Duration(milliseconds: 400),
-              curve: Curves.easeOutQuart,
+              duration: const Duration(milliseconds: 500),
+              curve: Curves.fastOutSlowIn,
             );
           });
         },
