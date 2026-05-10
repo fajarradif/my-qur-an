@@ -12,6 +12,7 @@ import '../widgets/feature_menu_button.dart';
 import '../widgets/last_read_card.dart';
 import '../models/jadwal.dart';
 import '../services/api_service.dart';
+import '../services/app_settings.dart';
 import 'quran_screen.dart';
 import 'tahlil_screen.dart';
 import 'tasbih_screen.dart';
@@ -42,6 +43,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<List<Map<String, dynamic>>>? futureNews;
   late Timer _timer;
   late Timer _autoScrollTimer;
+  Timer? _prayerCheckTimer;
   late PageController _pageController;
   late PageController _mainPageController;
   late ScrollController _scrollController;
@@ -49,6 +51,9 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _showNavBar = true;
   String _currentTime = "";
   String _currentLocationName = "Mencari lokasi...";
+  Jadwal? _currentJadwal;
+  bool _prayerBannerShown = false;
+  String? _lastNotifiedPrayer;
   
   // Default ke Pamekasan jika gagal
   final String _defaultCityId = 'c52f1bd66cc19d05628bd8bf27af3ad6';
@@ -88,6 +93,7 @@ class _HomeScreenState extends State<HomeScreen> {
     // Update jam setiap detik
     _currentTime = _formatDateTime(DateTime.now());
     _timer = Timer.periodic(const Duration(seconds: 1), (Timer t) => _updateTime());
+    _prayerCheckTimer = Timer.periodic(const Duration(seconds: 30), (_) => _checkPrayerTime());
 
     _startAutoScrollTimer();
   }
@@ -128,7 +134,8 @@ class _HomeScreenState extends State<HomeScreen> {
         if (cachedCityId != null && cachedCityName != null && mounted) {
           setState(() {
             _currentLocationName = cachedCityName;
-            futureJadwal = ApiService.getJadwalSholat(cachedCityId);
+            futureJadwal = ApiService.getJadwalSholat(cachedCityId)
+              ..then((j) { if (mounted) setState(() => _currentJadwal = j); });
           });
           return;
         }
@@ -211,9 +218,112 @@ class _HomeScreenState extends State<HomeScreen> {
   void dispose() {
     _timer.cancel();
     _autoScrollTimer.cancel();
+    _prayerCheckTimer?.cancel();
     _pageController.dispose();
     _scrollController.dispose();
     super.dispose();
+  }
+
+  void _checkPrayerTime() {
+    if (_currentJadwal == null) return;
+    if (!mounted) return;
+    final settings = MyQuranApp.settingsOf(context);
+    if (!settings.prayerNotifEnabled) return;
+
+    final now = DateTime.now();
+    final nowStr = '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
+
+    final Map<String, String> prayers = {
+      'Subuh': _currentJadwal!.subuh,
+      'Dzuhur': _currentJadwal!.dzuhur,
+      'Ashar': _currentJadwal!.ashar,
+      'Maghrib': _currentJadwal!.maghrib,
+      'Isya': _currentJadwal!.isya,
+    };
+
+    for (final entry in prayers.entries) {
+      final prayerTime = entry.value.substring(0, 5); // ambil HH:mm saja
+      if (nowStr == prayerTime && _lastNotifiedPrayer != '${entry.key}_$prayerTime') {
+        _lastNotifiedPrayer = '${entry.key}_$prayerTime';
+        _showPrayerBanner(entry.key, entry.value);
+        break;
+      }
+    }
+  }
+
+  void _showPrayerBanner(String prayerName, String time) {
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      barrierColor: Colors.black54,
+      barrierDismissible: true,
+      builder: (_) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 60),
+        child: Container(
+          padding: const EdgeInsets.all(28),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [AppColors.primaryGreen, Color(0xFF1B5E20)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(28),
+            boxShadow: [
+              BoxShadow(color: AppColors.primaryGreen.withOpacity(0.4), blurRadius: 30, offset: const Offset(0, 10)),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('🕌', style: TextStyle(fontSize: 50)),
+              const SizedBox(height: 12),
+              const Text(
+                'Allahu Akbar',
+                style: TextStyle(color: AppColors.primaryYellow, fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: 2),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Sudah masuk waktu',
+                style: TextStyle(color: Colors.white.withOpacity(0.85), fontSize: 14),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Sholat $prayerName',
+                style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                time,
+                style: TextStyle(color: AppColors.primaryYellow, fontSize: 20, fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 20),
+              const Divider(color: Colors.white24),
+              const SizedBox(height: 12),
+              const Text(
+                'حَيَّ عَلَى الصَّلَاة',
+                style: TextStyle(color: AppColors.primaryYellow, fontSize: 22, fontFamily: 'Scheherazade'),
+              ),
+              const Text('Mari Segera Sholat', style: TextStyle(color: Colors.white70, fontSize: 12)),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(_),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryYellow,
+                    foregroundColor: AppColors.primaryGreen,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  ),
+                  child: const Text('Siap, Segera Sholat!', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   void _updateTime() {

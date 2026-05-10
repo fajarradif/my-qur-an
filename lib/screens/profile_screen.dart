@@ -2,10 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../theme/colors.dart';
 import '../main.dart';
+import '../services/app_settings.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -22,8 +28,7 @@ class ProfileScreen extends StatelessWidget {
               const SizedBox(height: 40),
               _buildDarkModeToggle(context, isDark),
               const SizedBox(height: 16),
-              _buildProfileMenu(Icons.settings, 'Pengaturan', isDark, onTap: null),
-              _buildProfileMenu(Icons.history, 'Riwayat Bacaan', isDark, onTap: null),
+              _buildProfileMenu(Icons.settings, 'Pengaturan', isDark, onTap: () => _showSettingsDialog(context, isDark)),
               _buildProfileMenu(Icons.help_outline, 'Pusat Bantuan', isDark, onTap: () => _showHelpDialog(context, isDark)),
               _buildProfileMenu(Icons.info_outline, 'Tentang Aplikasi', isDark, onTap: () => _showAboutDialog(context, isDark)),
               const SizedBox(height: 40),
@@ -163,6 +168,167 @@ class ProfileScreen extends StatelessWidget {
             },
           ),
         ],
+      ),
+    );
+  }
+
+  void _showSettingsDialog(BuildContext context, bool isDark) {
+    final settings = MyQuranApp.settingsOf(context);
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (_) => StatefulBuilder(
+        builder: (ctx, setModalState) {
+          return Container(
+            padding: const EdgeInsets.fromLTRB(24, 20, 24, 40),
+            decoration: BoxDecoration(
+              color: isDark ? AppColors.darkSurface : AppColors.surface,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40, height: 4,
+                    decoration: BoxDecoration(
+                      color: (isDark ? Colors.white : Colors.black).withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Text('Pengaturan Aplikasi',
+                  style: TextStyle(color: isDark ? AppColors.darkTextPrimary : AppColors.primaryGreen, fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 24),
+
+                // Font Size Section
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: isDark ? AppColors.darkBackground : AppColors.background,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.text_fields, color: AppColors.primaryGreen, size: 20),
+                          const SizedBox(width: 10),
+                          Text('Ukuran Font Al-Quran',
+                            style: TextStyle(color: isDark ? AppColors.darkTextPrimary : AppColors.primaryGreen, fontWeight: FontWeight.w600, fontSize: 14),
+                          ),
+                          const Spacer(),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: AppColors.primaryGreen.withOpacity(0.15),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              '${settings.quranFontSize.toInt()}px',
+                              style: const TextStyle(color: AppColors.primaryGreen, fontWeight: FontWeight.bold, fontSize: 13),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      // Preview teks Arab
+                      Center(
+                        child: Text(
+                          'بِسْمِ اللّٰهِ',
+                          style: TextStyle(
+                            fontSize: settings.quranFontSize,
+                            color: isDark ? AppColors.darkTextPrimary : AppColors.primaryGreen,
+                            fontFamily: 'Scheherazade',
+                          ),
+                        ),
+                      ),
+                      Slider(
+                        value: settings.quranFontSize,
+                        min: 20, max: 48,
+                        divisions: 14,
+                        activeColor: AppColors.primaryGreen,
+                        inactiveColor: AppColors.primaryGreen.withOpacity(0.2),
+                        onChanged: (val) {
+                          setModalState(() {});
+                          settings.setQuranFontSize(val);
+                        },
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text('Kecil', style: TextStyle(color: isDark ? AppColors.darkTextSecondary : AppColors.mutedGreen, fontSize: 11)),
+                          Text('Default (28px)', style: TextStyle(color: isDark ? AppColors.darkTextSecondary : AppColors.mutedGreen, fontSize: 11)),
+                          Text('Besar', style: TextStyle(color: isDark ? AppColors.darkTextSecondary : AppColors.mutedGreen, fontSize: 11)),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 16),
+
+                // Notifikasi Sholat Section
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: isDark ? AppColors.darkBackground : AppColors.background,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.notifications_active, color: AppColors.primaryYellow, size: 22),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Notifikasi Waktu Sholat',
+                              style: TextStyle(color: isDark ? AppColors.darkTextPrimary : AppColors.primaryGreen, fontWeight: FontWeight.w600, fontSize: 14),
+                            ),
+                            Text(
+                              settings.prayerNotifEnabled ? 'Aktif — muncul saat waktu sholat tiba' : 'Nonaktif',
+                              style: TextStyle(color: isDark ? AppColors.darkTextSecondary : AppColors.mutedGreen, fontSize: 11),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Switch.adaptive(
+                        value: settings.prayerNotifEnabled,
+                        activeColor: AppColors.primaryYellow,
+                        activeTrackColor: AppColors.primaryGreen,
+                        onChanged: (val) {
+                          setModalState(() {});
+                          settings.setPrayerNotifEnabled(val);
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primaryGreen,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 13),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: const Text('Simpan & Tutup', style: TextStyle(fontWeight: FontWeight.bold)),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }

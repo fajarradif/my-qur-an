@@ -5,6 +5,7 @@ import 'package:audio_session/audio_session.dart';
 import 'screens/home_screen.dart';
 import 'theme/app_theme.dart';
 import 'theme/theme_provider.dart';
+import 'services/app_settings.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -20,18 +21,24 @@ Future<void> main() async {
   await session.configure(const AudioSessionConfiguration.music());
 
   final themeProvider = ThemeProvider();
-  runApp(MyQuranApp(themeProvider: themeProvider));
+  final appSettings = AppSettings();
+  runApp(MyQuranApp(themeProvider: themeProvider, appSettings: appSettings));
 }
 
 class MyQuranApp extends StatefulWidget {
   final ThemeProvider themeProvider;
+  final AppSettings appSettings;
   
-  const MyQuranApp({super.key, required this.themeProvider});
+  const MyQuranApp({super.key, required this.themeProvider, required this.appSettings});
 
-  /// Akses ThemeProvider dari mana saja di widget tree
   static ThemeProvider of(BuildContext context) {
     final inherited = context.dependOnInheritedWidgetOfExactType<ThemeInherited>();
     return inherited!.themeProvider;
+  }
+
+  static AppSettings settingsOf(BuildContext context) {
+    final inherited = context.dependOnInheritedWidgetOfExactType<ThemeInherited>();
+    return inherited!.appSettings;
   }
 
   @override
@@ -59,6 +66,7 @@ class _MyQuranAppState extends State<MyQuranApp> {
   Widget build(BuildContext context) {
     return ThemeInherited(
       themeProvider: widget.themeProvider,
+      appSettings: widget.appSettings,
       child: MaterialApp(
         title: 'MyQuran',
         debugShowCheckedModeBanner: false,
@@ -76,10 +84,12 @@ class _MyQuranAppState extends State<MyQuranApp> {
 /// InheritedWidget untuk menyebarkan ThemeProvider ke seluruh widget tree
 class ThemeInherited extends InheritedWidget {
   final ThemeProvider themeProvider;
+  final AppSettings appSettings;
 
   const ThemeInherited({
     super.key,
     required this.themeProvider,
+    required this.appSettings,
     required super.child,
   });
 
