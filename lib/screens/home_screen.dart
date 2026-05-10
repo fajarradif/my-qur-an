@@ -58,6 +58,7 @@ class _HomeScreenState extends State<HomeScreen> {
   // Default ke Pamekasan jika gagal
   final String _defaultCityId = 'c52f1bd66cc19d05628bd8bf27af3ad6';
   final String _defaultCityName = 'Pamekasan, Madura';
+  String? _lastLanguage;
 
   @override
   void initState() {
@@ -309,7 +310,7 @@ class _HomeScreenState extends State<HomeScreen> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () => Navigator.pop(_),
+                  onPressed: () => Navigator.pop(context),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primaryYellow,
                     foregroundColor: AppColors.primaryGreen,
@@ -459,25 +460,25 @@ class _HomeScreenState extends State<HomeScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Menu Utama', style: TextStyle(color: AppColors.isDark(context) ? Colors.white : AppColors.primaryGreen, fontSize: 16, fontWeight: FontWeight.bold)),
+              Text(MyQuranApp.settingsOf(context).t('Menu Utama', 'Main Menu'), style: TextStyle(color: AppColors.isDark(context) ? Colors.white : AppColors.primaryGreen, fontSize: 16, fontWeight: FontWeight.bold)),
               GestureDetector(
                 onTap: () {
                   setState(() {
                     _showAllFeaturesGrid = !_showAllFeaturesGrid;
                   });
                 },
-                child: Text(_showAllFeaturesGrid ? 'Tutup' : 'Lihat Semua', style: TextStyle(color: AppColors.isDark(context) ? Colors.white70 : AppColors.secondaryGreen, fontSize: 12, fontWeight: FontWeight.w600)),
+                child: Text(_showAllFeaturesGrid ? MyQuranApp.settingsOf(context).t('Tutup', 'Close') : MyQuranApp.settingsOf(context).t('Lihat Semua', 'See All'), style: TextStyle(color: AppColors.isDark(context) ? Colors.white70 : AppColors.secondaryGreen, fontSize: 12, fontWeight: FontWeight.w600)),
               ),
             ],
           ),
           const SizedBox(height: 16),
           _buildFeaturesGrid(),
           const SizedBox(height: 30),
-          Text('Inspirasi Harian', style: TextStyle(color: AppColors.isDark(context) ? Colors.white : AppColors.primaryGreen, fontSize: 16, fontWeight: FontWeight.bold)),
+          Text(MyQuranApp.settingsOf(context).t('Inspirasi Harian', 'Daily Inspiration'), style: TextStyle(color: AppColors.isDark(context) ? Colors.white : AppColors.primaryGreen, fontSize: 16, fontWeight: FontWeight.bold)),
           const SizedBox(height: 16),
           _buildInspirationCard(),
           const SizedBox(height: 30),
-          Text('Warta Islami', style: TextStyle(color: AppColors.isDark(context) ? Colors.white : AppColors.primaryGreen, fontSize: 16, fontWeight: FontWeight.bold)),
+          Text(MyQuranApp.settingsOf(context).t('Warta Islami', 'Islamic News'), style: TextStyle(color: AppColors.isDark(context) ? Colors.white : AppColors.primaryGreen, fontSize: 16, fontWeight: FontWeight.bold)),
           const SizedBox(height: 16),
           _buildNewsSection(),
         ],
@@ -531,7 +532,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
               const SizedBox(height: 4),
-              Text('Assalamualaikum', style: TextStyle(color: AppColors.isDark(context) ? Colors.white : AppColors.primaryGreen, fontSize: 22, fontWeight: FontWeight.bold)),
+              Text(MyQuranApp.settingsOf(context).t('Assalamualaikum', 'Assalamu’alaikum'), style: TextStyle(color: AppColors.isDark(context) ? Colors.white : AppColors.primaryGreen, fontSize: 22, fontWeight: FontWeight.bold)),
             ],
           ),
         ),
@@ -606,20 +607,20 @@ class _HomeScreenState extends State<HomeScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Row(
-                    children: [
-                      const Icon(Icons.calendar_month, color: AppColors.primaryYellow, size: 20),
-                      const SizedBox(width: 8),
-                      const Text('Kalender Hijriah', style: TextStyle(color: Colors.white70, fontSize: 14)),
-                    ],
-                  ),
+                      Row(
+                        children: [
+                          const Icon(Icons.calendar_month, color: AppColors.primaryYellow, size: 20),
+                          const SizedBox(width: 8),
+                          Text(MyQuranApp.settingsOf(context).t('Kalender Hijriah', 'Hijri Calendar'), style: const TextStyle(color: Colors.white70, fontSize: 14)),
+                        ],
+                      ),
                   const SizedBox(height: 12),
                   Text(
                     '$hijriDay $hijriMonth',
                     style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold),
                   ),
                   Text(
-                    '$hijriYear Hijriah',
+                    '$hijriYear ${MyQuranApp.settingsOf(context).t('Hijriah', 'Hijri')}',
                     style: const TextStyle(color: AppColors.primaryYellow, fontSize: 18, fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 4),
@@ -650,7 +651,7 @@ class _HomeScreenState extends State<HomeScreen> {
       future: futureJadwal,
       builder: (context, snapshot) {
         String countdownText = "--:--:--";
-        String nextPrayerName = "Menunggu...";
+        String nextPrayerName = MyQuranApp.settingsOf(context).t('Menunggu...', 'Waiting...');
         
         if (snapshot.hasData) {
           final jadwal = snapshot.data!;
@@ -658,11 +659,11 @@ class _HomeScreenState extends State<HomeScreen> {
           
           // Cari sholat terdekat berikutnya
           final List<Map<String, String>> prayers = [
-            {'name': 'Subuh', 'time': jadwal.subuh},
-            {'name': 'Dzuhur', 'time': jadwal.dzuhur},
-            {'name': 'Ashar', 'time': jadwal.ashar},
-            {'name': 'Maghrib', 'time': jadwal.maghrib},
-            {'name': 'Isya', 'time': jadwal.isya},
+            {'name': MyQuranApp.settingsOf(context).t('Subuh', 'Fajr'), 'time': jadwal.subuh},
+            {'name': MyQuranApp.settingsOf(context).t('Dzuhur', 'Dhuhr'), 'time': jadwal.dzuhur},
+            {'name': MyQuranApp.settingsOf(context).t('Ashar', 'Asr'), 'time': jadwal.ashar},
+            {'name': MyQuranApp.settingsOf(context).t('Maghrib', 'Maghrib'), 'time': jadwal.maghrib},
+            {'name': MyQuranApp.settingsOf(context).t('Isya', "Isha'"), 'time': jadwal.isya},
           ];
           
           final currentMinutes = now.hour * 60 + now.minute;
@@ -721,7 +722,12 @@ class _HomeScreenState extends State<HomeScreen> {
                   children: [
                     const Icon(Icons.timer, color: AppColors.primaryYellow, size: 20),
                     const SizedBox(width: 8),
-                    Text('Menuju Waktu $nextPrayerName', style: const TextStyle(color: Colors.white70, fontSize: 14)),
+                    Text(
+                      MyQuranApp.settingsOf(context).language == 'en' 
+                          ? 'Next: $nextPrayerName' 
+                          : 'Menuju Waktu $nextPrayerName', 
+                      style: const TextStyle(color: Colors.white70, fontSize: 14)
+                    ),
                   ],
                 ),
                 const SizedBox(height: 12),
@@ -730,7 +736,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   style: const TextStyle(color: Colors.white, fontSize: 42, fontWeight: FontWeight.bold, letterSpacing: 2),
                 ),
                 const SizedBox(height: 4),
-                const Text('Tetap istiqomah dalam ibadah ya!', style: TextStyle(color: Colors.white54, fontSize: 12, fontStyle: FontStyle.italic)),
+                Text(
+                  MyQuranApp.settingsOf(context).t('Tetap istiqomah dalam ibadah ya!', 'Stay steadfast in your worship!'), 
+                  style: const TextStyle(color: Colors.white54, fontSize: 12, fontStyle: FontStyle.italic)
+                ),
               ],
             ),
           ),
@@ -754,11 +763,11 @@ class _HomeScreenState extends State<HomeScreen> {
         final currentMinutes = now.hour * 60 + now.minute;
         
         final List<Map<String, dynamic>> allPrayers = [
-          {'name': 'Subuh', 'time': jadwal.subuh},
-          {'name': 'Dzuhur', 'time': jadwal.dzuhur},
-          {'name': 'Ashar', 'time': jadwal.ashar},
-          {'name': 'Maghrib', 'time': jadwal.maghrib},
-          {'name': 'Isya', 'time': jadwal.isya},
+          {'name': MyQuranApp.settingsOf(context).t('Subuh', 'Fajr'), 'time': jadwal.subuh},
+          {'name': MyQuranApp.settingsOf(context).t('Dzuhur', 'Dhuhr'), 'time': jadwal.dzuhur},
+          {'name': MyQuranApp.settingsOf(context).t('Ashar', 'Asr'), 'time': jadwal.ashar},
+          {'name': MyQuranApp.settingsOf(context).t('Maghrib', 'Maghrib'), 'time': jadwal.maghrib},
+          {'name': MyQuranApp.settingsOf(context).t('Isya', "Isha'"), 'time': jadwal.isya},
         ];
 
         // Cari sholat mana yang sedang aktif saat ini
@@ -806,7 +815,7 @@ class _HomeScreenState extends State<HomeScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('Jadwal Sholat Hari Ini', style: const TextStyle(color: AppColors.primaryYellow, fontWeight: FontWeight.bold, fontSize: 14)),
+                  Text(MyQuranApp.settingsOf(context).t('Jadwal Sholat Hari Ini', "Today's Prayer Schedule"), style: const TextStyle(color: AppColors.primaryYellow, fontWeight: FontWeight.bold, fontSize: 14)),
                   Builder(
                     builder: (context) {
                       final hijri = HijriHelper.fromGregorian(DateTime.now());
@@ -914,10 +923,11 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   List<Widget> _buildFirstRowFeatures() {
+    final s = MyQuranApp.settingsOf(context);
     return [
       FeatureMenuButton(
         icon: Icons.menu_book,
-        label: 'Al-Quran',
+        label: s.t('Al-Quran', 'Al-Quran'),
         onTap: () {
           setState(() => _selectedIndex = 1);
           _mainPageController.animateToPage(
@@ -929,21 +939,21 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       FeatureMenuButton(
         icon: Icons.auto_stories,
-        label: 'Tahlil & Yasin',
+        label: s.t('Tahlil & Yasin', 'Tahlil & Yasin'),
         onTap: () {
           Navigator.push(context, MaterialPageRoute(builder: (context) => const TahlilScreen()));
         },
       ),
       FeatureMenuButton(
         icon: Icons.brightness_high,
-        label: 'Tasbih',
+        label: s.t('Tasbih', 'Tasbih'),
         onTap: () {
           Navigator.push(context, MaterialPageRoute(builder: (context) => const TasbihScreen()));
         },
       ),
       FeatureMenuButton(
         icon: Icons.explore,
-        label: 'Kiblat',
+        label: s.t('Kiblat', 'Qibla'),
         onTap: () {
           Navigator.push(context, MaterialPageRoute(builder: (context) => const KiblatScreen()));
         },
@@ -952,31 +962,32 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   List<Widget> _buildSecondRowFeatures() {
+    final s = MyQuranApp.settingsOf(context);
     return [
       FeatureMenuButton(
         icon: Icons.headphones,
-        label: 'Murottal',
+        label: s.t('Murottal', 'Murottal'),
         onTap: () {
           Navigator.push(context, MaterialPageRoute(builder: (context) => const MurottalScreen()));
         },
       ),
       FeatureMenuButton(
         icon: Icons.pan_tool,
-        label: 'Doa-doa',
+        label: s.t('Doa-doa', 'Prayers'),
         onTap: () {
           Navigator.push(context, MaterialPageRoute(builder: (context) => const DoaScreen()));
         },
       ),
       FeatureMenuButton(
         icon: Icons.event_note,
-        label: 'Kalender',
+        label: s.t('Kalender', 'Calendar'),
         onTap: () {
           Navigator.push(context, MaterialPageRoute(builder: (context) => const HijriCalendarScreen(swipeEnabled: true)));
         },
       ),
       FeatureMenuButton(
         icon: Icons.auto_awesome,
-        label: 'Zikir',
+        label: s.t('Zikir', 'Dhikr'),
         onTap: () {
           Navigator.push(context, MaterialPageRoute(builder: (context) => const DzikirPagiPetangScreen()));
         },
@@ -990,91 +1001,109 @@ class _HomeScreenState extends State<HomeScreen> {
     {
       'arabic': 'فَاذْكُرُونِي أَذْكُرْكُمْ وَاشْكُرُوا لِي وَلَا تَكْفُرُونِ',
       'translation': '"Maka ingatlah kepada-Ku, Aku pun akan ingat kepadamu. Bersyukurlah kepada-Ku dan janganlah kamu ingkar kepada-Ku."',
+      'translation_en': '"So remember Me; I will remember you. And be grateful to Me and do not deny Me."',
       'source': 'QS. Al-Baqarah: 152',
     },
     {
       'arabic': 'إِنَّ مَعَ الْعُسْرِ يُسْرًا',
       'translation': '"Sesungguhnya bersama kesulitan ada kemudahan."',
+      'translation_en': '"Indeed, with hardship [will be] ease."',
       'source': 'QS. Al-Insyirah: 6',
     },
     {
       'arabic': 'وَلَسَوْفَ يُعْطِيكَ رَبُّكَ فَتَرْضَىٰ',
       'translation': '"Dan sungguh, kelak Tuhanmu pasti memberikan karunia-Nya kepadamu, sehingga engkau rida."',
+      'translation_en': '"And your Lord is going to give you, and you will be satisfied."',
       'source': 'QS. Ad-Duha: 5',
     },
     {
       'arabic': 'يَا أَيُّهَا الَّذِينَ آمَنُوا اسْتَعِينُوا بِالصَّبْرِ وَالصَّلَاةِ ۚ إِنَّ اللَّهَ مَعَ الصَّابِرِينَ',
       'translation': '"Wahai orang-orang yang beriman! Mohonlah pertolongan (kepada Allah) dengan sabar dan salat. Sungguh, Allah beserta orang-orang yang sabar."',
+      'translation_en': '"O you who have believed, seek help through patience and prayer. Indeed, Allah is with the patient."',
       'source': 'QS. Al-Baqarah: 153',
     },
     {
       'arabic': 'لَا يُكَلِّفُ اللَّهُ نَفْسًا إِلَّا وُسْعَهَا',
       'translation': '"Allah tidak membebani seseorang melainkan sesuai dengan kesanggupannya."',
+      'translation_en': '"Allah does not charge a soul except [with that within] its capacity."',
       'source': 'QS. Al-Baqarah: 286',
     },
     {
       'arabic': 'وَقَالَ رَبُّكُمُ ادْعُونِي أَسْتَجِبْ لَكُمْ',
       'translation': '"Dan Tuhanmu berfirman, \'Berdoalah kepada-Ku, niscaya akan Aku perkenankan bagimu.\'"',
+      'translation_en': '"And your Lord says, \'Call upon Me; I will respond to you.\'"',
       'source': 'QS. Ghafir: 60',
     },
     {
       'arabic': 'وَمَنْ يَتَّقِ اللَّهَ يَجْعَلْ لَهُ مَخْرَجًا',
       'translation': '"Barangsiapa bertakwa kepada Allah niscaya Dia akan membukakan jalan keluar baginya."',
+      'translation_en': '"And whoever fears Allah - He will make for him a way out."',
       'source': 'QS. At-Talaq: 2',
     },
     {
       'arabic': 'وَلَا تَهِنُوا وَلَا تَحْزَنُوا وَأَنتُمُ الْأَعْلَوْنَ إِن كُنتُم مُّؤْمِنِينَ',
       'translation': '"Janganlah kamu bersikap lemah, dan janganlah (pula) kamu bersedih hati, padahal kamulah orang-orang yang paling tinggi (derajatnya), jika kamu orang-orang yang beriman."',
+      'translation_en': '"So do not weaken and do not grieve, and you will be superior if you are [true] believers."',
       'source': 'QS. Ali \'Imran: 139',
     },
     {
       'arabic': 'أَلَا بِذِكْرِ اللَّهِ تَطْمَئِنُّ الْقُلُوبُ',
       'translation': '"Ingatlah, hanya dengan mengingati Allah-lah hati menjadi tenteram."',
+      'translation_en': '"Unquestionably, by the remembrance of Allah hearts are assured."',
       'source': 'QS. Ar-Ra\'d: 28',
     },
     {
       'arabic': 'لَئِن شَكَرْتُمْ لَأَزِيدَنَّكُمْ ۖ وَلَئِن كَفَرْتُمْ إِنَّ عَذَابِي لَشَدِيدٌ',
       'translation': '"Sesungguhnya jika kamu bersyukur, pasti Kami akan menambah (nikmat) kepadamu, dan jika kamu mengingkari (nikmat-Ku), maka sesungguhnya azab-Ku sangat pedih."',
+      'translation_en': '"If you are grateful, I will surely increase you [in favor]; but if you deny, indeed, My punishment is severe."',
       'source': 'QS. Ibrahim: 7',
     },
     {
       'arabic': 'وَعَسَىٰ أَن تَكْرَهُوا شَيْئًا وَهُوَ خَيْرٌ لَّكُمْ ۖ وَعَسَىٰ أَن تُحِبُّوا شَيْئًا وَهُوَ شَرٌّ لَّكُمْ',
       'translation': '"Boleh jadi kamu membenci sesuatu, padahal ia amat baik bagimu, dan boleh jadi (pula) kamu menyukai sesuatu, padahal ia amat buruk bagimu."',
+      'translation_en': '"But perhaps you hate a thing and it is good for you; and perhaps you love a thing and it is bad for you."',
       'source': 'QS. Al-Baqarah: 216',
     },
     {
       'arabic': 'لَا تَقْنَطُوا مِن رَّحْمَةِ اللَّهِ ۚ إِنَّ اللَّهَ يَغْفِرُ الذُّنُوبَ جَمِيعًا',
       'translation': '"Janganlah kamu berputus asa dari rahmat Allah. Sesungguhnya Allah mengampuni dosa-dosa semuanya."',
+      'translation_en': '"Do not despair of the mercy of Allah. Indeed, Allah forgives all sins."',
       'source': 'QS. Az-Zumar: 53',
     },
     {
       'arabic': 'لَا تَحْزَنْ إِنَّ اللَّهَ مَعَنَا',
       'translation': '"Janganlah kamu berduka cita, sesungguhnya Allah beserta kita."',
+      'translation_en': '"Do not grieve; indeed Allah is with us."',
       'source': 'QS. At-Tawbah: 40',
     },
     {
       'arabic': 'وَاللَّهُ خَيْرُ الْمَاكِرِينَ',
       'translation': '"Dan Allah adalah sebaik-baik pembalas tipu daya."',
+      'translation_en': '"And Allah is the best of planners."',
       'source': 'QS. Al-Anfal: 30',
     },
     {
       'arabic': 'إِنَّمَا الْمُؤْمِنُونَ إِخْوَةٌ',
       'translation': '"Orang-orang beriman itu sesungguhnya bersaudara."',
+      'translation_en': '"The believers are but brothers."',
       'source': 'QS. Al-Hujurat: 10',
     },
     {
       'arabic': 'فَبِأَيِّ آلَاءِ رَبِّكُمَا تُكَذِّبَانِ',
       'translation': '"Maka nikmat Tuhan kamu yang manakah yang kamu dustakan?"',
+      'translation_en': '"So which of the favors of your Lord would you deny?"',
       'source': 'QS. Ar-Rahman: 13',
     },
     {
       'arabic': 'وَإِذَا سَأَلَكَ عِبَادِي عَنِّي فَإِنِّي قَرِيبٌ ۖ أُجِيبُ دَعْوَةَ الدَّاعِ إِذَا دَعَانِ',
       'translation': '"Dan apabila hamba-hamba-Ku bertanya kepadamu tentang Aku, maka (jawablah), bahwasanya Aku adalah dekat. Aku mengabulkan permohonan orang yang berdoa apabila ia memohon kepada-Ku."',
+      'translation_en': '"And when My servants ask you concerning Me - indeed I am near. I respond to the invocation of the supplicant when he calls upon Me."',
       'source': 'QS. Al-Baqarah: 186',
     },
     {
       'arabic': 'يُرِيدُ اللَّهُ أَن يُخَفِّفَ عَنكُمْ ۚ وَخُلِقَ الْإِنسَانُ ضَعِيفًا',
       'translation': '"Allah hendak memberikan keringanan kepadamu, dan manusia dijadikan bersifat lemah."',
+      'translation_en': '"Allah wants to lighten for you [your difficulties]; and mankind was created weak."',
       'source': 'QS. An-Nisa: 28',
     },
     {
@@ -1170,7 +1199,7 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Column(
         children: [
           Text(
-            inspiration['arabic']!,
+            inspiration['arabic'] ?? '',
             textAlign: TextAlign.center,
             style: const TextStyle(
               color: AppColors.primaryYellow,
@@ -1181,7 +1210,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: 20),
           Text(
-            inspiration['translation']!,
+            MyQuranApp.settingsOf(context).t(inspiration['translation'] ?? '', inspiration['translation_en'] ?? ''),
             textAlign: TextAlign.center,
             style: const TextStyle(
               color: Colors.white,
@@ -1208,9 +1237,14 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildNewsSection() {
-    if (futureNews == null) {
-      return const Center(child: CircularProgressIndicator(color: AppColors.primaryYellow));
+    final s = MyQuranApp.settingsOf(context);
+    
+    // Update news future jika bahasa berubah
+    if (_lastLanguage != s.language) {
+      _lastLanguage = s.language;
+      futureNews = ApiService.getNews(lang: s.language);
     }
+
     return FutureBuilder<List<Map<String, dynamic>>>(
       future: futureNews,
       builder: (context, snapshot) {
@@ -1218,7 +1252,6 @@ class _HomeScreenState extends State<HomeScreen> {
           return const Center(child: CircularProgressIndicator(color: AppColors.primaryYellow));
         }
         
-        // Selalu ambil data, kalau snapshot kosong pakai list kosong biar nggak eror
         final newsList = snapshot.data ?? [];
         
         if (newsList.isEmpty) {
@@ -1228,7 +1261,7 @@ class _HomeScreenState extends State<HomeScreen> {
         return ListView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          itemCount: newsList.length > 5 ? 5 : newsList.length, // Tampilkan maksimal 5 berita
+          itemCount: newsList.length > 5 ? 5 : newsList.length,
           itemBuilder: (context, index) {
             final news = newsList[index];
             return Container(
@@ -1246,9 +1279,9 @@ class _HomeScreenState extends State<HomeScreen> {
                             color: AppColors.emeraldGreen.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(4),
                           ),
-                          child: const Text(
-                            'NASIONAL',
-                            style: TextStyle(color: AppColors.emeraldGreen, fontSize: 10, fontWeight: FontWeight.bold),
+                          child: Text(
+                            s.t('NASIONAL', 'NATIONAL'),
+                            style: const TextStyle(color: AppColors.emeraldGreen, fontSize: 10, fontWeight: FontWeight.bold),
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -1354,6 +1387,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // Gaya Android: Floating Solid NavBar (Simpel & Fungsional)
   Widget _buildFloatingNavBar() {
+    final s = MyQuranApp.settingsOf(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
@@ -1366,11 +1400,11 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          _navItem(0, Icons.home_filled, 'Beranda'),
+          _navItem(0, Icons.home_filled, s.t('Beranda', 'Home')),
           _navItem(1, Icons.menu_book, 'Al-Quran'),
-          _navItem(2, Icons.article, 'Artikel'),
-          _navItem(3, Icons.calendar_month, 'Kalender'),
-          _navItem(4, Icons.settings, 'Pengaturan'),
+          _navItem(2, Icons.article, s.t('Artikel', 'Articles')),
+          _navItem(3, Icons.calendar_month, s.t('Kalender', 'Calendar')),
+          _navItem(4, Icons.settings, s.t('Pengaturan', 'Settings')),
         ],
       ),
     );
@@ -1381,6 +1415,7 @@ class _HomeScreenState extends State<HomeScreen> {
   
   // Gaya iOS: Liquid Glass Taskbar (Floating, Blur, Iridescent, Swipeable)
   Widget _buildLiquidGlassNavBar() {
+    final s = MyQuranApp.settingsOf(context);
     double width = MediaQuery.of(context).size.width - 40;
     double tabWidth = width / 5;
 
@@ -1435,11 +1470,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
-                      _liquidNavItem(0, Icons.home_filled, 'Beranda'),
-                      _liquidNavItem(1, Icons.menu_book, 'Quran'),
-                      _liquidNavItem(2, Icons.article, 'Artikel'),
-                      _liquidNavItem(3, Icons.calendar_month, 'Kalender'),
-                      _liquidNavItem(4, Icons.settings, 'Pengaturan'),
+                      _liquidNavItem(0, Icons.home_filled, s.t('Beranda', 'Home')),
+                      _liquidNavItem(1, Icons.menu_book, 'Al-Quran'),
+                      _liquidNavItem(2, Icons.article, s.t('Artikel', 'Articles')),
+                      _liquidNavItem(3, Icons.calendar_month, s.t('Kalender', 'Calendar')),
+                      _liquidNavItem(4, Icons.settings, s.t('Pengaturan', 'Settings')),
                     ],
                   ),
                 ],

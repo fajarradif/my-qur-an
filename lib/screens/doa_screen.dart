@@ -8,6 +8,42 @@ import '../main.dart';
 class DoaScreen extends StatefulWidget {
   const DoaScreen({super.key});
 
+  static String translateDoaTitle(String title) {
+    final String t = title.toLowerCase();
+    
+    // Keyword Matching yang lebih luas sesuai API MyQuran
+    if (t.contains('mohon') && t.contains('kebaikan')) return 'Prayer for Goodness';
+    if (t.contains('dunia') && t.contains('akhirat')) return 'Prayer for World & Hereafter';
+    if (t.contains('perlindungan')) return 'Prayer for Protection';
+    if (t.contains('keselamatan')) return 'Prayer for Safety';
+    if (t.contains('keteguhan') || t.contains('kekuatan')) {
+       if (t.contains('iman')) return 'Prayer for Strength of Faith';
+    }
+    if (t.contains('ampunan')) return 'Prayer for Forgiveness';
+    if (t.contains('keadilan')) return 'Prayer for Justice';
+    if (t.contains('api neraka')) return 'Protection from Hellfire';
+    if (t.contains('lawan')) return 'Prayer against Opponents';
+    if (t.contains('husnul khatimah')) return 'Prayer for Good Ending';
+    if (t.contains('penyesalan') || t.contains('istighfar')) return 'Prayer of Repentance';
+    if (t.contains('sabar') || t.contains('tabah')) return 'Prayer for Patience';
+    if (t.contains('ilmu') || t.contains('belajar')) return 'Prayer for Knowledge';
+    if (t.contains('rezeki') || t.contains('rizki')) return 'Prayer for Sustenance';
+    if (t.contains('keluarga')) return 'Prayer for Family';
+    if (t.contains('orang tua')) return 'Prayer for Parents';
+    if (t.contains('sakit') || t.contains('sembuh')) return 'Prayer for Healing';
+    
+    // Default mapping untuk adab harian
+    if (t.contains('makan')) return 'Prayer for Eating';
+    if (t.contains('tidur')) return 'Prayer for Sleeping';
+    if (t.contains('wudhu')) return 'Prayer for Wudu';
+    if (t.contains('masjid')) return 'Prayer for Mosque';
+    if (t.contains('rumah')) return 'Prayer for Home';
+    if (t.contains('pakaian')) return 'Prayer for Clothing';
+    if (t.contains('kamar mandi')) return 'Prayer for Bathroom';
+
+    return title;
+  }
+
   @override
   State<DoaScreen> createState() => _DoaScreenState();
 }
@@ -45,7 +81,7 @@ class _DoaScreenState extends State<DoaScreen> {
     return Scaffold(
       backgroundColor: AppColors.bg(context),
       appBar: AppBar(
-        title: Text('Doa-doa Harian', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.isDark(context) ? Colors.white : AppColors.primaryGreen)),
+        title: Text(MyQuranApp.settingsOf(context).t('Doa-doa Harian', 'Daily Prayers'), style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.isDark(context) ? Colors.white : AppColors.primaryGreen)),
         centerTitle: true,
         elevation: 0,
         backgroundColor: AppColors.bg(context),
@@ -80,7 +116,7 @@ class _DoaScreenState extends State<DoaScreen> {
                     ),
                   );
                 } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return Center(child: Text('Tidak ada data doa.', style: TextStyle(color: AppColors.isDark(context) ? Colors.white : Colors.black)));
+                  return Center(child: Text(MyQuranApp.settingsOf(context).t('Tidak ada data doa.', 'No prayer data.'), style: TextStyle(color: AppColors.isDark(context) ? Colors.white : Colors.black)));
                 }
 
                 if (_allDoas.isEmpty) {
@@ -112,7 +148,7 @@ class _DoaScreenState extends State<DoaScreen> {
         controller: _searchController,
         style: TextStyle(color: AppColors.isDark(context) ? Colors.white : Colors.black),
         decoration: InputDecoration(
-          hintText: 'Cari doa...',
+          hintText: MyQuranApp.settingsOf(context).t('Cari doa...', 'Search prayer...'),
           hintStyle: TextStyle(color: AppColors.isDark(context) ? Colors.white54 : Colors.grey),
           prefixIcon: Icon(Icons.search, color: AppColors.isDark(context) ? AppColors.primaryYellow : AppColors.primaryGreen),
           filled: true,
@@ -125,6 +161,11 @@ class _DoaScreenState extends State<DoaScreen> {
         ),
       ),
     );
+  }
+
+  String _getTranslatedTitle(String title) {
+    if (MyQuranApp.settingsOf(context).language == 'id') return title;
+    return DoaScreen.translateDoaTitle(title);
   }
 
   Widget _buildDoaItem(Doa doa) {
@@ -156,7 +197,7 @@ class _DoaScreenState extends State<DoaScreen> {
             const SizedBox(width: 16),
             Expanded(
               child: Text(
-                doa.judul,
+                _getTranslatedTitle(doa.judul),
                 style: TextStyle(color: AppColors.isDark(context) ? Colors.white : AppColors.primaryGreen, fontSize: 15, fontWeight: FontWeight.bold),
               ),
             ),
@@ -177,7 +218,7 @@ class DoaDetailScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.bg(context),
       appBar: AppBar(
-        title: Text('Detail Doa', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.isDark(context) ? Colors.white : AppColors.primaryGreen)),
+        title: Text(MyQuranApp.settingsOf(context).t('Detail Doa', 'Prayer Detail'), style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.isDark(context) ? Colors.white : AppColors.primaryGreen)),
         backgroundColor: AppColors.bg(context),
         elevation: 0,
         iconTheme: IconThemeData(color: AppColors.isDark(context) ? Colors.white : AppColors.primaryGreen),
@@ -196,7 +237,7 @@ class DoaDetailScreen extends StatelessWidget {
             onPressed: () {
               Clipboard.setData(ClipboardData(text: '${doa.judul}\n\n${doa.doa}\n\n${doa.artinya}'));
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Doa disalin ke clipboard')),
+                SnackBar(content: Text(MyQuranApp.settingsOf(context).t('Doa disalin ke clipboard', 'Prayer copied to clipboard'))),
               );
             },
           ),
@@ -208,7 +249,9 @@ class DoaDetailScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              doa.judul,
+              MyQuranApp.settingsOf(context).language == 'en' 
+                  ? DoaScreen.translateDoaTitle(doa.judul) 
+                  : doa.judul,
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: AppColors.isDark(context) ? AppColors.primaryYellow : AppColors.primaryGreen,
@@ -242,7 +285,7 @@ class DoaDetailScreen extends StatelessWidget {
             Divider(color: AppColors.isDark(context) ? Colors.white24 : AppColors.primaryGreen, thickness: 0.5),
             const SizedBox(height: 16),
             Text(
-              'Artinya:',
+              MyQuranApp.settingsOf(context).t('Artinya:', 'Meaning:'),
               style: TextStyle(
                 color: AppColors.isDark(context) ? AppColors.primaryYellow : AppColors.primaryGreen,
                 fontSize: 16,

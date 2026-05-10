@@ -21,6 +21,18 @@ class _NewsScreenState extends State<NewsScreen> {
 
   final List<String> _categories = ['Terkini', 'Islami', 'Nasional', 'Internasional', 'Daerah'];
 
+  String _getCatLabel(String cat) {
+    if (MyQuranApp.settingsOf(context).language == 'id') return cat;
+    final Map<String, String> mapping = {
+      'Terkini': 'Latest',
+      'Islami': 'Islamic',
+      'Nasional': 'National',
+      'Internasional': 'International',
+      'Daerah': 'Regional',
+    };
+    return mapping[cat] ?? cat;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -70,7 +82,7 @@ class _NewsScreenState extends State<NewsScreen> {
             flexibleSpace: FlexibleSpaceBar(
               titlePadding: const EdgeInsets.only(left: 20, bottom: 16),
               title: Text(
-                'Warta Islami',
+                MyQuranApp.settingsOf(context).t('Warta Islami', 'Islamic News'),
                 style: TextStyle(
                   color: AppColors.text1(context),
                   fontWeight: FontWeight.bold,
@@ -107,7 +119,7 @@ class _NewsScreenState extends State<NewsScreen> {
                             ),
                           ),
                           const SizedBox(height: 20),
-                          Text('Cari Kategori Berita',
+                          Text(MyQuranApp.settingsOf(context).t('Cari Kategori Berita', 'Search News Category'),
                             style: TextStyle(color: AppColors.text1(context), fontSize: 18, fontWeight: FontWeight.bold),
                           ),
                           const SizedBox(height: 8),
@@ -124,7 +136,10 @@ class _NewsScreenState extends State<NewsScreen> {
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: Text(
-                                    'Pencarian hanya tersedia berdasarkan kategori: Terkini, Islami, Nasional, Internasional, dan Daerah.',
+                                    MyQuranApp.settingsOf(context).t(
+                                      'Pencarian hanya tersedia berdasarkan kategori: Terkini, Islami, Nasional, Internasional, dan Daerah.',
+                                      'Search is only available by category: Latest, Islamic, National, International, and Regional.'
+                                    ),
                                     style: TextStyle(color: AppColors.gold(context), fontSize: 12, height: 1.4),
                                   ),
                                 ),
@@ -168,7 +183,7 @@ class _NewsScreenState extends State<NewsScreen> {
                                     ),
                                     const SizedBox(width: 12),
                                     Text(
-                                      cat,
+                                      _getCatLabel(cat),
                                       style: TextStyle(
                                         color: isActive ? AppColors.gold(context) : AppColors.text1(context),
                                         fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
@@ -216,13 +231,13 @@ class _NewsScreenState extends State<NewsScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'Sorotan Utama',
+                        MyQuranApp.settingsOf(context).t('Sorotan Utama', 'Main Highlights'),
                         style: TextStyle(color: AppColors.text1(context), fontSize: 18, fontWeight: FontWeight.bold),
                       ),
                       GestureDetector(
                         onTap: _scrollToList,
                         child: Text(
-                          'Lihat Semua',
+                          MyQuranApp.settingsOf(context).t('Lihat Semua', 'View All'),
                           style: TextStyle(color: AppColors.gold(context), fontSize: 12, fontWeight: FontWeight.w500),
                         ),
                       ),
@@ -238,7 +253,7 @@ class _NewsScreenState extends State<NewsScreen> {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: Text(
-                    'Berita Terkini',
+                    MyQuranApp.settingsOf(context).t('Berita Terkini', 'Latest News'),
                     style: TextStyle(color: AppColors.text1(context), fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                 ),
@@ -259,8 +274,8 @@ class _NewsScreenState extends State<NewsScreen> {
               
               final newsList = snapshot.data ?? [];
               if (newsList.isEmpty) {
-                return const SliverFillRemaining(
-                  child: Center(child: Text('Belum ada berita.')),
+                return SliverFillRemaining(
+                  child: Center(child: Text(MyQuranApp.settingsOf(context).t('Belum ada berita.', 'No news available.'))),
                 );
               }
 
@@ -317,7 +332,7 @@ class _NewsScreenState extends State<NewsScreen> {
                 ),
               ),
               child: Text(
-                cat,
+                _getCatLabel(cat),
                 style: TextStyle(
                   color: isSelected ? Colors.white : AppColors.text1(context),
                   fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
@@ -506,7 +521,7 @@ class _NewsScreenState extends State<NewsScreen> {
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
-                            _selectedCategory,
+                            _getCatLabel(_selectedCategory),
                             style: TextStyle(color: AppColors.gold(context), fontSize: 9, fontWeight: FontWeight.bold),
                           ),
                         ),

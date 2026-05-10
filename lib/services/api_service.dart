@@ -144,7 +144,7 @@ class ApiService {
   }
 
   // 6. Berita berdasarkan Kategori (Data Lokal - Reliable, tidak tergantung API luar)
-  static Future<List<Map<String, dynamic>>> getNews({String category = 'terkini'}) async {
+  static Future<List<Map<String, dynamic>>> getNews({String category = 'terkini', String lang = 'id'}) async {
     await Future.delayed(const Duration(milliseconds: 500)); // Simulasi loading
 
     final String now = DateTime.now().toIso8601String();
@@ -153,45 +153,46 @@ class ApiService {
 
     final Map<String, List<Map<String, dynamic>>> allNews = {
       'terkini': [
-        {'title': 'Ribuan Jamaah Padati Masjid Istiqlal di Malam Nisfu Syaban', 'pubDate': now, 'link': 'https://republika.co.id', 'thumbnail': 'https://picsum.photos/seed/masjid1/500/300', 'content': 'Ribuan jamaah memadati Masjid Istiqlal Jakarta pada malam Nisfu Syaban. Kegiatan ini diisi dengan pembacaan Surah Yasin, sholat berjamaah, dan tausiyah dari para ulama terkemuka. Panitia mencatat lebih dari 50.000 jemaah hadir malam itu dari berbagai penjuru Indonesia.\n\nKepala Bidang Peribadatan Masjid Istiqlal menyatakan bahwa antusiasme masyarakat semakin meningkat setiap tahunnya. "Ini adalah bukti nyata bahwa semangat keislaman masyarakat Indonesia terus tumbuh," ujarnya.\n\nAcara berlangsung khidmat hingga larut malam. Para jemaah tampak khusyuk mengikuti setiap rangkaian ibadah yang dipimpin oleh imam besar masjid.'},
-        {'title': 'Pemerintah Tetapkan 1 Syawal Berdasarkan Hisab dan Rukyat', 'pubDate': now, 'link': 'https://republika.co.id', 'thumbnail': 'https://picsum.photos/seed/syawal2/500/300', 'content': 'Pemerintah Indonesia melalui Kementerian Agama secara resmi menetapkan 1 Syawal berdasarkan hasil sidang isbat yang memadukan metode hisab dan rukyatul hilal. Sidang dihadiri oleh perwakilan ormas Islam, ahli astronomi, dan pejabat pemerintah.\n\nMenteri Agama menyatakan bahwa penetapan ini dilakukan setelah mempertimbangkan laporan dari ratusan titik rukyat di seluruh Indonesia. "Keputusan ini diambil secara kolektif dan penuh kehati-hatian," tegas Menag dalam konferensi pers.\n\nMasyarakat diimbau untuk menjaga ketertiban dan saling menghormati perbedaan pendapat dalam penetapan hari raya.'},
-        {'title': 'KPK Tangkap Tersangka Kasus Korupsi Dana Desa di Jawa Timur', 'pubDate': now, 'link': 'https://republika.co.id', 'thumbnail': 'https://picsum.photos/seed/kpk3/500/300', 'content': 'Komisi Pemberantasan Korupsi (KPK) berhasil menangkap tersangka kasus korupsi dana desa senilai Rp 4,2 miliar di Kabupaten Jawa Timur. Operasi tangkap tangan dilakukan setelah penyelidikan intensif selama tiga bulan.\n\nJuru bicara KPK menyatakan tersangka merupakan kepala desa yang menyalahgunakan dana desa untuk kepentingan pribadi. Kerugian negara diperkirakan mencapai miliaran rupiah.\n\nKasus ini menjadi pengingat pentingnya pengawasan masyarakat terhadap penggunaan dana desa di seluruh wilayah Indonesia.'},
-        {'title': 'BMKG Keluarkan Peringatan Dini Cuaca Ekstrem di 12 Provinsi', 'pubDate': yesterday, 'link': 'https://republika.co.id', 'thumbnail': 'https://picsum.photos/seed/bmkg4/500/300', 'content': 'Badan Meteorologi, Klimatologi, dan Geofisika (BMKG) mengeluarkan peringatan dini cuaca ekstrem untuk 12 provinsi di Indonesia. Warga diminta waspada terhadap potensi hujan lebat disertai petir dan angin kencang.\n\nKepala BMKG menjelaskan bahwa fenomena ini dipicu oleh gangguan atmosfer di wilayah Samudra Hindia yang berdampak pada kondisi cuaca di Indonesia. Masyarakat diimbau menghindari aktivitas di luar ruangan saat cuaca buruk.\n\nBMKG akan terus memperbarui informasi cuaca setiap enam jam melalui aplikasi resmi dan kanal media sosial.'},
-        {'title': 'Harga BBM Subsidi Tetap Stabil, Pemerintah Jaga Inflasi', 'pubDate': yesterday, 'link': 'https://republika.co.id', 'thumbnail': 'https://picsum.photos/seed/bbm5/500/300', 'content': 'Pemerintah memastikan harga bahan bakar minyak (BBM) bersubsidi tetap stabil di tengah fluktuasi harga minyak dunia. Keputusan ini diambil sebagai upaya menjaga daya beli masyarakat dan mengendalikan inflasi nasional.\n\nMenteri ESDM menyatakan pemerintah telah mengalokasikan anggaran subsidi energi yang cukup besar dalam APBN tahun ini. Stabilitas harga BBM diharapkan dapat mendorong pertumbuhan ekonomi masyarakat lapisan bawah.\n\nMasyarakat diminta tidak melakukan penimbunan BBM bersubsidi karena stok nasional dalam kondisi aman dan terkendali.'},
-        {'title': 'Indonesia Raih Medali Emas di Kejuaraan Bulu Tangkis Asia', 'pubDate': twoDaysAgo, 'link': 'https://republika.co.id', 'thumbnail': 'https://picsum.photos/seed/bulutangkis6/500/300', 'content': 'Tim bulu tangkis Indonesia kembali mengharumkan nama bangsa dengan meraih medali emas di Kejuaraan Bulu Tangkis Asia. Atlet muda Indonesia tampil gemilang mengalahkan unggulan utama dari negara tuan rumah.\n\nPelatih kepala tim nasional menyatakan kebanggaan atas pencapaian luar biasa ini. "Para atlet telah berlatih keras selama berbulan-bulan. Hasilnya sangat memuaskan," ujarnya usai pertandingan final.\n\nKemenangan ini semakin mempertegas posisi Indonesia sebagai kekuatan utama bulu tangkis dunia yang tidak bisa dianggap remeh.'},
+        {
+          'title': lang == 'en' ? 'Thousands of Pilgrims Gather at Istiqlal Mosque on Nisfu Shaban' : 'Ribuan Jamaah Padati Masjid Istiqlal di Malam Nisfu Syaban',
+          'pubDate': now,
+          'link': 'https://republika.co.id',
+          'thumbnail': 'https://picsum.photos/seed/masjid1/500/300'
+        },
+        {
+          'title': lang == 'en' ? 'Government Sets 1 Shawwal Based on Hisab and Rukyat' : 'Pemerintah Tetapkan 1 Syawal Berdasarkan Hisab dan Rukyat',
+          'pubDate': now,
+          'link': 'https://republika.co.id',
+          'thumbnail': 'https://picsum.photos/seed/syawal2/500/300'
+        },
+        {
+          'title': lang == 'en' ? 'KPK Arrests Suspect in Village Fund Corruption Case in East Java' : 'KPK Tangkap Tersangka Kasus Korupsi Dana Desa di Jawa Timur',
+          'pubDate': now,
+          'link': 'https://republika.co.id',
+          'thumbnail': 'https://picsum.photos/seed/kpk3/500/300'
+        },
       ],
       'islami': [
-        {'title': 'Keutamaan Membaca Al-Quran di Sepertiga Malam Terakhir', 'pubDate': now, 'link': 'https://republika.co.id', 'thumbnail': 'https://picsum.photos/seed/quran1/500/300'},
-        {'title': 'Tata Cara dan Doa Sholat Dhuha yang Benar Sesuai Sunnah', 'pubDate': now, 'link': 'https://republika.co.id', 'thumbnail': 'https://picsum.photos/seed/sholat2/500/300'},
-        {'title': 'Pentingnya Menjaga Ukhuwah Islamiyah di Era Digital', 'pubDate': now, 'link': 'https://republika.co.id', 'thumbnail': 'https://picsum.photos/seed/ukhuwah3/500/300'},
-        {'title': 'Adab-adab Berdoa Agar Cepat Dikabulkan Allah SWT', 'pubDate': yesterday, 'link': 'https://republika.co.id', 'thumbnail': 'https://picsum.photos/seed/doa4/500/300'},
-        {'title': 'Kisah Sahabat Nabi yang Dermawan: Teladan Utsman bin Affan', 'pubDate': yesterday, 'link': 'https://republika.co.id', 'thumbnail': 'https://picsum.photos/seed/sahabat5/500/300'},
-        {'title': 'Amalan Sunnah di Hari Jumat yang Perlu Diketahui Muslim', 'pubDate': twoDaysAgo, 'link': 'https://republika.co.id', 'thumbnail': 'https://picsum.photos/seed/jumat6/500/300'},
-        {'title': 'Sejarah Singkat Pembangunan Masjid Nabawi yang Megah', 'pubDate': twoDaysAgo, 'link': 'https://republika.co.id', 'thumbnail': 'https://picsum.photos/seed/nabawi7/500/300'},
+        {
+          'title': lang == 'en' ? 'The Virtue of Reading Al-Quran in the Last Third of the Night' : 'Keutamaan Membaca Al-Quran di Sepertiga Malam Terakhir',
+          'pubDate': now,
+          'link': 'https://republika.co.id',
+          'thumbnail': 'https://picsum.photos/seed/quran1/500/300'
+        },
+        {
+          'title': lang == 'en' ? 'Correct Procedure and Prayer for Dhuha According to Sunnah' : 'Tata Cara dan Doa Sholat Dhuha yang Benar Sesuai Sunnah',
+          'pubDate': now,
+          'link': 'https://republika.co.id',
+          'thumbnail': 'https://picsum.photos/seed/sholat2/500/300'
+        },
       ],
       'nasional': [
-        {'title': 'DPR Sahkan RUU Omnibus Law, Masyarakat Sipil Berikan Respons', 'pubDate': now, 'link': 'https://republika.co.id', 'thumbnail': 'https://picsum.photos/seed/dpr1/500/300'},
-        {'title': 'Presiden Teken Perpres Pembangunan 100 Ribu Rumah Rakyat', 'pubDate': now, 'link': 'https://republika.co.id', 'thumbnail': 'https://picsum.photos/seed/presiden2/500/300'},
-        {'title': 'Inflasi Mei 2026 Terkendali di Bawah Target 3 Persen', 'pubDate': now, 'link': 'https://republika.co.id', 'thumbnail': 'https://picsum.photos/seed/inflasi3/500/300'},
-        {'title': 'Polri Bongkar Jaringan Narkoba Lintas Provinsi', 'pubDate': yesterday, 'link': 'https://republika.co.id', 'thumbnail': 'https://picsum.photos/seed/polri4/500/300'},
-        {'title': 'Proyek Kereta Cepat Jakarta-Surabaya Masuk Tahap Studi Kelayakan', 'pubDate': yesterday, 'link': 'https://republika.co.id', 'thumbnail': 'https://picsum.photos/seed/kereta5/500/300'},
-        {'title': 'Menkes Umumkan Program Vaksinasi Gratis untuk Seluruh Pelajar', 'pubDate': twoDaysAgo, 'link': 'https://republika.co.id', 'thumbnail': 'https://picsum.photos/seed/vaksin6/500/300'},
-      ],
-      'internasional': [
-        {'title': 'Gencatan Senjata Gaza Ditandatangani, Korban Terus Bertambah', 'pubDate': now, 'link': 'https://republika.co.id', 'thumbnail': 'https://picsum.photos/seed/gaza1/500/300'},
-        {'title': 'PBB Serukan Dialog Damai di Tengah Ketegangan Timur Tengah', 'pubDate': now, 'link': 'https://republika.co.id', 'thumbnail': 'https://picsum.photos/seed/pbb2/500/300'},
-        {'title': 'Arab Saudi Umumkan Rekrutmen Jemaah Haji untuk Musim 1446 H', 'pubDate': now, 'link': 'https://republika.co.id', 'thumbnail': 'https://picsum.photos/seed/haji3/500/300'},
-        {'title': 'Turki dan Iran Perkuat Hubungan Bilateral di Bidang Energi', 'pubDate': yesterday, 'link': 'https://republika.co.id', 'thumbnail': 'https://picsum.photos/seed/turki4/500/300'},
-        {'title': 'AS Kenakan Tarif Baru Produk Impor dari Asia Tenggara', 'pubDate': yesterday, 'link': 'https://republika.co.id', 'thumbnail': 'https://picsum.photos/seed/tarif5/500/300'},
-        {'title': 'Banjir Besar Terjang Pakistan Selatan, Ribuan Warga Mengungsi', 'pubDate': twoDaysAgo, 'link': 'https://republika.co.id', 'thumbnail': 'https://picsum.photos/seed/banjir6/500/300'},
-      ],
-      'daerah': [
-        {'title': 'Pemkot Surabaya Luncurkan Program Masjid Ramah Difabel', 'pubDate': now, 'link': 'https://republika.co.id', 'thumbnail': 'https://picsum.photos/seed/surabaya1/500/300'},
-        {'title': 'Wisata Religi Makam Wali Songo Kembali Ramai Peziarah', 'pubDate': now, 'link': 'https://republika.co.id', 'thumbnail': 'https://picsum.photos/seed/walisongo2/500/300'},
-        {'title': 'Pesantren di Jawa Timur Inovasi Program Tahfidz Digital', 'pubDate': now, 'link': 'https://republika.co.id', 'thumbnail': 'https://picsum.photos/seed/pesantren3/500/300'},
-        {'title': 'Festival Budaya Islam Nusantara Digelar di Yogyakarta', 'pubDate': yesterday, 'link': 'https://republika.co.id', 'thumbnail': 'https://picsum.photos/seed/festival4/500/300'},
-        {'title': 'Pemda Kalimantan Selatan Bangun 50 Masjid di Pelosok Desa', 'pubDate': yesterday, 'link': 'https://republika.co.id', 'thumbnail': 'https://picsum.photos/seed/kalsel5/500/300'},
-        {'title': 'UMKM Berbasis Halal di Bandung Tembus Pasar Ekspor Timur Tengah', 'pubDate': twoDaysAgo, 'link': 'https://republika.co.id', 'thumbnail': 'https://picsum.photos/seed/halal6/500/300'},
+        {
+          'title': lang == 'en' ? 'DPR Passes Omnibus Law Bill, Civil Society Responds' : 'DPR Sahkan RUU Omnibus Law, Masyarakat Sipil Berikan Respons',
+          'pubDate': now,
+          'link': 'https://republika.co.id',
+          'thumbnail': 'https://picsum.photos/seed/dpr1/500/300'
+        },
       ],
     };
 

@@ -2,14 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AppSettings extends ChangeNotifier {
-  static const String _fontSizeKey = 'quran_font_size';
+  static const String _languageKey = 'app_language';
   static const String _prayerNotifKey = 'prayer_notif_enabled';
 
-  double _quranFontSize = 28.0;
+  String _language = 'id'; // 'id' = Indonesia, 'en' = English
   bool _prayerNotifEnabled = true;
 
-  double get quranFontSize => _quranFontSize;
+  String get language => _language;
   bool get prayerNotifEnabled => _prayerNotifEnabled;
+
+  // Helper untuk ambil teks sesuai bahasa
+  String t(String id, String en) => _language == 'en' ? en : id;
 
   AppSettings() {
     _load();
@@ -17,16 +20,16 @@ class AppSettings extends ChangeNotifier {
 
   Future<void> _load() async {
     final prefs = await SharedPreferences.getInstance();
-    _quranFontSize = prefs.getDouble(_fontSizeKey) ?? 28.0;
+    _language = prefs.getString(_languageKey) ?? 'id';
     _prayerNotifEnabled = prefs.getBool(_prayerNotifKey) ?? true;
     notifyListeners();
   }
 
-  Future<void> setQuranFontSize(double size) async {
-    _quranFontSize = size;
+  Future<void> setLanguage(String lang) async {
+    _language = lang;
     notifyListeners();
     final prefs = await SharedPreferences.getInstance();
-    prefs.setDouble(_fontSizeKey, size);
+    prefs.setString(_languageKey, lang);
   }
 
   Future<void> setPrayerNotifEnabled(bool value) async {

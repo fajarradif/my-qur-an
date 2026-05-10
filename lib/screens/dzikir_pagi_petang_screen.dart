@@ -12,7 +12,7 @@ class DzikirPagiPetangScreen extends StatelessWidget {
       child: Scaffold(
         backgroundColor: AppColors.bg(context),
         appBar: AppBar(
-          title: Text('Zikir Pagi & Petang', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          title: Text(MyQuranApp.settingsOf(context).t('Zikir Pagi & Petang', 'Morning & Evening Dhikr'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
           backgroundColor: AppColors.primaryGreen,
           iconTheme: const IconThemeData(color: Colors.white),
           elevation: 0,
@@ -28,17 +28,17 @@ class DzikirPagiPetangScreen extends StatelessWidget {
             ),
             const SizedBox(width: 8),
           ],
-          bottom: const TabBar(
+          bottom: TabBar(
             labelColor: AppColors.primaryYellow,
             unselectedLabelColor: Colors.white70,
             indicatorColor: AppColors.primaryYellow,
             tabs: [
-              Tab(icon: Icon(Icons.wb_sunny), text: 'Zikir Pagi'),
-              Tab(icon: Icon(Icons.nightlight_round), text: 'Zikir Petang'),
+              Tab(icon: const Icon(Icons.wb_sunny), text: MyQuranApp.settingsOf(context).t('Zikir Pagi', 'Morning Dhikr')),
+              Tab(icon: const Icon(Icons.nightlight_round), text: MyQuranApp.settingsOf(context).t('Zikir Petang', 'Evening Dhikr')),
             ],
           ),
         ),
-        body: const TabBarView(
+        body: TabBarView(
           children: [
             DzikirList(isPagi: true),
             DzikirList(isPagi: false),
@@ -58,22 +58,22 @@ class DzikirList extends StatelessWidget {
     // Data contoh zikir (bisa ditambah lagi nanti)
     final dzikirData = [
       {
-        'title': 'Membaca Ayat Kursi',
+        'title': MyQuranApp.settingsOf(context).t('Membaca Ayat Kursi', 'Reading Ayat Kursi'),
         'arabic': 'اللَّهُ لَا إِلَهَ إِلَّا هُوَ الْحَيُّ الْقَيُّومُ لَا تَأْخُذُهُ سِنَةٌ وَلَا نَوْمٌ...',
         'latin': 'Allahu laa ilaaha illaa huwal hayyul qayyuum...',
-        'info': 'Dibaca 1x (Pelindung dari jin hingga sore/pagi)',
+        'info': MyQuranApp.settingsOf(context).t('Dibaca 1x (Pelindung dari jin hingga sore/pagi)', 'Read 1x (Protection from jinn until evening/morning)'),
       },
       {
         'title': 'Sayyidul Istighfar',
         'arabic': 'اللَّهُمَّ أَنْتَ رَبِّي لَا إِلَهَ إِلَّا أَنْتَ خَلَقْتَنِي وَأَنَا عَبْدُكَ...',
         'latin': 'Allahumma anta rabbii laa ilaaha illaa anta khalaqtanii...',
-        'info': 'Dibaca 1x (Penyebab masuk surga jika meninggal hari itu)',
+        'info': MyQuranApp.settingsOf(context).t('Dibaca 1x (Penyebab masuk surga jika meninggal hari itu)', 'Read 1x (Ensures Paradise if passing away that day)'),
       },
       {
-        'title': 'Zikir Perlindungan',
+        'title': MyQuranApp.settingsOf(context).t('Zikir Perlindungan', 'Supplication for Protection'),
         'arabic': 'بِسْمِ اللَّهِ الَّذِي لَا يَضُرُّ مَعَ اسْمِهِ شَيْءٌ فِي الْأَرْضِ وَلَا فِي السَّمَاءِ...',
         'latin': 'Bismillahilladzi laa yadhurru ma’asmihi syai’un fil ardhi...',
-        'info': 'Dibaca 3x (Pelindung dari segala bahaya)',
+        'info': MyQuranApp.settingsOf(context).t('Dibaca 3x (Pelindung dari segala bahaya)', 'Read 3x (Protection from all dangers)'),
       }
     ];
 
@@ -97,15 +97,17 @@ class DzikirList extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: AppColors.primaryGreen.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Text(
-                      dzikir['info']!,
-                      style: const TextStyle(color: AppColors.primaryGreen, fontSize: 10, fontWeight: FontWeight.bold),
+                  Flexible(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryGreen.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        dzikir['info']!,
+                        style: const TextStyle(color: AppColors.primaryGreen, fontSize: 10, fontWeight: FontWeight.bold),
+                      ),
                     ),
                   ),
                 ],

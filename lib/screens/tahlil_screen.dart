@@ -99,7 +99,9 @@ class _TahlilScreenState extends State<TahlilScreen> {
             onPressed: () => Navigator.pop(context),
           ),
           title: Text(
-            _isMushafMode ? 'Mode Lafadz' : 'Tahlil & Yasin',
+            _isMushafMode 
+                ? MyQuranApp.settingsOf(context).t('Mode Lafadz', 'Text Only Mode') 
+                : 'Tahlil & Yasin',
             style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 20),
           ),
           centerTitle: true,
@@ -124,9 +126,9 @@ class _TahlilScreenState extends State<TahlilScreen> {
             labelColor: AppColors.primaryYellow,
             unselectedLabelColor: Colors.white70,
             indicatorColor: AppColors.primaryYellow,
-            tabs: const [
-              Tab(text: 'TAHLIL'),
-              Tab(text: 'SURAH YASIN'),
+            tabs: [
+              Tab(text: MyQuranApp.settingsOf(context).t('TAHLIL', 'TAHLIL')),
+              Tab(text: MyQuranApp.settingsOf(context).t('SURAH YASIN', 'SURAH YASIN')),
             ],
           ),
         ),
@@ -149,7 +151,7 @@ class _TahlilScreenState extends State<TahlilScreen> {
         } else if (snapshot.hasError) {
           return Center(child: Text('Error: ${snapshot.error}', style: TextStyle(color: AppColors.text1(context))));
         } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return Center(child: Text('Data Tahlil tidak tersedia', style: TextStyle(color: AppColors.text1(context))));
+          return Center(child: Text(MyQuranApp.settingsOf(context).t('Data Tahlil tidak tersedia', 'Tahlil data not available'), style: TextStyle(color: AppColors.text1(context))));
         }
 
         final tahlilData = snapshot.data!;
@@ -182,7 +184,7 @@ class _TahlilScreenState extends State<TahlilScreen> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            tahlil.title,
+            _getTahlilTitle(tahlil.title),
             style: TextStyle(
               color: AppColors.gold(context),
               fontSize: 16,
@@ -245,7 +247,7 @@ class _TahlilScreenState extends State<TahlilScreen> {
         } else if (snapshot.hasError) {
           return Center(child: Text('Error: ${snapshot.error}', style: TextStyle(color: AppColors.text1(context))));
         } else if (!snapshot.hasData) {
-          return Center(child: Text('Data Yasin tidak tersedia', style: TextStyle(color: AppColors.text1(context))));
+          return Center(child: Text(MyQuranApp.settingsOf(context).t('Data Yasin tidak tersedia', 'Yasin data not available'), style: TextStyle(color: AppColors.text1(context))));
         }
 
         final yasin = snapshot.data!;
@@ -411,5 +413,39 @@ class _TahlilScreenState extends State<TahlilScreen> {
         ),
       ),
     );
+  }
+
+  String _getTahlilTitle(String originalTitle) {
+    if (MyQuranApp.settingsOf(context).language == 'id') return originalTitle;
+    
+    final Map<String, String> translations = {
+      'Tawasul Nabi Muhammad ﷺ': 'Tawassul to Prophet Muhammad ﷺ',
+      'Tawasul Para Nabi & Ulama': 'Tawassul to Prophets & Scholars',
+      'Tawasul Ahli Kubur': 'Tawassul to Inhabitants of the Grave',
+      'Tawasul Khusus Arwah': 'Special Tawassul for Souls',
+      'Surah Al-Ikhlas (3x)': 'Surah Al-Ikhlas (3x)',
+      'Tahlil & Takbir': 'Tahlil & Takbir',
+      'Surah Al-Falaq': 'Surah Al-Falaq',
+      'Surah An-Nas': 'Surah An-Nas',
+      'Surah Al-Fatihah': 'Surah Al-Fatihah',
+      'Surah Al-Baqarah 1-5': 'Surah Al-Baqarah 1-5',
+      'Surah Al-Baqarah 163': 'Surah Al-Baqarah 163',
+      'Ayat Kursi': 'Ayat al-Kursi',
+      'Istighfar (3x)': 'Istighfar (3x)',
+      'Tahlil Afdaludz Dzikri': 'Tahlil (Afdhaluz Dzikri)',
+      'Tahlil Hayyun Ma\'bud': 'Tahlil (Hayyun Ma\'bud)',
+      'Tahlil Hayyun Baq': 'Tahlil (Hayyun Baq)',
+      'Tahlil (100x)': 'Tahlil (100x)',
+      'Sholawat (2x)': 'Salawat (2x)',
+      'Tasbih (7x)': 'Tasbih (7x)',
+      'Tasbih Subhanallah (33x)': 'Tasbih (33x)',
+      'Sholawat Kamilah': 'Salawat Kamilah',
+      'Doa Tahlil (Pembuka)': 'Tahlil Prayer (Opening)',
+      'Doa Tahlil (Sampaikan Pahala)': 'Tahlil Prayer (Dedication)',
+      'Doa Ampunan Ahli Kubur': 'Prayer for Forgiveness of the Deceased',
+      'Doa Penutup': 'Closing Prayer',
+    };
+    
+    return translations[originalTitle] ?? originalTitle;
   }
 }

@@ -106,7 +106,7 @@ class _MurottalScreenState extends State<MurottalScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal memutar audio: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text('${MyQuranApp.settingsOf(context).t('Gagal memutar audio', 'Failed to play audio')}: $e'), backgroundColor: Colors.red),
         );
       }
     }
@@ -117,7 +117,7 @@ class _MurottalScreenState extends State<MurottalScreen> {
     return Scaffold(
       backgroundColor: AppColors.bg(context),
       appBar: AppBar(
-        title: Text('Murottal Al-Quran', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.text1(context))),
+        title: Text(MyQuranApp.settingsOf(context).t('Murottal Al-Quran', 'Quran Murottal'), style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.text1(context))),
         centerTitle: true,
         elevation: 0,
         backgroundColor: AppColors.bg(context),
@@ -148,7 +148,7 @@ class _MurottalScreenState extends State<MurottalScreen> {
                 } else if (snapshot.hasError) {
                   return Center(child: Text('Error: ${snapshot.error}', style: TextStyle(color: AppColors.text1(context))));
                 } else if (!snapshot.hasData) {
-                  return Center(child: Text('Tidak ada data surat.', style: TextStyle(color: AppColors.text1(context))));
+                  return Center(child: Text(MyQuranApp.settingsOf(context).t('Tidak ada data surat.', 'No surah data.'), style: TextStyle(color: AppColors.text1(context))));
                 }
 
                 if (_allSurahs.isEmpty) {
@@ -224,7 +224,7 @@ class _MurottalScreenState extends State<MurottalScreen> {
       child: TextField(
         controller: _searchController,
         decoration: InputDecoration(
-          hintText: 'Cari nama surat...',
+          hintText: MyQuranApp.settingsOf(context).t('Cari nama surat...', 'Search surah name...'),
           prefixIcon: Icon(Icons.search, color: AppColors.green(context)),
           filled: true,
           fillColor: AppColors.sf(context),
@@ -278,7 +278,7 @@ class _MurottalScreenState extends State<MurottalScreen> {
                     style: TextStyle(color: AppColors.text1(context), fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                   Text(
-                    '${surah.jumlahAyat} Ayat',
+                    '${surah.jumlahAyat} ${MyQuranApp.settingsOf(context).t('Ayat', 'Verses')}',
                     style: TextStyle(color: AppColors.text2(context), fontSize: 12),
                   ),
                 ],

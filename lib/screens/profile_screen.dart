@@ -28,9 +28,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const SizedBox(height: 40),
               _buildDarkModeToggle(context, isDark),
               const SizedBox(height: 16),
-              _buildProfileMenu(Icons.settings, 'Pengaturan', isDark, onTap: () => _showSettingsDialog(context, isDark)),
-              _buildProfileMenu(Icons.help_outline, 'Pusat Bantuan', isDark, onTap: () => _showHelpDialog(context, isDark)),
-              _buildProfileMenu(Icons.info_outline, 'Tentang Aplikasi', isDark, onTap: () => _showAboutDialog(context, isDark)),
+              _buildProfileMenu(Icons.settings, MyQuranApp.settingsOf(context).t('Pengaturan', 'Settings'), isDark, onTap: () => _showSettingsDialog(context, isDark)),
+              _buildProfileMenu(Icons.help_outline, MyQuranApp.settingsOf(context).t('Pusat Bantuan', 'Help Center'), isDark, onTap: () => _showHelpDialog(context, isDark)),
+              _buildProfileMenu(Icons.info_outline, MyQuranApp.settingsOf(context).t('Tentang Aplikasi', 'About Application'), isDark, onTap: () => _showAboutDialog(context, isDark)),
               const SizedBox(height: 40),
               _buildLogoutButton(isDark),
             ],
@@ -137,7 +137,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Mode Gelap',
+                  MyQuranApp.settingsOf(context).t('Mode Gelap', 'Dark Mode'),
                   style: TextStyle(
                     color: isDark ? AppColors.darkTextPrimary : AppColors.primaryGreen,
                     fontWeight: FontWeight.w600,
@@ -145,7 +145,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
                 Text(
-                  isDark ? 'Aktif — Hemat baterai' : 'Nonaktif',
+                  isDark 
+                    ? MyQuranApp.settingsOf(context).t('Aktif — Hemat baterai', 'Active — Battery saver') 
+                    : MyQuranApp.settingsOf(context).t('Nonaktif', 'Inactive'),
                   style: TextStyle(
                     color: isDark ? AppColors.darkTextSecondary : AppColors.mutedGreen,
                     fontSize: 12,
@@ -200,12 +202,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
                 const SizedBox(height: 20),
-                Text('Pengaturan Aplikasi',
+                Text(settings.t('Pengaturan Aplikasi', 'App Settings'),
                   style: TextStyle(color: isDark ? AppColors.darkTextPrimary : AppColors.primaryGreen, fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 24),
 
-                // Font Size Section
+                // Language Section
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
@@ -217,54 +219,96 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     children: [
                       Row(
                         children: [
-                          Icon(Icons.text_fields, color: AppColors.primaryGreen, size: 20),
+                          Icon(Icons.language, color: AppColors.primaryGreen, size: 20),
                           const SizedBox(width: 10),
-                          Text('Ukuran Font Al-Quran',
+                          Text(settings.t('Bahasa Aplikasi', 'App Language'),
                             style: TextStyle(color: isDark ? AppColors.darkTextPrimary : AppColors.primaryGreen, fontWeight: FontWeight.w600, fontSize: 14),
-                          ),
-                          const Spacer(),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: AppColors.primaryGreen.withOpacity(0.15),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              '${settings.quranFontSize.toInt()}px',
-                              style: const TextStyle(color: AppColors.primaryGreen, fontWeight: FontWeight.bold, fontSize: 13),
-                            ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 8),
-                      // Preview teks Arab
-                      Center(
-                        child: Text(
-                          'بِسْمِ اللّٰهِ',
-                          style: TextStyle(
-                            fontSize: settings.quranFontSize,
-                            color: isDark ? AppColors.darkTextPrimary : AppColors.primaryGreen,
-                            fontFamily: 'Scheherazade',
-                          ),
-                        ),
-                      ),
-                      Slider(
-                        value: settings.quranFontSize,
-                        min: 20, max: 48,
-                        divisions: 14,
-                        activeColor: AppColors.primaryGreen,
-                        inactiveColor: AppColors.primaryGreen.withOpacity(0.2),
-                        onChanged: (val) {
-                          setModalState(() {});
-                          settings.setQuranFontSize(val);
-                        },
-                      ),
+                      const SizedBox(height: 14),
                       Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text('Kecil', style: TextStyle(color: isDark ? AppColors.darkTextSecondary : AppColors.mutedGreen, fontSize: 11)),
-                          Text('Default (28px)', style: TextStyle(color: isDark ? AppColors.darkTextSecondary : AppColors.mutedGreen, fontSize: 11)),
-                          Text('Besar', style: TextStyle(color: isDark ? AppColors.darkTextSecondary : AppColors.mutedGreen, fontSize: 11)),
+                          // Card Indonesia
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: () {
+                                setModalState(() {});
+                                settings.setLanguage('id');
+                              },
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 200),
+                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                decoration: BoxDecoration(
+                                  color: settings.language == 'id'
+                                      ? AppColors.primaryGreen
+                                      : (isDark ? AppColors.darkSurface : Colors.white),
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(
+                                    color: settings.language == 'id' ? AppColors.primaryGreen : Colors.grey.withOpacity(0.3),
+                                    width: 2,
+                                  ),
+                                  boxShadow: settings.language == 'id' ? [
+                                    BoxShadow(color: AppColors.primaryGreen.withOpacity(0.3), blurRadius: 10, offset: const Offset(0, 4)),
+                                  ] : [],
+                                ),
+                                child: Column(
+                                  children: [
+                                    const Text('🇮🇩', style: TextStyle(fontSize: 28)),
+                                    const SizedBox(height: 6),
+                                    Text(settings.t('Indonesia', 'Indonesian'),
+                                      style: TextStyle(
+                                        color: settings.language == 'id' ? Colors.white : (isDark ? Colors.white70 : Colors.black87),
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                    if (settings.language == 'id')
+                                      const Icon(Icons.check_circle, color: Colors.white, size: 20),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          // Card English
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: () {
+                                setModalState(() {});
+                                settings.setLanguage('en');
+                              },
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 200),
+                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                decoration: BoxDecoration(
+                                  color: settings.language == 'en'
+                                      ? AppColors.primaryGreen
+                                      : (isDark ? AppColors.darkSurface : Colors.white),
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(
+                                    color: settings.language == 'en' ? AppColors.primaryGreen : Colors.grey.withOpacity(0.3),
+                                    width: 2,
+                                  ),
+                                  boxShadow: settings.language == 'en' ? [
+                                    BoxShadow(color: AppColors.primaryGreen.withOpacity(0.3), blurRadius: 10, offset: const Offset(0, 4)),
+                                  ] : [],
+                                ),
+                                child: Column(
+                                  children: [
+                                    const Text('🇬🇧', style: TextStyle(fontSize: 28)),
+                                    const SizedBox(height: 6),
+                                    Text(settings.t('Inggris', 'English'),
+                                      style: TextStyle(
+                                        color: settings.language == 'en' ? Colors.white : (isDark ? AppColors.darkTextPrimary : AppColors.primaryGreen),
+                                        fontWeight: FontWeight.bold, fontSize: 13,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
                         ],
                       ),
                     ],
@@ -288,11 +332,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('Notifikasi Waktu Sholat',
+                            Text(settings.language == 'en' ? 'Prayer Time Notification' : 'Notifikasi Waktu Sholat',
                               style: TextStyle(color: isDark ? AppColors.darkTextPrimary : AppColors.primaryGreen, fontWeight: FontWeight.w600, fontSize: 14),
                             ),
                             Text(
-                              settings.prayerNotifEnabled ? 'Aktif — muncul saat waktu sholat tiba' : 'Nonaktif',
+                              settings.prayerNotifEnabled
+                                ? (settings.language == 'en' ? 'Active — notifies when prayer time starts' : 'Aktif — muncul saat waktu sholat tiba')
+                                : (settings.language == 'en' ? 'Inactive' : 'Nonaktif'),
                               style: TextStyle(color: isDark ? AppColors.darkTextSecondary : AppColors.mutedGreen, fontSize: 11),
                             ),
                           ],
@@ -315,14 +361,37 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: () => Navigator.pop(context),
+                    onPressed: () {
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Row(
+                            children: [
+                              const Icon(Icons.check_circle, color: Colors.white, size: 18),
+                              const SizedBox(width: 10),
+                              Text(
+                                settings.language == 'en' ? 'Settings saved successfully!' : 'Pengaturan berhasil disimpan!',
+                                style: const TextStyle(fontWeight: FontWeight.w500),
+                              ),
+                            ],
+                          ),
+                          backgroundColor: AppColors.primaryGreen,
+                          behavior: SnackBarBehavior.floating,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          duration: const Duration(seconds: 2),
+                        ),
+                      );
+                    },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primaryGreen,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 13),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
-                    child: const Text('Simpan & Tutup', style: TextStyle(fontWeight: FontWeight.bold)),
+                    child: Text(
+                      settings.language == 'en' ? 'Save & Close' : 'Simpan & Tutup',
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
                   ),
                 ),
               ],
@@ -371,7 +440,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             const SizedBox(height: 16),
             Center(
-              child: Text('Pusat Bantuan',
+              child: Text(MyQuranApp.settingsOf(context).t('Pusat Bantuan', 'Help Center'),
                 style: TextStyle(
                   color: isDark ? AppColors.darkTextPrimary : AppColors.primaryGreen,
                   fontSize: 20, fontWeight: FontWeight.bold,
@@ -389,7 +458,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Punya pertanyaan, saran, atau menemukan bug?',
+                  Text(MyQuranApp.settingsOf(context).t('Punya pertanyaan, saran, atau menemukan bug?', 'Have questions, suggestions, or found a bug?'),
                     style: TextStyle(
                       color: isDark ? AppColors.darkTextPrimary : AppColors.primaryGreen,
                       fontWeight: FontWeight.w600, fontSize: 14,
@@ -397,7 +466,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Hubungi developer langsung via WhatsApp. Kami siap membantu kamu!',
+                    MyQuranApp.settingsOf(context).t(
+                      'Hubungi developer langsung via WhatsApp. Kami siap membantu kamu!',
+                      'Contact the developer directly via WhatsApp. We are ready to help you!'
+                    ),
                     style: TextStyle(
                       color: isDark ? AppColors.darkTextSecondary : AppColors.mutedGreen,
                       fontSize: 13, height: 1.5,
@@ -433,7 +505,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   _launchWhatsApp(context);
                 },
                 icon: const Icon(Icons.chat, size: 18),
-                label: const Text('Buka WhatsApp', style: TextStyle(fontWeight: FontWeight.bold)),
+                label: Text(MyQuranApp.settingsOf(context).t('Buka WhatsApp', 'Open WhatsApp'), style: const TextStyle(fontWeight: FontWeight.bold)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF25D366),
                   foregroundColor: Colors.white,
@@ -447,7 +519,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               width: double.infinity,
               child: TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: Text('Tutup', style: TextStyle(color: isDark ? AppColors.darkMutedGreen : AppColors.mutedGreen)),
+                child: Text(MyQuranApp.settingsOf(context).t('Tutup', 'Close'), style: TextStyle(color: isDark ? AppColors.darkMutedGreen : AppColors.mutedGreen)),
               ),
             ),
           ],
@@ -487,7 +559,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ),
             const SizedBox(height: 4),
-            Text('Versi 1.0.0',
+            Text(MyQuranApp.settingsOf(context).t('Versi 1.0.0', 'Version 1.0.0'),
               style: TextStyle(
                 color: isDark ? AppColors.darkTextSecondary : AppColors.mutedGreen,
                 fontSize: 13,
@@ -496,13 +568,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
             const SizedBox(height: 20),
             Divider(color: (isDark ? AppColors.darkMutedGreen : AppColors.mutedGreen).withOpacity(0.3)),
             const SizedBox(height: 16),
-            _aboutRow(Icons.person, 'Pembuat', 'Radifullah', isDark),
+            _aboutRow(Icons.person, MyQuranApp.settingsOf(context).t('Pembuat', 'Creator'), 'Radifullah', isDark),
             const SizedBox(height: 10),
             _aboutRow(Icons.code, 'Framework', 'Flutter & Dart', isDark),
             const SizedBox(height: 10),
-            _aboutRow(Icons.school, 'Tujuan', 'Proyek UAS Mobile', isDark),
+            _aboutRow(Icons.school, MyQuranApp.settingsOf(context).t('Tujuan', 'Purpose'), MyQuranApp.settingsOf(context).t('Proyek UAS Mobile', 'Mobile Course Project'), isDark),
             const SizedBox(height: 10),
-            _aboutRow(Icons.favorite, 'Dibuat dengan', 'Bismillah ❤️', isDark),
+            _aboutRow(Icons.favorite, MyQuranApp.settingsOf(context).t('Dibuat dengan', 'Made with'), 'Bismillah ❤️', isDark),
             const SizedBox(height: 24),
             SizedBox(
               width: double.infinity,
@@ -514,7 +586,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
-                child: const Text('Tutup', style: TextStyle(fontWeight: FontWeight.bold)),
+                child: Text(MyQuranApp.settingsOf(context).t('Tutup', 'Close'), style: const TextStyle(fontWeight: FontWeight.bold)),
               ),
             ),
           ],
@@ -590,7 +662,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           padding: const EdgeInsets.symmetric(vertical: 16),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         ),
-        child: const Text('Keluar', style: TextStyle(fontWeight: FontWeight.bold)),
+        child: Text(MyQuranApp.settingsOf(context).t('Keluar', 'Logout'), style: const TextStyle(fontWeight: FontWeight.bold)),
       ),
     );
   }

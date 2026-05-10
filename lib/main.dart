@@ -49,34 +49,38 @@ class _MyQuranAppState extends State<MyQuranApp> {
   @override
   void initState() {
     super.initState();
-    widget.themeProvider.addListener(_onThemeChanged);
+    widget.themeProvider.addListener(_onChanged);
+    widget.appSettings.addListener(_onChanged);
   }
 
   @override
   void dispose() {
-    widget.themeProvider.removeListener(_onThemeChanged);
+    widget.themeProvider.removeListener(_onChanged);
+    widget.appSettings.removeListener(_onChanged);
     super.dispose();
   }
 
-  void _onThemeChanged() {
+  void _onChanged() {
     if (mounted) setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
-    return ThemeInherited(
-      themeProvider: widget.themeProvider,
-      appSettings: widget.appSettings,
-      child: MaterialApp(
-        title: 'MyQuran',
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.lightTheme,
-        darkTheme: AppTheme.darkTheme,
-        themeMode: widget.themeProvider.isDarkMode ? ThemeMode.dark : ThemeMode.light,
-        themeAnimationDuration: const Duration(milliseconds: 300),
-        themeAnimationCurve: Curves.easeInOut,
-        home: const HomeScreen(),
+    return MaterialApp(
+      title: 'MyQuran',
+      debugShowCheckedModeBanner: false,
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: widget.themeProvider.isDarkMode ? ThemeMode.dark : ThemeMode.light,
+      themeAnimationDuration: const Duration(milliseconds: 300),
+      themeAnimationCurve: Curves.easeInOut,
+      // Wrap SEMUA route (termasuk Navigator.push) dengan ThemeInherited
+      builder: (context, child) => ThemeInherited(
+        themeProvider: widget.themeProvider,
+        appSettings: widget.appSettings,
+        child: child!,
       ),
+      home: const HomeScreen(),
     );
   }
 }

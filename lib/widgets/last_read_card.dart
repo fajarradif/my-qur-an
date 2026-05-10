@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../theme/colors.dart';
 import '../services/bookmark_service.dart';
 import '../screens/detail_surat_screen.dart';
+import '../main.dart';
 
 class LastReadCard extends StatelessWidget {
   final VoidCallback? onRefresh;
@@ -57,16 +58,16 @@ class LastReadCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
-                        children: const [
-                          Icon(Icons.menu_book, color: AppColors.primaryYellow, size: 18),
-                          SizedBox(width: 8),
-                          Text('Terakhir Dibaca', style: TextStyle(color: Colors.white70, fontSize: 13)),
+                        children: [
+                          const Icon(Icons.menu_book, color: AppColors.primaryYellow, size: 18),
+                          const SizedBox(width: 8),
+                          Text(MyQuranApp.settingsOf(context).t('Terakhir Dibaca', 'Last Read'), style: const TextStyle(color: Colors.white70, fontSize: 13)),
                         ],
                       ),
                       const SizedBox(height: 12),
                       Text(surahName, style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w600)),
                       const SizedBox(height: 4),
-                      Text(ayatNo == 0 ? 'Mulai membaca yuk!' : 'Ayat No: $ayatNo', style: const TextStyle(color: Colors.white70, fontSize: 14)),
+                      Text(ayatNo == 0 ? MyQuranApp.settingsOf(context).t('Mulai membaca yuk!', "Let's start reading!") : '${MyQuranApp.settingsOf(context).t('Ayat No', 'Verse No')}: $ayatNo', style: const TextStyle(color: Colors.white70, fontSize: 14)),
                       const Spacer(),
                       Align(
                         alignment: Alignment.bottomRight,
@@ -93,10 +94,10 @@ class LastReadCard extends StatelessWidget {
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
-                            children: const [
-                              Text('Lanjutkan', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-                              SizedBox(width: 8),
-                              Icon(Icons.arrow_forward, size: 16),
+                            children: [
+                              Text(MyQuranApp.settingsOf(context).t('Lanjutkan', 'Continue'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                              const SizedBox(width: 8),
+                              const Icon(Icons.arrow_forward, size: 16),
                             ],
                           ),
                         ),

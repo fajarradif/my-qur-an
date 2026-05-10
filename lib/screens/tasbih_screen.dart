@@ -83,14 +83,14 @@ class _TasbihScreenState extends State<TasbihScreen> {
       builder: (context) => AlertDialog(
         backgroundColor: AppColors.bg(context),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text('Set Target Dzikir', style: TextStyle(color: AppColors.primaryGreen, fontWeight: FontWeight.bold)),
+        title: Text(MyQuranApp.settingsOf(context).t('Set Target Dzikir', 'Set Dhikr Target'), style: TextStyle(color: AppColors.primaryGreen, fontWeight: FontWeight.bold)),
         content: TextField(
           controller: targetEditController,
           keyboardType: TextInputType.number,
           inputFormatters: [FilteringTextInputFormatter.digitsOnly],
           autofocus: true,
           decoration: InputDecoration(
-            hintText: 'Contoh: 33, 99, 100',
+            hintText: MyQuranApp.settingsOf(context).t('Contoh: 33, 99, 100', 'Example: 33, 99, 100'),
             filled: true,
             fillColor: AppColors.sf(context),
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
@@ -99,7 +99,7 @@ class _TasbihScreenState extends State<TasbihScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Batal', style: TextStyle(color: Colors.grey)),
+            child: Text(MyQuranApp.settingsOf(context).t('Batal', 'Cancel'), style: const TextStyle(color: Colors.grey)),
           ),
           ElevatedButton(
             onPressed: () {
@@ -114,7 +114,7 @@ class _TasbihScreenState extends State<TasbihScreen> {
               backgroundColor: AppColors.primaryGreen,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
-            child: const Text('Simpan', style: TextStyle(color: Colors.white)),
+            child: Text(MyQuranApp.settingsOf(context).t('Simpan', 'Save'), style: const TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -126,7 +126,7 @@ class _TasbihScreenState extends State<TasbihScreen> {
     return Scaffold(
       backgroundColor: AppColors.bg(context),
       appBar: AppBar(
-        title: Text('Tasbih Digital', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.text1(context))),
+        title: Text(MyQuranApp.settingsOf(context).t('Tasbih Digital', 'Digital Tasbih'), style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.text1(context))),
         centerTitle: true,
         elevation: 0,
         backgroundColor: AppColors.bg(context),
@@ -213,7 +213,7 @@ class _TasbihScreenState extends State<TasbihScreen> {
                     fontWeight: FontWeight.bold,
                   ),
                   decoration: InputDecoration(
-                    hintText: 'Masukkan doa/dzikir...',
+                    hintText: MyQuranApp.settingsOf(context).t('Masukkan doa/dzikir...', 'Enter prayer/dhikr...'),
                     hintStyle: TextStyle(color: AppColors.text2(context).withValues(alpha: 0.5), fontSize: 14),
                     border: InputBorder.none,
                     prefixIcon: Icon(Icons.edit_note, color: AppColors.isDark(context) ? AppColors.primaryYellow : AppColors.green(context), size: 18),
@@ -283,19 +283,19 @@ class _TasbihScreenState extends State<TasbihScreen> {
               children: [
                 _actionButton(
                   icon: Icons.refresh,
-                  label: 'Reset',
+                  label: MyQuranApp.settingsOf(context).t('Reset', 'Reset'),
                   onTap: _resetCounter,
                 ),
                 const SizedBox(width: 25),
                 _actionButton(
                   icon: Icons.remove_circle_outline,
-                  label: 'Kurangi',
+                  label: MyQuranApp.settingsOf(context).t('Kurangi', 'Subtract'),
                   onTap: _decrementCounter,
                 ),
                 const SizedBox(width: 25),
                 _actionButton(
                   icon: Icons.settings,
-                  label: 'Target',
+                  label: MyQuranApp.settingsOf(context).t('Target', 'Target'),
                   onTap: _showTargetDialog,
                 ),
               ],

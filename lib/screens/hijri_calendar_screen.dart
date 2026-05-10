@@ -56,7 +56,7 @@ class _HijriCalendarScreenState extends State<HijriCalendarScreen> {
     return Scaffold(
       backgroundColor: AppColors.bg(context),
       appBar: AppBar(
-        title: Text('Kalender Hijriah', style: TextStyle(color: AppColors.isDark(context) ? Colors.white : Colors.white, fontWeight: FontWeight.bold)),
+        title: Text(MyQuranApp.settingsOf(context).t('Kalender Hijriah', 'Hijri Calendar'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         backgroundColor: AppColors.primaryGreen,
         iconTheme: const IconThemeData(color: Colors.white),
         elevation: 0,
@@ -116,11 +116,11 @@ class _HijriCalendarScreenState extends State<HijriCalendarScreen> {
           Column(
             children: [
               Text(
-                HijriHelper.getMonthName(_currentMonth),
+                _getTranslatedMonth(_currentMonth),
                 style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
               ),
               Text(
-                '$_currentYear Hijriah',
+                '$_currentYear ${MyQuranApp.settingsOf(context).t('Hijriah', 'Hijri')}',
                 style: const TextStyle(color: AppColors.primaryYellow, fontSize: 16, fontWeight: FontWeight.w500),
               ),
             ],
@@ -135,7 +135,9 @@ class _HijriCalendarScreenState extends State<HijriCalendarScreen> {
   }
 
   Widget _buildWeekdayHeader() {
-    const weekdays = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
+    final weekdays = MyQuranApp.settingsOf(context).language == 'id' 
+        ? ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab']
+        : ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 10),
       child: Row(
@@ -221,7 +223,7 @@ class _HijriCalendarScreenState extends State<HijriCalendarScreen> {
             children: [
               const Icon(Icons.stars, color: AppColors.primaryYellow, size: 18),
               const SizedBox(width: 8),
-              Text('Hari Penting Bulan Ini', style: TextStyle(color: AppColors.isDark(context) ? AppColors.primaryYellow : AppColors.primaryGreen, fontWeight: FontWeight.bold, fontSize: 14)),
+              Text(MyQuranApp.settingsOf(context).t('Hari Penting Bulan Ini', 'Important Days This Month'), style: TextStyle(color: AppColors.isDark(context) ? AppColors.primaryYellow : AppColors.primaryGreen, fontWeight: FontWeight.bold, fontSize: 14)),
             ],
           ),
           const SizedBox(height: 10),
@@ -231,7 +233,10 @@ class _HijriCalendarScreenState extends State<HijriCalendarScreen> {
               children: [
                 Text('${e.key} :', style: const TextStyle(color: AppColors.primaryYellow, fontWeight: FontWeight.bold)),
                 const SizedBox(width: 8),
-                Text(e.value, style: TextStyle(color: AppColors.isDark(context) ? Colors.white70 : AppColors.primaryGreen, fontSize: 13)),
+                Text(
+                  _getTranslatedHoliday(e.value), 
+                  style: TextStyle(color: AppColors.isDark(context) ? Colors.white70 : AppColors.primaryGreen, fontSize: 13)
+                ),
               ],
             ),
           )).toList(),
@@ -254,12 +259,45 @@ class _HijriCalendarScreenState extends State<HijriCalendarScreen> {
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              'Kalender ini dihitung secara astronomis. Mungkin terdapat selisih 1 hari dengan pengamatan hilal.',
+              MyQuranApp.settingsOf(context).t(
+                'Kalender ini dihitung secara astronomis. Mungkin terdapat selisih 1 hari dengan pengamatan hilal.',
+                'This calendar is calculated astronomically. There may be a 1-day difference from the crescent (hilal) observation.'
+              ),
               style: TextStyle(color: AppColors.isDark(context) ? Colors.white70 : AppColors.primaryGreen, fontSize: 12),
             ),
           ),
         ],
       ),
     );
+  }
+
+  String _getTranslatedMonth(int month) {
+    if (MyQuranApp.settingsOf(context).language == 'id') {
+      return HijriHelper.getMonthName(month);
+    }
+    const monthsEn = [
+      'Muharram', 'Safar', 'Rabi\' al-Awwal', 'Rabi\' al-Thani',
+      'Jumada al-Awwal', 'Jumada al-Thani', 'Rajab', 'Sha\'ban',
+      'Ramadan', 'Shawwal', 'Dhu al-Qi\'dah', 'Dhu al-Hijjah'
+    ];
+    return monthsEn[month - 1];
+  }
+
+  String _getTranslatedHoliday(String holiday) {
+    if (MyQuranApp.settingsOf(context).language == 'id') return holiday;
+    
+    final Map<String, String> holidaysEn = {
+      'Tahun Baru Hijriah': 'Islamic New Year',
+      'Hari Asyura': 'Day of Ashura',
+      'Maulid Nabi Muhammad SAW': 'Mawlid al-Nabi',
+      'Isra\' Mi\'raj': 'Isra\' Mi\'raj',
+      'Awal Puasa Ramadhan': 'Start of Ramadan',
+      'Nuzulul Qur\'an': 'Nuzul al-Quran',
+      'Hari Raya Idul Fitri': 'Eid al-Fitr',
+      'Hari Raya Idul Adha': 'Eid al-Adha',
+      'Hari Tasyrik': 'Days of Tashreeq',
+    };
+    
+    return holidaysEn[holiday] ?? holiday;
   }
 }

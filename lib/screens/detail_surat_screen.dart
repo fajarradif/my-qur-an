@@ -3,6 +3,7 @@ import '../theme/colors.dart';
 import '../models/ayat.dart';
 import '../models/surah_detail.dart';
 import '../services/api_service.dart';
+import '../services/app_settings.dart';
 import '../services/bookmark_service.dart';
 import '../widgets/quran_number_marker.dart';
 import 'package:just_audio/just_audio.dart';
@@ -42,16 +43,24 @@ class _DetailSuratScreenState extends State<DetailSuratScreen> {
     futureSurahDetail = ApiService.getDetailSurat(widget.nomorSurat);
     _loadLastRead();
     
-    // Listen to audio player state untuk update UI secara real-time berdasarkan state mesin
     _audioPlayer.playerStateStream.listen((state) {
-      if (mounted) {
-        setState(() {});
-      }
+      if (mounted) setState(() {});
     });
+
+    // Rebuild otomatis saat font size berubah dari Pengaturan
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) MyQuranApp.settingsOf(context).addListener(_onSettingsChanged);
+    });
+  }
+
+  void _onSettingsChanged() {
+    if (mounted) setState(() {});
   }
 
   @override
   void dispose() {
+    // Hapus listener sebelum dispose
+    try { MyQuranApp.settingsOf(context).removeListener(_onSettingsChanged); } catch (_) {}
     _audioPlayer.dispose();
     _scrollController.dispose();
     super.dispose();
@@ -310,7 +319,7 @@ class _DetailSuratScreenState extends State<DetailSuratScreen> {
   Widget _buildMushafView(SurahDetail detail) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        // Sesuaikan ukuran font berdasarkan lebar layar (responsif)
+        // Ukuran font responsif berdasarkan lebar layar
         final double fontSize = constraints.maxWidth < 400 ? 22 : 26;
         final double bismillahSize = constraints.maxWidth < 400 ? 24 : 30;
         

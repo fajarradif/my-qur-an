@@ -74,7 +74,7 @@ class _KiblatScreenState extends State<KiblatScreen> {
     return Scaffold(
       backgroundColor: AppColors.bg(context),
       appBar: AppBar(
-        title: Text('Arah Kiblat', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.text1(context))),
+        title: Text(MyQuranApp.settingsOf(context).t('Arah Kiblat', 'Qibla Direction'), style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.text1(context))),
         centerTitle: true,
         elevation: 0,
         backgroundColor: AppColors.bg(context),
@@ -110,7 +110,10 @@ class _KiblatScreenState extends State<KiblatScreen> {
                         child: Padding(
                           padding: const EdgeInsets.all(32.0),
                           child: Text(
-                            "Device tidak mendukung sensor kompas/magnetometer. Silakan gunakan device lain.",
+                            MyQuranApp.settingsOf(context).t(
+                              "Device tidak mendukung sensor kompas/magnetometer. Silakan gunakan device lain.",
+                              "Your device does not support compass/magnetometer sensors. Please use another device."
+                            ),
                             textAlign: TextAlign.center,
                             style: TextStyle(color: AppColors.text1(context)),
                           ),
@@ -133,7 +136,10 @@ class _KiblatScreenState extends State<KiblatScreen> {
             const Icon(Icons.location_off, size: 80, color: Colors.grey),
             const SizedBox(height: 24),
             Text(
-              "Izin lokasi diperlukan untuk menentukan arah kiblat.",
+              MyQuranApp.settingsOf(context).t(
+                "Izin lokasi diperlukan untuk menentukan arah kiblat.",
+                "Location permission is required to determine the Qibla direction."
+              ),
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 16, color: AppColors.text1(context)),
             ),
@@ -146,7 +152,7 @@ class _KiblatScreenState extends State<KiblatScreen> {
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
               ),
-              child: const Text("Berikan Izin"),
+              child: Text(MyQuranApp.settingsOf(context).t("Berikan Izin", "Grant Permission")),
             ),
           ],
         ),
@@ -163,10 +169,10 @@ class _KiblatScreenState extends State<KiblatScreen> {
         }
 
         if (snapshot.hasError) {
-          return Center(child: Text("Error sensor: ${snapshot.error}", style: TextStyle(color: AppColors.text1(context))));
+          return Center(child: Text("${MyQuranApp.settingsOf(context).t('Error sensor', 'Sensor Error')}: ${snapshot.error}", style: TextStyle(color: AppColors.text1(context))));
         }
         if (!snapshot.hasData || snapshot.data == null) {
-          return Center(child: Text("Menunggu data sensor...", style: TextStyle(color: AppColors.text1(context))));
+          return Center(child: Text(MyQuranApp.settingsOf(context).t("Menunggu data sensor...", "Waiting for sensor data..."), style: TextStyle(color: AppColors.text1(context))));
         }
 
         final qiblahDirection = snapshot.data!;
@@ -193,7 +199,9 @@ class _KiblatScreenState extends State<KiblatScreen> {
                 ),
               ),
               Text(
-                isAligned ? "Sudah Pas Hadap Kiblat!" : "Putar HP kamu",
+                isAligned 
+                    ? MyQuranApp.settingsOf(context).t("Sudah Pas Hadap Kiblat!", "Aligned with Qibla!") 
+                    : MyQuranApp.settingsOf(context).t("Putar HP kamu", "Rotate your phone"),
                 style: TextStyle(
                   color: isAligned ? Colors.orangeAccent : AppColors.text2(context).withValues(alpha: 0.7),
                   fontSize: 16,
@@ -224,7 +232,10 @@ class _KiblatScreenState extends State<KiblatScreen> {
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
-                  "Arahkan HP sejajar dengan lantai",
+                  MyQuranApp.settingsOf(context).t(
+                    "Arahkan HP sejajar dengan lantai", 
+                    "Hold your phone parallel to the floor"
+                  ),
                   style: TextStyle(color: AppColors.isDark(context) ? AppColors.primaryYellow : AppColors.green(context), fontWeight: FontWeight.bold),
                 ),
               ),
