@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart'; 
 import '../theme/colors.dart';
 import '../models/ayat.dart';
 import '../models/surah.dart';
@@ -66,7 +67,6 @@ class _DetailSuratScreenState extends State<DetailSuratScreen> {
   void _loadSurahData() {
     futureSurahDetail = ApiService.getDetailSurat(_currentNomor).then((detail) {
       if (_pendingScrollAyat != null) {
-        // Beri waktu sekejap buat ListView inisialisasi
         Future.delayed(const Duration(milliseconds: 500), () {
           if (mounted) {
             _scrollToAyat(_pendingScrollAyat!);
@@ -139,6 +139,7 @@ class _DetailSuratScreenState extends State<DetailSuratScreen> {
       appBar: AppBar(
         backgroundColor: AppColors.isDark(context) ? AppColors.darkSurface : AppColors.primaryGreen,
         elevation: 0,
+        centerTitle: false, // Digeser ke kiri
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),
@@ -148,6 +149,7 @@ class _DetailSuratScreenState extends State<DetailSuratScreen> {
           builder: (context, snapshot) {
             if (snapshot.hasData) {
               return Column(
+                crossAxisAlignment: CrossAxisAlignment.start, // Rata kiri
                 children: [
                   Text(snapshot.data!.namaLatin, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
                   Text(snapshot.data!.arti, style: const TextStyle(color: Colors.white70, fontSize: 12)),
@@ -279,9 +281,10 @@ class _DetailSuratScreenState extends State<DetailSuratScreen> {
   }
 
   Widget _buildAyatItem(Ayat ayat, SurahDetail surah) {
-    final isPlaying = _audioPlayer.playing && 
-                    _audioPlayer.sequenceState?.currentSource?.tag is MediaItem &&
-                    (_audioPlayer.sequenceState!.currentSource!.tag as MediaItem).extras?['ayatNo'] == ayat.nomorAyat;
+    final currentItem = _audioPlayer.sequenceState?.currentSource?.tag as MediaItem?;
+    final isThisAyat = currentItem != null && currentItem.extras?['ayatNo'] == ayat.nomorAyat && currentItem.extras?['surahNo'] == _currentNomor;
+    
+    final isPlaying = _audioPlayer.playing && isThisAyat && _audioPlayer.processingState != ProcessingState.completed;
     
     final isBookmarked = _lastReadAyat == ayat.nomorAyat;
 
@@ -298,8 +301,8 @@ class _DetailSuratScreenState extends State<DetailSuratScreen> {
               ),
               const Spacer(),
               IconButton(
-                icon: const Icon(Icons.share_outlined, color: AppColors.primaryGreen, size: 18),
-                onPressed: () {}, 
+                icon: const Icon(Icons.copy_rounded, color: AppColors.primaryGreen, size: 18),
+                onPressed: () => _copyAyat(ayat, surah), 
               ),
               IconButton(
                 icon: Icon(isPlaying ? Icons.pause_circle_filled : Icons.play_circle_outline, color: AppColors.primaryGreen, size: 22),
@@ -428,15 +431,15 @@ class _DetailSuratScreenState extends State<DetailSuratScreen> {
 
   Widget _buildHeader(SurahDetail detail) {
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 16),
-      padding: const EdgeInsets.all(24),
+      margin: const EdgeInsets.only(top: 10, bottom: 20),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       decoration: BoxDecoration(
         color: AppColors.primaryGreen,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(20),
         image: const DecorationImage(
           image: AssetImage('assets/images/islamic_pattern.png'),
           fit: BoxFit.cover,
-          opacity: 0.1,
+          opacity: 0.2, 
         ),
       ),
       child: Column(
@@ -444,16 +447,29 @@ class _DetailSuratScreenState extends State<DetailSuratScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(detail.tempatTurun.toUpperCase(), style: const TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold)),
-              Text('${detail.jumlahAyat} AYAT', style: const TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold)),
+              Text(detail.tempatTurun.toUpperCase(), style: const TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.bold)),
+              Text('${detail.jumlahAyat} AYAT', style: const TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.bold)),
             ],
           ),
           const SizedBox(height: 12),
-          Text(detail.nama, style: const TextStyle(color: Colors.white, fontSize: 24, fontFamily: 'QuranFont')),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+            decoration: BoxDecoration(
+              color: Colors.black.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(30),
+            ),
+            child: Text(
+              detail.nama, 
+              style: const TextStyle(color: Colors.white, fontSize: 22, fontFamily: 'QuranFont'),
+            ),
+          ),
+          const SizedBox(height: 12),
+          const Divider(color: Colors.white24, height: 1),
           const SizedBox(height: 8),
-          const Divider(color: Colors.white24),
-          const SizedBox(height: 8),
-          Text(detail.arti, style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 14)),
+          Text(
+            detail.arti, 
+            style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 14, fontStyle: FontStyle.italic),
+          ),
         ],
       ),
     );
@@ -580,12 +596,9 @@ class _DetailSuratScreenState extends State<DetailSuratScreen> {
     
     final key = _ayatKeys[ayatNumber];
     if (key != null && key.currentContext != null) {
-      // Ayat sudah ketemu, scroll presisi
       Scrollable.ensureVisible(key.currentContext!, duration: const Duration(seconds: 1), curve: Curves.easeInOut, alignment: 0.1);
     } else {
-      // Ayat BELUM ketemu (mungkin karena lazy loading).
-      // Kita LOMPAT dulu ke area estimasi biar ayatnya di-render sama Flutter
-      double estimation = (ayatNumber - 1) * 350.0; // Estimasi tinggi rata-rata ayat
+      double estimation = (ayatNumber - 1) * 350.0; 
       double maxScroll = _scrollController.position.maxScrollExtent;
       
       _scrollController.animateTo(
@@ -593,7 +606,6 @@ class _DetailSuratScreenState extends State<DetailSuratScreen> {
         duration: const Duration(milliseconds: 500),
         curve: Curves.fastOutSlowIn,
       ).then((_) {
-        // Setelah lompat, kita cari lagi key-nya (retry)
         Future.delayed(const Duration(milliseconds: 300), () {
           final retryKey = _ayatKeys[ayatNumber];
           if (retryKey != null && retryKey.currentContext != null) {
@@ -604,8 +616,38 @@ class _DetailSuratScreenState extends State<DetailSuratScreen> {
     }
   }
 
+  void _copyAyat(Ayat ayat, SurahDetail surah) {
+    final textToCopy = "${ayat.teksArab}\n\n${ayat.teksIndonesia}\n\n(QS. ${surah.namaLatin}: ${ayat.nomorAyat})";
+    Clipboard.setData(ClipboardData(text: textToCopy)).then((_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Ayat tersalin ke papan klip'),
+            backgroundColor: AppColors.primaryGreen,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    });
+  }
+
   Future<void> _playAudio(int ayatNo, String audioUrl) async {
     try {
+      final currentItem = _audioPlayer.sequenceState?.currentSource?.tag as MediaItem?;
+      final isThisAyat = currentItem != null && currentItem.extras?['ayatNo'] == ayatNo && currentItem.extras?['surahNo'] == _currentNomor;
+
+      if (isThisAyat) {
+        if (_audioPlayer.playing) {
+          await _audioPlayer.pause();
+        } else {
+          if (_audioPlayer.processingState == ProcessingState.completed) {
+            await _audioPlayer.seek(Duration.zero);
+          }
+          await _audioPlayer.play();
+        }
+        return;
+      }
+
       await _audioPlayer.stop();
       await _audioPlayer.setAudioSource(AudioSource.uri(
         Uri.parse(audioUrl),
@@ -614,7 +656,7 @@ class _DetailSuratScreenState extends State<DetailSuratScreen> {
           album: "My Quran",
           title: "Ayat $ayatNo",
           artist: _qoriNames[_selectedQori] ?? "Unknown",
-          extras: {'ayatNo': ayatNo},
+          extras: {'ayatNo': ayatNo, 'surahNo': _currentNomor},
         ),
       ));
       await _audioPlayer.play();
@@ -626,6 +668,6 @@ class _DetailSuratScreenState extends State<DetailSuratScreen> {
   void _saveLastRead(int ayatNo, SurahDetail surah) async {
     await BookmarkService.saveLastRead(surah: surah.nomor, ayat: ayatNo, surahName: surah.namaLatin);
     _loadLastRead(); 
-    if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Tersimpan di Terakhir Baca')));
+    if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Tersalin di Terakhir Baca')));
   }
 }
