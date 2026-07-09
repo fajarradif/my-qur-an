@@ -12,7 +12,7 @@ Future<void> main() async {
   await initializeDateFormatting('id_ID', null);
   
   await JustAudioBackground.init(
-    androidNotificationChannelId: 'com.example.myQuran.audio',
+    androidNotificationChannelId: 'com.radiffajar.myquran.audio',
     androidNotificationChannelName: 'Audio playback',
     androidNotificationOngoing: true,
   );
